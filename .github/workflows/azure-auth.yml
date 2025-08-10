@@ -1,0 +1,14 @@
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: 04f60aef-96b9-46ff-8c2a-0bb6e403e56b
+          tenant-id: 9f0fe02d-4068-4307-a5da-697b6058fa64
+          subscription-id: 8c781f5c-b4c9-4184-9915-7bb3b64a885e
