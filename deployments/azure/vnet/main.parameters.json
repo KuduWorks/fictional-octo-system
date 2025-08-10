@@ -1,0 +1,26 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "vnetName": {
+      "value": "vnet-fictional-octo"
+    },
+    "vnetAddressPrefix": {
+      "value": "10.0.0.0/16"
+    },
+    "subnetName": {
+      "value": "default"
+    },
+    "subnetAddressPrefix": {
+      "value": "10.0.1.0/24"
+    },
+    "tags": {
+      "value": {
+        "Environment": "Development",
+        "Project": "fictional-octo-system",
+        "ManagedBy": "Bicep",
+        "CreatedBy": "KuduWorks"
+      }
+    }
+  }
+}
