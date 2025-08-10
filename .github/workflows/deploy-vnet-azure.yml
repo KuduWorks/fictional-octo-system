@@ -1,0 +1,29 @@
+name: Deploy VNet
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy-vnet:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy VNet
+        run: |
+          az network vnet create \
+            --name vnet-front-end-01 \
+            --resource-group rg-networking \
+            --location westeurope \
+            --address-prefix 10.0.0.0/16 \
+            --subnet-name subnet-front-end-01 \
+            --subnet-prefix 10.0.0.0/24
