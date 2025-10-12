@@ -5,7 +5,7 @@
 # Example:
 #   *       @kudu-star
 #   /api/   @kudu-star
-#   /deployments/ @KuduWorks
+#   /deployments/ @KuduWorks.
 
 *       @kudu-star
 /api/   @kudu-star
