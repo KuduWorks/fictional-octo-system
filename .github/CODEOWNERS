@@ -1,0 +1,12 @@
+# CODEOWNERS
+# This file designates code owners for this repository.
+# Lines should be in the format:
+#   <pattern> <owner>
+# Example:
+#   *       @kudu-star
+#   /api/   @kudu-star
+#   /deployments/ @KuduWorks
+
+*       @kudu-star
+/api/   @kudu-star
+/deployments/ @KuduWorks
