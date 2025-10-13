@@ -16,3 +16,13 @@ _site/
 # counterproductive to check this file into the repository.
 # Details at https://github.com/github/pages-gem/issues/768
 Gemfile.lock
+# ignore Terraform backend configuration file with sensitive information
+terraform/backend.tf
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+# ignore any .tfvars files that may contain sensitive variable definitions
+terraform/*.tfvars
+# ignore crash log files
+terraform/crash.log
+# ignore local VS Code settings
+.vscode/settings.json
