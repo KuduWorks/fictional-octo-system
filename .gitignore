@@ -26,3 +26,5 @@ terraform/*.tfvars
 terraform/crash.log
 # ignore local VS Code settings
 .vscode/settings.json
+# ignore executable files
+*.exe
