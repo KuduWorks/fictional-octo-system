@@ -61,5 +61,4 @@ az storage account create --name tfstate20251013 --resource-group rg-tfstate --l
 
 # Create blob container
 
-
- <your-storage-account-name>
+az storage container create --name tfstate --account-name tfstate20251013 --resource-group rg-tfstate
