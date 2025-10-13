@@ -51,6 +51,19 @@ See `variables.tf` for configurable options such as:
 - [Terraform Azure Provider Docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
 - [Terraform Documentation](https://www.terraform.io/docs)
 
+## Network Configuration
+
+The infrastructure includes:
+- Virtual Network with address space 10.0.0.0/16
+- Main subnet with address prefix 10.0.1.0/24
+
+To deploy:
+```bash
+terraform init
+terraform plan
+terraform apply
+```
+
 ---
 
 # Create resource group
