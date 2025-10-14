@@ -1,77 +1,104 @@
 # Terraform Infrastructure for Fictional Octo System
-// filepath: c:\Repos\fictional-octo-system\terraform\README.md
 
 This folder contains Terraform code for deploying and managing Azure resources for the Fictional Octo System project.
 
-## Structure
+## Infrastructure Components
 
-- `backend.tf` — Configures remote state storage in Azure using a Storage Account and Blob Container.
-- `variables.tf` — Defines input variables for resource configuration.
-- Other `.tf` files — Add your resource definitions here.
+- **Storage Account**: Remote state storage with IP-restricted access
+- **Virtual Network**: Basic networking setup with customizable address space
+- **Monitoring**: Azure Monitor setup with Log Analytics Workspace
+- **Security**: Network rules limiting storage account access to specified IPs
+
+## File Structure
+
+- `main.tf` — Core infrastructure and provider configuration
+- `variables.tf` — Input variables definition
+- `monitoring.tf` — Monitoring and alerting configuration
+- `storage_network.tf` — Storage account network security rules
+- `backend.tf` — Remote state configuration
+- `terraform.tfvars` — Variable values (not in version control)
+
+## Prerequisites
+
+1. **Azure CLI** installed and configured
+2. **Terraform** (version >= 1.3.0) installed
+3. Access to Azure subscription with required permissions
 
 ## Getting Started
 
-1. **Install Terraform**  
-   Download from [terraform.io/downloads](https://www.terraform.io/downloads.html) and add it to your system PATH.
-
-2. **Authenticate to Azure**  
-   ```
-   az login
-   ```
-
-3. **Configure Backend**  
-   Update `backend.tf` with your Azure Storage Account, Resource Group, and Container details.
-
-4. **Initialize Terraform**  
-   ```
+1. **Initialize Terraform**
+   ```powershell
    terraform init
    ```
 
-5. **Plan and Apply**  
+2. **Configure Variables**
+   Create a `terraform.tfvars` file with your values:
+   ```hcl
+   resource_group_name = "rg-monitoring"
+   alert_email = "your.email@domain.com"
+   allowed_ip_addresses = ["YOUR.IP.ADDRESS"]
    ```
+
+3. **Deploy Infrastructure**
+   ```powershell
    terraform plan
    terraform apply
    ```
 
-## Variables
+## Security Features
 
-See `variables.tf` for configurable options such as:
-- `location` — Azure region for deployment
-- `resource_group_name` — Resource group name
-- `tags` — Resource tags
+- Storage account access restricted to specified IP addresses
+- Azure services bypass enabled for monitoring
+- Diagnostic settings configured for auditing
+- 30-day retention policy for logs and metrics
+
+## Monitoring Setup
+
+- Log Analytics Workspace for centralized logging
+- Storage account metrics collection
+- Availability monitoring and alerting
+- Email notifications for critical events
 
 ## Best Practices
 
-- Store state remotely using Azure Storage for collaboration and reliability.
-- Do not include credentials in `.tf` files; use Azure CLI authentication or environment variables.
-- Use tags for resource management and cost tracking.
+- Store sensitive data in `terraform.tfvars` (not in version control)
+- Use Azure CLI authentication
+- Keep Terraform provider and Azure RM versions up to date
+- Review and adjust monitoring thresholds as needed
 
-## Resources
+## Resource Dependencies
 
-- [Terraform Azure Provider Docs](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
-- [Terraform Documentation](https://www.terraform.io/docs)
-
-## Network Configuration
-
-The infrastructure includes:
-- Virtual Network with address space 10.0.0.0/16
-- Main subnet with address prefix 10.0.1.0/24
-
-To deploy:
-```bash
-terraform init
-terraform plan
-terraform apply
+```
+Storage Account
+    └── Network Rules
+    └── Diagnostic Settings
+    └── Management Policy
+Virtual Network
+    └── Subnets
+Log Analytics
+    └── Metrics Collection
+    └── Alert Rules
 ```
 
----
+## Variables
 
-# Create resource group
-az group create --name rg-tfstate --location swedencentral
+| Name | Description | Default |
+|------|-------------|---------|
+| `resource_group_name` | Name of the resource group | `"rg-monitoring"` |
+| `location` | Azure region for deployment | `"swedencentral"` |
+| `allowed_ip_addresses` | List of IPs allowed to access storage | `[]` |
+| `alert_email` | Email for monitoring alerts | - |
 
-# Create storage account (with secure settings)
-az storage account create --name tfstate20251013 --resource-group rg-tfstate --location swedencentral --sku Standard_LRS --encryption-services blob
+## Contributing
 
-# Create blob container
+1. Create a feature branch
+2. Make your changes
+3. Run `terraform fmt` before committing
+4. Submit a pull request
 
-az storage container create --name tfstate --account-name tfstate20251013 --resource-group rg-tfstate
+## Maintenance
+
+- Regularly update provider versions
+- Review and adjust IP allowlists as needed
+- Monitor storage metrics and adjust thresholds
+- Update email recipients for alerts as team changes

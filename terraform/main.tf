@@ -12,7 +12,14 @@ provider "azurerm" {
   features {}
 }
 
-resource "azurerm_resource_group" "example" {
+# Data source for existing Terraform state storage account
+data "azurerm_storage_account" "state_storage_account" {
+  name                = "tfstate20251013"
+  resource_group_name = "rg-tfstate"
+}
+
+# Resource Group
+resource "azurerm_resource_group" "main" {
   name     = var.resource_group_name
   location = var.location
   tags     = var.tags
