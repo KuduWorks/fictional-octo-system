@@ -1,7 +1,4 @@
 # Local variables
-locals {
-  current_ip = "YOUR_IP_ADDRESS_HERE" # Replace with your actual IP address
-}
 
 # Network Rules for Storage Account
 resource "azurerm_storage_account_network_rules" "tfstate" {
