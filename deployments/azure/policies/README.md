@@ -11,25 +11,22 @@ policies/
 │   ├── arm-template.parameters.json
 │   ├── deploy-arm.sh
 │   ├── deploy-arm.ps1
-│   ├── main.bicep           # Alternative: Bicep template
+│   ├── main.parameters.json # Legacy parameters file
 │   ├── main.tf              # Alternative: Terraform
 │   └── README.md
 ├── security-baseline/        # Security and compliance policies
 │   ├── arm-template.json
-│   ├── parameters/
-│   │   ├── prod.parameters.json
-│   │   ├── dev.parameters.json
-│   │   └── test.parameters.json
-│   └── README.md
+│   └── README.md            # (Coming soon)
 ├── cost-management/          # Cost optimization policies
 │   ├── arm-template.json
-│   ├── parameters/
-│   └── README.md
+│   └── README.md            # (Coming soon)
 ├── shared/                   # Common utilities and scripts
-│   ├── deploy-all.sh
-│   ├── validate-all.sh
-│   └── policy-utilities.ps1
-└── README.md                # This file
+│   └── deploy-all.sh
+├── deploy-cli.sh             # Pure Azure CLI deployment (no templates)
+├── deploy.sh                 # Legacy deployment script
+├── deploy.ps1                # Legacy PowerShell script
+├── verify-cli.sh             # CLI verification script
+└── README.md                 # This file
 ```
 
 ## Policy Categories
@@ -70,82 +67,90 @@ policies/
 
 ## Deployment Options
 
-### Option 1: Using Bash Script (Recommended for Linux/macOS/WSL)
+### Option 1: ARM Template Deployment (Recommended)
+
+Deploy specific policy categories using ARM templates:
+
+```bash
+# Navigate to specific policy category
+cd deployments/azure/policies/region-control
+
+# Deploy using the ARM deployment script
+./deploy-arm.sh
+
+# Or deploy manually
+az deployment sub create \
+    --location swedencentral \
+    --template-file arm-template.json \
+    --parameters arm-template.parameters.json \
+    --name "region-control-$(date +%Y%m%d-%H%M%S)"
+```
+
+### Option 2: Pure Azure CLI Deployment
+
+Deploy using direct Azure CLI commands (no templates required):
 
 ```bash
 # Navigate to the policies directory
 cd deployments/azure/policies
 
-# Make the script executable
-chmod +x deploy.sh
+# Verify before deploying
+chmod +x verify-cli.sh
+./verify-cli.sh
 
-# Run the deployment
-./deploy.sh
+# Deploy using CLI commands
+chmod +x deploy-cli.sh
+./deploy-cli.sh
 ```
 
-### Option 2: Using PowerShell Script (Recommended for Windows)
+### Option 3: Deploy All Policy Categories
 
-```powershell
-# Navigate to the policies directory
-Set-Location deployments\azure\policies
-
-# Run the deployment
-.\deploy.ps1
-
-# For what-if analysis only (preview changes)
-.\deploy.ps1 -WhatIf
-
-# For automated deployment without confirmation
-.\deploy.ps1 -Force
-```
-
-### Option 3: Manual Azure CLI Deployment
+Deploy all available policy categories at once:
 
 ```bash
-# Set variables
-SUBSCRIPTION_ID="your-subscription-id"
-LOCATION="swedencentral"
-DEPLOYMENT_NAME="azure-policy-sweden-central-$(date +%Y%m%d-%H%M%S)"
+# Navigate to shared utilities
+cd deployments/azure/policies/shared
 
-# Set subscription
-az account set --subscription $SUBSCRIPTION_ID
+# Deploy all policies
+chmod +x deploy-all.sh
+./deploy-all.sh
+```
 
-# Validate template
-az deployment sub validate \
-    --location $LOCATION \
-    --template-file main.bicep \
-    --parameters main.parameters.json
+### Option 4: Terraform (Alternative)
 
-# Preview deployment
-az deployment sub what-if \
-    --location $LOCATION \
-    --template-file main.bicep \
-    --parameters main.parameters.json \
-    --name $DEPLOYMENT_NAME
+For infrastructure as code using Terraform:
 
-# Deploy
-az deployment sub create \
-    --location $LOCATION \
-    --template-file main.bicep \
-    --parameters main.parameters.json \
-    --name $DEPLOYMENT_NAME
+```bash
+cd deployments/azure/policies/region-control
+terraform init
+terraform plan
+terraform apply
 ```
 
 ## Configuration
 
 ### Modifying Allowed Regions
 
-To allow additional regions, modify the `allowedRegions` parameter in `main.parameters.json`:
+To allow additional regions, modify the parameters in the appropriate files:
 
+**For ARM Template:**
 ```json
 {
-  "allowedRegions": {
-    "value": [
-      "swedencentral",
-      "swedensouth"
-    ]
+  "parameters": {
+    "allowedRegions": {
+      "value": [
+        "swedencentral",
+        "swedensouth"
+      ]
+    }
   }
 }
+```
+
+**For CLI Deployment:**
+Edit the `ALLOWED_REGIONS` variable in `deploy-cli.sh`:
+```bash
+ALLOWED_REGIONS='["swedencentral", "swedensouth"]'
 ```
 
 ### Enforcement Modes
@@ -153,14 +158,78 @@ To allow additional regions, modify the `allowedRegions` parameter in `main.para
 - **Default**: Policy is enforced, non-compliant resources are denied
 - **DoNotEnforce**: Policy is evaluated but not enforced (audit mode)
 
-Modify the `enforcementMode` parameter in `main.parameters.json`:
-
+**For ARM Template:**
 ```json
 {
-  "enforcementMode": {
-    "value": "DoNotEnforce"
+  "parameters": {
+    "enforcementMode": {
+      "value": "DoNotEnforce"
+    }
   }
 }
+```
+
+**For CLI Deployment:**
+Edit the `ENFORCEMENT_MODE` variable in `deploy-cli.sh`:
+```bash
+ENFORCEMENT_MODE="DoNotEnforce"
+```
+
+## Pre-Deployment Verification
+
+Before deploying, it's recommended to verify your configuration:
+
+### Option 1: CLI Verification Script
+
+```bash
+# Navigate to the policies directory
+cd deployments/azure/policies
+
+# Run comprehensive verification
+chmod +x verify-cli.sh
+./verify-cli.sh
+```
+
+This script checks:
+- ✅ Azure CLI installation and login status
+- ✅ Required permissions (Policy Contributor role)
+- ✅ Existing policies (conflict detection)
+- ✅ Policy JSON syntax validation
+- ✅ Built-in policy availability
+- ✅ Configuration review and impact estimation
+
+### Option 2: ARM Template Validation
+
+For ARM template deployments:
+
+```bash
+cd region-control/
+
+# Validate template syntax
+az deployment sub validate \
+    --location swedencentral \
+    --template-file arm-template.json \
+    --parameters arm-template.parameters.json
+
+# Preview exact changes (what-if)
+az deployment sub what-if \
+    --location swedencentral \
+    --template-file arm-template.json \
+    --parameters arm-template.parameters.json \
+    --name "test-$(date +%Y%m%d-%H%M%S)"
+```
+
+### Option 3: Quick CLI Checks
+
+```bash
+# Check login and permissions
+az account show
+
+# Check existing policies
+az policy assignment list --query "[?contains(name, 'region')].{Name:name, DisplayName:displayName}" -o table
+
+# Check if built-in policy exists
+az policy definition show --name "e56962a6-4747-49cd-b67b-bf8b01975c4c"
 ```
 
 ## Post-Deployment Verification
@@ -187,6 +256,7 @@ az group create --name test-rg --location "eastus"
 ```bash
 # This should succeed
 az group create --name test-rg-sweden --location "swedencentral"
+az group delete --name test-rg-sweden --yes --no-wait
 ```
 
 ## Policy Effects Timeline
@@ -227,13 +297,21 @@ az policy state list --query "[?complianceState=='NonCompliant']"
 # View policy assignment details
 az policy assignment show --name "allowed-regions-sweden-central"
 
-# Check deployment status
+# Check deployment status (for ARM template deployments)
 az deployment sub show --name "your-deployment-name"
+
+# List all custom policy definitions
+az policy definition list --query "[?policyType=='Custom'].{Name:name, DisplayName:displayName}" -o table
+
+# List all policy initiatives
+az policy set-definition list --query "[?policyType=='Custom'].{Name:name, DisplayName:displayName}" -o table
 ```
 
 ## Cleanup
 
-To remove the policies:
+To remove the policies, choose the appropriate method based on how they were deployed:
+
+### For CLI Deployed Policies
 
 ```bash
 # Delete policy assignments
@@ -246,6 +324,33 @@ az policy definition delete --name "custom-rg-location-policy"
 
 # Delete policy set definition
 az policy set-definition delete --name "region-control-initiative"
+```
+
+### For ARM Template Deployed Policies
+
+```bash
+# Delete policy assignments (ARM template names may differ)
+az policy assignment delete --name "allowed-regions-sweden-central-arm"
+az policy assignment delete --name "region-control-initiative-assignment"
+
+# Delete custom policy definitions
+az policy definition delete --name "custom-rg-location-policy"
+
+# Delete policy set definition
+az policy set-definition delete --name "region-control-initiative"
+```
+
+### Clean Up All Region-Related Policies
+
+```bash
+# List and delete all region-related policy assignments
+az policy assignment list --query "[?contains(name, 'region')].name" -o tsv | xargs -I {} az policy assignment delete --name {}
+
+# List and delete custom policy definitions
+az policy definition list --query "[?policyType=='Custom' && contains(name, 'region')].name" -o tsv | xargs -I {} az policy definition delete --name {}
+
+# List and delete custom policy set definitions
+az policy set-definition list --query "[?policyType=='Custom' && contains(name, 'region')].name" -o tsv | xargs -I {} az policy set-definition delete --name {}
 ```
 
 ## Security Considerations
