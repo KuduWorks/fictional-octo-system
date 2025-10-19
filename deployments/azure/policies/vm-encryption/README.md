@@ -1,37 +1,38 @@
 # VM Encryption Policies
 
-This folder contains Azure Policy assignments to enforce encryption on all virtual machines. These policies ensure that every VM deployed must have **either Azure Disk Encryption or EncryptionAtHost enabled**.
+This folder contains an Azure Policy that **audits** virtual machines to ensure they have **either EncryptionAtHost OR Azure Disk Encryption** enabled.
 
 ## Overview
 
-This deployment creates **2 built-in policy assignments**:
+This deployment creates **1 audit policy** that checks for encryption compliance:
 
-1. **Windows VM Encryption Policy** - Enforces encryption on Windows VMs
-2. **Linux VM Encryption Policy** - Enforces encryption on Linux VMs
+**VM Encryption Audit Policy** - Audits VMs to ensure they have at least one encryption method
 
-Both policies use Azure's built-in policy definitions with the **Deny** effect, meaning any VM deployment without proper encryption will be blocked.
+## ✅ What This Policy Does
 
-## What Gets Enforced
+The policy uses **AuditIfNotExists** effect to check VMs for encryption compliance:
 
-### Encryption Requirements
-Virtual machines must have **at least ONE** of the following:
+1. **If a VM has EncryptionAtHost enabled** → ✅ **Compliant** (no further checks needed)
+2. **If a VM does NOT have EncryptionAtHost** → Checks for Azure Disk Encryption extension
+   - **If ADE extension is present and successful** → ✅ **Compliant**
+   - **If no ADE extension found** → ❌ **Non-Compliant** (flagged for audit)
 
-1. ✅ **Azure Disk Encryption (ADE)**
-   - Full disk encryption using BitLocker (Windows) or dm-crypt (Linux)
-   - Encryption keys managed in Azure Key Vault
-   
-2. ✅ **EncryptionAtHost**
-   - Encryption at the host level
-   - Encrypts temp disks and OS/data disk caches
-   - Simpler to implement than ADE
+## 🎯 Policy Behavior
 
-### What Gets Blocked
+| Scenario | EncryptionAtHost | Azure Disk Encryption | Result |
+|----------|------------------|----------------------|---------|
+| VM deployed with encryption at host | ✅ Enabled | N/A | ✅ **Compliant** |
+| VM deployed without encryption at host, ADE applied later | ❌ Not enabled | ✅ Extension present | ✅ **Compliant** |
+| VM deployed without any encryption | ❌ Not enabled | ❌ No extension | ❌ **Non-Compliant** |
+| VM with both encryption methods | ✅ Enabled | ✅ Extension present | ✅ **Compliant** |
 
-❌ VMs without any encryption enabled  
-❌ VMs with only platform-managed encryption (default storage encryption)  
-✅ VMs with Azure Disk Encryption  
-✅ VMs with EncryptionAtHost enabled  
-✅ VMs with both ADE and EncryptionAtHost
+## 🚀 Key Features
+
+✅ **Does NOT block VM deployment** - VMs can be created without EncryptionAtHost  
+✅ **Allows Azure Disk Encryption** - Checks for ADE extension as alternative  
+✅ **Supports both Windows and Linux** - Single policy covers both OS types  
+✅ **Audit-only enforcement** - Flags non-compliant VMs but doesn't prevent creation  
+✅ **Flexible workflow** - Teams can choose their preferred encryption method
 
 ## Files
 
@@ -81,15 +82,31 @@ enforcement_mode = "Default"      # Denies non-compliant VMs
 
 ## Testing
 
-After deployment, **wait 15-30 minutes** for policies to take effect.
+After deployment, **wait 15-30 minutes** for policies to take effect and run compliance scan.
 
-### Test 1: Deploy VM WITHOUT Encryption (Should FAIL)
+### Test 1: Deploy VM WITH EncryptionAtHost (Compliant)
 
 ```bash
 # Create resource group
 az group create --name "rg-vm-encryption-test" --location "swedencentral"
 
-# Try to deploy VM without encryption - THIS SHOULD FAIL
+# Deploy VM with EncryptionAtHost - COMPLIANT
+az vm create \
+    --resource-group "rg-vm-encryption-test" \
+    --name "vm-with-enchost" \
+    --image "Ubuntu2204" \
+    --admin-username "azureuser" \
+    --generate-ssh-keys \
+    --size "Standard_D2s_v3" \
+    --encryption-at-host true
+```
+
+**Expected Result:** ✅ VM deploys successfully and shows as **Compliant**
+
+### Test 2: Deploy VM WITHOUT Encryption (Non-Compliant, but allowed)
+
+```bash
+# Deploy VM without any encryption - ALLOWED but flagged as non-compliant
 az vm create \
     --resource-group "rg-vm-encryption-test" \
     --name "vm-no-encryption" \
@@ -99,38 +116,26 @@ az vm create \
     --size "Standard_D2s_v3"
 ```
 
-**Expected Result:** ❌ Deployment blocked with policy violation error
+**Expected Result:** ✅ VM deploys successfully but shows as **Non-Compliant** in policy compliance
 
-### Test 2: Deploy VM WITH EncryptionAtHost (Should SUCCEED)
-
-```bash
-# Deploy VM with EncryptionAtHost enabled - THIS SHOULD SUCCEED
-az vm create \
-    --resource-group "rg-vm-encryption-test" \
-    --name "vm-with-encryption" \
-    --image "Ubuntu2204" \
-    --admin-username "azureuser" \
-    --generate-ssh-keys \
-    --size "Standard_D2s_v3" \
-    --encryption-at-host true
-```
-
-**Expected Result:** ✅ VM deployed successfully
-
-### Test 3: Deploy Windows VM WITHOUT Encryption (Should FAIL)
+### Test 3: Apply Azure Disk Encryption to Non-Compliant VM
 
 ```bash
-# Try to deploy Windows VM without encryption - THIS SHOULD FAIL
-az vm create \
-    --resource-group "rg-vm-encryption-test" \
-    --name "vm-windows-no-enc" \
-    --image "Win2022Datacenter" \
-    --admin-username "azureuser" \
-    --admin-password "YourPassword123!" \
-    --size "Standard_D2s_v3"
+# This would require Key Vault setup - see Azure Disk Encryption documentation
+# After applying ADE, the VM will become compliant
 ```
 
-**Expected Result:** ❌ Deployment blocked with policy violation error
+**Expected Result:** ✅ After ADE is applied, VM becomes **Compliant**
+
+### Check Compliance Status
+
+```bash
+# Wait a few minutes after deployment, then check compliance
+az policy state list \
+    --filter "policyDefinitionName eq 'custom-vm-encryption-audit'" \
+    --query "[].{Resource:resourceId, ComplianceState:complianceState, Timestamp:timestamp}" \
+    --output table
+```
 
 ### Cleanup
 
@@ -141,43 +146,73 @@ az group delete --name "rg-vm-encryption-test" --yes --no-wait
 
 ## Verification
 
-Check deployed policies:
+Check policy compliance:
 
 ```bash
-# List encryption policy assignments
+# List all policy assignments
 az policy assignment list \
-    --query "[?contains(name, 'vm-encryption')].{Name:name, DisplayName:displayName, EnforcementMode:enforcementMode}" \
+    --query "[?contains(name, 'vm-encryption')].{Name:name, DisplayName:displayName}" \
     --output table
 
-# Check compliance state
+# Check compliance state for VMs
 az policy state list \
-    --filter "policyDefinitionId eq '/providers/Microsoft.Authorization/policyDefinitions/3dc5edcd-002d-444c-b216-e123bbfa37c0' or policyDefinitionId eq '/providers/Microsoft.Authorization/policyDefinitions/ca88aadc-6e2b-416c-9de2-5a0f01d1693f'" \
-    --query "[].{ResourceId:resourceId, ComplianceState:complianceState}" \
+    --resource-type "Microsoft.Compute/virtualMachines" \
+    --filter "policyDefinitionName eq 'custom-vm-encryption-audit'" \
+    --query "[].{ResourceName:resourceId, ComplianceState:complianceState, Reason:policyDefinitionAction}" \
     --output table
+
+# Trigger on-demand compliance scan
+az policy state trigger-scan --no-wait
+
+# Get compliance summary
+az policy state summarize \
+    --filter "policyDefinitionName eq 'custom-vm-encryption-audit'"
 ```
 
 ## Policy Details
 
-### Windows VM Encryption Policy
-- **Policy ID**: `3dc5edcd-002d-444c-b216-e123bbfa37c0`
-- **Display Name**: "Windows virtual machines should enable Azure Disk Encryption or EncryptionAtHost"
-- **Effect**: Deny
-- **Scope**: All Windows VMs in the subscription
+### VM Encryption Audit Policy
+- **Policy Name**: `custom-vm-encryption-audit`
+- **Display Name**: "Audit VMs without EncryptionAtHost or Azure Disk Encryption"
+- **Effect**: AuditIfNotExists
+- **Scope**: All VMs (Windows and Linux) in the subscription
 
-### Linux VM Encryption Policy
-- **Policy ID**: `ca88aadc-6e2b-416c-9de2-5a0f01d1693f`
-- **Display Name**: "Linux virtual machines should enable Azure Disk Encryption or EncryptionAtHost"
-- **Effect**: Deny
-- **Scope**: All Linux VMs in the subscription
+### How It Works
+
+The policy evaluates VMs in this order:
+
+1. **Check EncryptionAtHost property**
+   - If `securityProfile.encryptionAtHost = true` → **Compliant** ✅
+   - If not enabled or doesn't exist → Continue to step 2
+
+2. **Check for Azure Disk Encryption Extension**
+   - Looks for extension publisher: `Microsoft.Azure.Security`
+   - Looks for extension types: `AzureDiskEncryption` (Windows) or `AzureDiskEncryptionForLinux` (Linux)
+   - Checks extension status is `Succeeded`
+   - If found → **Compliant** ✅
+   - If not found → **Non-Compliant** ❌
 
 ## Exclusions
 
-The policies automatically exclude:
-- ❌ Basic/A0/A1 VM sizes (not supported)
-- ❌ VMs with Ultra SSD enabled (not compatible)
-- ❌ Confidential VMs (already encrypted)
-- ❌ AKS node VMs (managed by AKS)
-- ❌ Azure Databricks VMs (managed service)
+No automatic exclusions - all VMs are evaluated.
+
+## Compliance vs. Enforcement
+
+This policy uses **Audit** mode, not **Deny** mode:
+
+| Mode | Effect | Use Case |
+|------|--------|----------|
+| **Audit** (Current) | Flags non-compliant resources | Visibility & gradual adoption |
+| **Deny** (Alternative) | Blocks resource creation | Strict enforcement |
+
+**Why Audit?**
+- ✅ Allows teams to deploy VMs with either encryption method
+- ✅ Azure Disk Encryption can be applied post-deployment
+- ✅ Provides visibility without blocking workflows
+- ✅ Teams can remediate at their own pace
+
+**When to use Deny?**
+- Only if you want to force EncryptionAtHost at deployment (cannot check ADE at deployment time)
 
 ## How to Enable Encryption on VMs
 
