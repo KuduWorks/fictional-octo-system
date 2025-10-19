@@ -7,11 +7,19 @@ resource "azurerm_monitor_diagnostic_setting" "storage" {
   metric {
     category = "Transaction"
     enabled  = true
+
+    retention_policy {
+      enabled = false
+    }
   }
 
   metric {
     category = "Capacity"
     enabled  = true
+
+    retention_policy {
+      enabled = false
+    }
   }
 
   # Add dependency on network rules
