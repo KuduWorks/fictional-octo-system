@@ -54,54 +54,11 @@ variable "subscription_id" {
 
 # Locals
 locals {
-  subscription_id_raw             = var.subscription_id != null ? var.subscription_id : data.azurerm_client_config.current.subscription_id
-  subscription_id                 = "/subscriptions/${local.subscription_id_raw}"
-  allowed_locations_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
-  subscription_scope              = local.subscription_id
-}
-
-# Custom Policy Definition for Resource Group Location Control
-resource "azurerm_policy_definition" "custom_rg_location_policy" {
-  name         = "custom-rg-location-policy"
-  policy_type  = "Custom"
-  mode         = "All"
-  display_name = "Resource Groups must be in allowed locations"
-  description  = "This policy ensures that resource groups are created only in approved Azure regions"
-
-  metadata = jsonencode({
-    category = "General"
-    source   = "Terraform"
-    version  = "1.0.0"
-  })
-
-  parameters = jsonencode({
-    allowedLocations = {
-      type = "Array"
-      metadata = {
-        displayName = "Allowed locations"
-        description = "The list of locations that resource groups can be created in"
-        strongType  = "location"
-      }
-    }
-  })
-
-  policy_rule = jsonencode({
-    if = {
-      allOf = [
-        {
-          field  = "type"
-          equals = "Microsoft.Resources/resourceGroups"
-        },
-        {
-          field = "location"
-          notIn = "[parameters('allowedLocations')]"
-        }
-      ]
-    }
-    then = {
-      effect = "deny"
-    }
-  })
+  subscription_id_raw                   = var.subscription_id != null ? var.subscription_id : data.azurerm_client_config.current.subscription_id
+  subscription_id                       = "/subscriptions/${local.subscription_id_raw}"
+  allowed_locations_definition_id       = "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
+  allowed_rg_locations_definition_id    = "/providers/Microsoft.Authorization/policyDefinitions/e765b5de-1225-4ba3-bd56-1ac6695af988"
+  subscription_scope                    = local.subscription_id
 }
 
 # Policy Assignment for Allowed Locations (Built-in Policy)
@@ -130,13 +87,13 @@ resource "azurerm_subscription_policy_assignment" "allowed_locations_assignment"
   })
 }
 
-# Policy Assignment for Custom Resource Group Location Policy
+# Policy Assignment for Resource Group Locations (Built-in Policy)
 resource "azurerm_subscription_policy_assignment" "rg_location_assignment" {
   name                 = "rg-location-policy-assignment"
-  policy_definition_id = azurerm_policy_definition.custom_rg_location_policy.id
+  policy_definition_id = local.allowed_rg_locations_definition_id
   subscription_id      = local.subscription_id
   display_name         = "Resource Group Location Control - Sweden Central"
-  description          = "Ensures resource groups are created only in Sweden Central"
+  description          = "Ensures resource groups are created only in Sweden Central using built-in policy"
   location             = var.allowed_regions[0]
 
   identity {
@@ -144,7 +101,7 @@ resource "azurerm_subscription_policy_assignment" "rg_location_assignment" {
   }
 
   parameters = jsonencode({
-    allowedLocations = {
+    listOfAllowedLocations = {
       value = var.allowed_regions
     }
   })
@@ -154,8 +111,6 @@ resource "azurerm_subscription_policy_assignment" "rg_location_assignment" {
     source   = "Terraform"
     version  = "1.0.0"
   })
-
-  depends_on = [azurerm_policy_definition.custom_rg_location_policy]
 }
 
 # Outputs
@@ -167,11 +122,6 @@ output "allowed_locations_policy_assignment_id" {
 output "allowed_locations_policy_assignment_name" {
   description = "The name of the allowed locations policy assignment"
   value       = azurerm_subscription_policy_assignment.allowed_locations_assignment.name
-}
-
-output "custom_resource_group_location_policy_id" {
-  description = "The ID of the custom resource group location policy"
-  value       = azurerm_policy_definition.custom_rg_location_policy.id
 }
 
 output "resource_group_location_policy_assignment_id" {
