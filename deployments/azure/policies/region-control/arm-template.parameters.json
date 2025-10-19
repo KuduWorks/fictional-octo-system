@@ -1,0 +1,20 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "allowedRegions": {
+      "value": [
+        "swedencentral"
+      ]
+    },
+    "policyAssignmentName": {
+      "value": "allowed-regions-sweden-central-arm"
+    },
+    "policyAssignmentDisplayName": {
+      "value": "Allowed Regions Policy - Sweden Central (ARM)"
+    },
+    "enforcementMode": {
+      "value": "Default"
+    }
+  }
+}

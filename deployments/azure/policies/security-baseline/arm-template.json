@@ -1,0 +1,136 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "requireStorageEncryption": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Require encryption for storage accounts"
+      }
+    },
+    "requireSqlEncryption": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Require TDE encryption for SQL databases"
+      }
+    },
+    "blockPublicBlobAccess": {
+      "type": "bool",
+      "defaultValue": true,
+      "metadata": {
+        "description": "Block public blob access on storage accounts"
+      }
+    },
+    "enforcementMode": {
+      "type": "string",
+      "defaultValue": "Default",
+      "allowedValues": [
+        "Default",
+        "DoNotEnforce"
+      ],
+      "metadata": {
+        "description": "Policy enforcement mode"
+      }
+    }
+  },
+  "variables": {
+    "storageEncryptionPolicyId": "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9",
+    "sqlEncryptionPolicyId": "/providers/Microsoft.Authorization/policyDefinitions/17k78e20-9358-41c9-923c-fb736d382a12",
+    "publicBlobAccessPolicyId": "/providers/Microsoft.Authorization/policyDefinitions/4fa4b6c0-31ca-4c0d-b10d-24b96f62a751"
+  },
+  "resources": [
+    {
+      "condition": "[parameters('requireStorageEncryption')]",
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2018-05-01",
+      "name": "require-storage-encryption",
+      "location": "swedencentral",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "displayName": "Require Storage Account Encryption",
+        "description": "This policy ensures that storage accounts have encryption enabled",
+        "policyDefinitionId": "[variables('storageEncryptionPolicyId')]",
+        "enforcementMode": "[parameters('enforcementMode')]",
+        "metadata": {
+          "category": "Security",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "condition": "[parameters('blockPublicBlobAccess')]",
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2018-05-01",
+      "name": "block-public-blob-access",
+      "location": "swedencentral",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "displayName": "Block Public Blob Access",
+        "description": "This policy blocks public blob access on storage accounts",
+        "policyDefinitionId": "[variables('publicBlobAccessPolicyId')]",
+        "enforcementMode": "[parameters('enforcementMode')]",
+        "metadata": {
+          "category": "Security",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policySetDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "security-baseline-initiative",
+      "properties": {
+        "displayName": "Security Baseline Initiative",
+        "description": "A collection of security policies for baseline compliance",
+        "policyType": "Custom",
+        "metadata": {
+          "category": "Security",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        },
+        "parameters": {
+          "enforcementMode": {
+            "type": "String",
+            "defaultValue": "Default",
+            "allowedValues": [
+              "Default",
+              "DoNotEnforce"
+            ]
+          }
+        },
+        "policyDefinitions": [
+          {
+            "policyDefinitionId": "[variables('storageEncryptionPolicyId')]",
+            "policyDefinitionReferenceId": "StorageEncryption"
+          },
+          {
+            "policyDefinitionId": "[variables('publicBlobAccessPolicyId')]",
+            "policyDefinitionReferenceId": "BlockPublicBlobAccess"
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "storageEncryptionPolicyId": {
+      "type": "string",
+      "value": "[if(parameters('requireStorageEncryption'), resourceId('Microsoft.Authorization/policyAssignments', 'require-storage-encryption'), '')]"
+    },
+    "publicBlobAccessPolicyId": {
+      "type": "string",
+      "value": "[if(parameters('blockPublicBlobAccess'), resourceId('Microsoft.Authorization/policyAssignments', 'block-public-blob-access'), '')]"
+    },
+    "securityInitiativeId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policySetDefinitions', 'security-baseline-initiative')]"
+    }
+  }
+}
