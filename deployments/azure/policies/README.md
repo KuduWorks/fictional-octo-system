@@ -1,124 +1,85 @@
-# Azure Policies - Recommended Folder Structure
+# Azure Policies - Terraform-Based Policy Management
 
-This folder contains Azure Policy definitions, assignments, and initiatives organized by policy category. This structure supports scalable policy management across multiple domains.
+This folder contains Azure Policy definitions and assignments organized by policy category. All policies are deployed using **Terraform** for infrastructure as code consistency.
 
 ## Folder Structure
 
 ```
 policies/
-├── region-control/           # Geographic and compliance policies
-│   ├── arm-template.json
-│   ├── arm-template.parameters.json
-│   ├── deploy-arm.sh
-│   ├── deploy-arm.ps1
-│   ├── main.parameters.json # Legacy parameters file
-│   ├── main.tf              # Alternative: Terraform
+├── region-control/           # ✅ Geographic restrictions (Terraform)
+│   ├── main.tf
+│   ├── terraform.tfvars
+│   ├── TERRAFORM.md
 │   └── README.md
-├── security-baseline/        # Security and compliance policies
-│   ├── arm-template.json
-│   └── README.md            # (Coming soon)
-├── cost-management/          # Cost optimization policies
-│   ├── arm-template.json
-│   └── README.md            # (Coming soon)
-├── shared/                   # Common utilities and scripts
-│   └── deploy-all.sh
-├── deploy-cli.sh             # Pure Azure CLI deployment (no templates)
-├── deploy.sh                 # Legacy deployment script
-├── deploy.ps1                # Legacy PowerShell script
-├── verify-cli.sh             # CLI verification script
+├── iso27001-crypto/          # ✅ ISO 27001 A.10.1.1 Cryptography Compliance (Terraform)
+│   ├── main.tf              # 12 encryption policies (Storage, SQL, KeyVault, VMs, Disks, Kusto, AKS)
+│   ├── terraform.tfvars
+│   └── README.md
+├── vm-encryption/            # ⚠️ DEPRECATED - Moved to iso27001-crypto/
+│   └── MOVED.md             # Migration instructions
+├── security-baseline/        # 🚧 Planned - Security hardening policies
+├── cost-management/          # 🚧 Planned - Cost optimization policies
+├── shared/                   # Legacy scripts (not used with Terraform)
 └── README.md                 # This file
 ```
 
 ## Policy Categories
 
-### 1. Region Control (`region-control/`)
-- **Purpose**: Geographic restrictions and data residency
-- **Policies**: Allowed locations, resource group locations
-- **Example**: Restrict deployments to Sweden Central
+### 1. Region Control (`region-control/`) ✅ Active
+- **Purpose**: Geographic restrictions and data residency compliance
+- **Deployment**: Terraform
+- **Policies**: 2 built-in policy assignments
+  - Allowed locations for resources
+  - Allowed locations for resource groups
+- **Target Region**: Sweden Central
+- **Status**: Deployed and enforced
 
-### 2. Security Baseline (`security-baseline/`)
-- **Purpose**: Security hardening and compliance
-- **Policies**: Encryption, network security, identity management
-- **Examples**: 
-  - Require encryption at rest
-  - Block public blob access
-  - Require Azure Defender
-  - Enforce strong passwords
+### 2. ISO 27001 Cryptography Compliance (`iso27001-crypto/`) ✅ Active
+- **Purpose**: ISO 27001 A.10.1.1 Cryptographic Controls compliance
+- **Deployment**: Terraform
+- **Policies**: 12 policies (7 built-in, 5 custom)
+  - **Storage Accounts** (3): HTTPS required, CMK encryption, disable public access
+  - **SQL Databases** (1): TDE with customer-managed keys
+  - **Key Vault** (2): Soft delete, purge protection
+  - **Managed Disks** (1): Customer-managed key encryption required
+  - **Data Explorer/Kusto** (2): Disk encryption, CMK required
+  - **Azure Kubernetes Service** (2): Policy add-on, encryption at host
+  - **Virtual Machines** (1): EncryptionAtHost OR Azure Disk Encryption
+- **Status**: Ready to deploy
+- **Compliance Standard**: ISO 27001:2013 A.10.1.1
 
-### 3. Cost Management (`cost-management/`)
-- **Purpose**: Cost optimization and resource governance
-- **Policies**: Resource sizing, spending limits, unused resources
-- **Examples**:
-  - Limit VM SKUs
-  - Require cost center tags
-  - Auto-shutdown dev VMs
+### 3. VM Encryption (`vm-encryption/`) ⚠️ DEPRECATED
+- **Status**: Moved to `iso27001-crypto/`
+- **Migration**: See `vm-encryption/MOVED.md` for details
+- **Action Required**: Use `iso27001-crypto/` for all encryption policies
 
-### 4. Shared (`shared/`)
-- **Purpose**: Common utilities and deployment scripts
-- **Contents**: Multi-policy deployment scripts, validation tools
+### 4. Security Baseline (`security-baseline/`) 🚧 Planned
+- **Purpose**: Security hardening and compliance (future)
+- **Potential Policies**: 
+  - Network security groups required
+  - Azure Defender enabled
+  - Managed identities for authentication
+  - Audit logging enabled
+
+### 5. Cost Management (`cost-management/`) 🚧 Planned
+- **Purpose**: Cost optimization and resource governance (future)
+- **Potential Policies**:
+  - VM SKU restrictions
+  - Required cost center tags
+  - Auto-shutdown for dev resources
 
 ## Prerequisites
 
-1. **Azure CLI** installed and configured
-2. **Appropriate permissions**:
+1. **Terraform** >= 1.0 installed
+2. **Azure CLI** installed and configured (`az login`)
+3. **Appropriate permissions**:
    - `Policy Contributor` role at subscription level
    - `User Access Administrator` or `Owner` role (for managed identity assignments)
-3. **Active Azure subscription**
+4. **Active Azure subscription**
 
-## Deployment Options
+## Quick Start
 
-### Option 1: ARM Template Deployment (Recommended)
-
-Deploy specific policy categories using ARM templates:
-
-```bash
-# Navigate to specific policy category
-cd deployments/azure/policies/region-control
-
-# Deploy using the ARM deployment script
-./deploy-arm.sh
-
-# Or deploy manually
-az deployment sub create \
-    --location swedencentral \
-    --template-file arm-template.json \
-    --parameters arm-template.parameters.json \
-    --name "region-control-$(date +%Y%m%d-%H%M%S)"
-```
-
-### Option 2: Pure Azure CLI Deployment
-
-Deploy using direct Azure CLI commands (no templates required):
-
-```bash
-# Navigate to the policies directory
-cd deployments/azure/policies
-
-# Verify before deploying
-chmod +x verify-cli.sh
-./verify-cli.sh
-
-# Deploy using CLI commands
-chmod +x deploy-cli.sh
-./deploy-cli.sh
-```
-
-### Option 3: Deploy All Policy Categories
-
-Deploy all available policy categories at once:
-
-```bash
-# Navigate to shared utilities
-cd deployments/azure/policies/shared
-
-# Deploy all policies
-chmod +x deploy-all.sh
-./deploy-all.sh
-```
-
-### Option 4: Terraform (Alternative)
-
-For infrastructure as code using Terraform:
+### Deploy Region Control Policies
 
 ```bash
 cd deployments/azure/policies/region-control
@@ -127,137 +88,221 @@ terraform plan
 terraform apply
 ```
 
+### Deploy ISO 27001 Cryptography Policies
+
+```bash
+cd deployments/azure/policies/iso27001-crypto
+terraform init
+terraform plan
+terraform apply
+```
+
+### Deploy All Active Policies
+
+```bash
+# Region control
+cd deployments/azure/policies/region-control
+terraform init && terraform apply -auto-approve
+
+# ISO 27001 crypto compliance
+cd ../iso27001-crypto
+terraform init && terraform apply -auto-approve
+```
+
+## Deployment Options
+
+### Terraform Deployment (Primary Method)
+
+All policies use Terraform for consistent infrastructure as code:
+
+```bash
+# Navigate to specific policy category
+cd deployments/azure/policies/<policy-category>
+
+# Initialize Terraform
+terraform init
+
+# Preview changes
+terraform plan
+
+# Deploy policies
+terraform apply
+```
+
+### Audit Mode Deployment (Recommended First)
+
+Start with audit-only mode to assess compliance without blocking resources:
+
+**Edit `terraform.tfvars`:**
+```hcl
+enforcement_mode = "DoNotEnforce"  # Audit only, no blocking
+```
+
+Then deploy:
+```bash
+terraform apply
+```
+
+Review compliance for 1-2 weeks, then switch to enforcement:
+```hcl
+enforcement_mode = "Default"  # Enforce policies
+```
+
+```bash
+terraform apply
+```
+
 ## Configuration
 
-### Modifying Allowed Regions
+### Region Control Configuration
 
-To allow additional regions, modify the parameters in the appropriate files:
-
-**For ARM Template:**
-```json
-{
-  "parameters": {
-    "allowedRegions": {
-      "value": [
-        "swedencentral",
-        "swedensouth"
-      ]
-    }
-  }
-}
+**Edit `region-control/terraform.tfvars`:**
+```hcl
+allowed_regions = ["swedencentral", "swedensouth"]
+enforcement_mode = "Default"  # or "DoNotEnforce" for audit mode
+# subscription_id = "your-subscription-id"  # Optional, auto-detected if not set
 ```
 
-**For CLI Deployment:**
-Edit the `ALLOWED_REGIONS` variable in `deploy-cli.sh`:
-```bash
-ALLOWED_REGIONS='["swedencentral", "swedensouth"]'
+### ISO 27001 Crypto Configuration
+
+**Edit `iso27001-crypto/terraform.tfvars`:**
+```hcl
+enforcement_mode = "DoNotEnforce"  # Start with audit mode
+# subscription_id = "your-subscription-id"  # Optional, auto-detected if not set
 ```
 
-### Enforcement Modes
+### Understanding Enforcement Modes
 
-- **Default**: Policy is enforced, non-compliant resources are denied
-- **DoNotEnforce**: Policy is evaluated but not enforced (audit mode)
-
-**For ARM Template:**
-```json
-{
-  "parameters": {
-    "enforcementMode": {
-      "value": "DoNotEnforce"
-    }
-  }
-}
-```
-
-**For CLI Deployment:**
-Edit the `ENFORCEMENT_MODE` variable in `deploy-cli.sh`:
-```bash
-ENFORCEMENT_MODE="DoNotEnforce"
-```
+- **`Default`**: Policy is enforced
+  - `Deny` policies: Block non-compliant resource creation
+  - `AuditIfNotExists` policies: Create audit logs for non-compliance
+  - `DeployIfNotExists` policies: Auto-remediate resources
+  
+- **`DoNotEnforce`**: Audit mode only
+  - All policies evaluate compliance
+  - No resources are blocked or modified
+  - Compliance state tracked in Azure Policy dashboard
+  - **Recommended for initial deployment**
 
 ## Pre-Deployment Verification
 
-Before deploying, it's recommended to verify your configuration:
+### Terraform Validation
 
-### Option 1: CLI Verification Script
+Before deploying, validate your Terraform configuration:
 
 ```bash
-# Navigate to the policies directory
-cd deployments/azure/policies
+# Navigate to policy folder
+cd deployments/azure/policies/region-control  # or iso27001-crypto
 
-# Run comprehensive verification
-chmod +x verify-cli.sh
-./verify-cli.sh
+# Initialize Terraform
+terraform init
+
+# Validate syntax
+terraform validate
+
+# Preview changes
+terraform plan
+
+# See detailed execution plan
+terraform plan -out=tfplan
+terraform show tfplan
 ```
 
-This script checks:
-- ✅ Azure CLI installation and login status
-- ✅ Required permissions (Policy Contributor role)
-- ✅ Existing policies (conflict detection)
-- ✅ Policy JSON syntax validation
-- ✅ Built-in policy availability
-- ✅ Configuration review and impact estimation
+### Azure CLI Verification
 
-### Option 2: ARM Template Validation
-
-For ARM template deployments:
+Check your Azure environment:
 
 ```bash
-cd region-control/
-
-# Validate template syntax
-az deployment sub validate \
-    --location swedencentral \
-    --template-file arm-template.json \
-    --parameters arm-template.parameters.json
-
-# Preview exact changes (what-if)
-az deployment sub what-if \
-    --location swedencentral \
-    --template-file arm-template.json \
-    --parameters arm-template.parameters.json \
-    --name "test-$(date +%Y%m%d-%H%M%S)"
-```
-
-### Option 3: Quick CLI Checks
-
-```bash
-# Check login and permissions
+# Verify login and subscription
 az account show
 
-# Check existing policies
-az policy assignment list --query "[?contains(name, 'region')].{Name:name, DisplayName:displayName}" -o table
+# Check existing policy assignments
+az policy assignment list \
+  --query "[].{Name:name, DisplayName:displayName, Scope:scope}" \
+  -o table
 
-# Check if built-in policy exists
-az policy definition show --name "e56962a6-4747-49cd-b67b-bf8b01975c4c"
+# Check for conflicts with existing policies
+az policy assignment list \
+  --query "[?contains(name, 'region') || contains(name, 'crypto')].{Name:name, DisplayName:displayName}" \
+  -o table
 ```
 
 ## Post-Deployment Verification
 
-### 1. List Policy Assignments
+### Check Terraform State
 
 ```bash
+# View deployed resources
+terraform show
+
+# List outputs
+terraform output
+
+# Check specific output
+terraform output policy_assignments
+```
+
+### Verify Policy Assignments
+
+```bash
+# List all policy assignments
 az policy assignment list \
-    --query "[?contains(name, 'allowed-regions') || contains(name, 'rg-location') || contains(name, 'region-control')].{Name:name, DisplayName:displayName, Scope:scope, EnforcementMode:enforcementMode}" \
-    --output table
+  --query "[].{Name:name, DisplayName:displayName, Scope:scope, EnforcementMode:enforcementMode}" \
+  -o table
+
+# Check region control policies
+az policy assignment list \
+  --query "[?contains(name, 'region')].{Name:name, DisplayName:displayName, EnforcementMode:enforcementMode}" \
+  -o table
+
+# Check ISO 27001 crypto policies
+az policy assignment list \
+  --query "[?contains(displayName, 'ISO 27001')].{Name:name, DisplayName:displayName, EnforcementMode:enforcementMode}" \
+  -o table
 ```
 
-### 2. Test Policy Enforcement
+### Test Policy Enforcement
 
-Try creating a resource in a non-allowed region:
-
-```bash
-# This should fail due to policy enforcement
-az group create --name test-rg --location "eastus"
-```
-
-### 3. Verify Allowed Region Works
+#### Test Region Control
 
 ```bash
-# This should succeed
+# This should FAIL (non-allowed region)
+az group create --name test-rg-eastus --location "eastus"
+
+# This should SUCCEED (allowed region)
 az group create --name test-rg-sweden --location "swedencentral"
+
+# Cleanup
 az group delete --name test-rg-sweden --yes --no-wait
 ```
+
+#### Test VM Encryption Audit
+
+```bash
+# Deploy a VM without encryption (will be created but flagged as non-compliant)
+az vm create \
+  --resource-group test-rg-sweden \
+  --name test-vm-no-encryption \
+  --image Ubuntu2204 \
+  --size Standard_B2s
+
+# Check compliance state (may take 5-10 minutes for evaluation)
+az policy state list \
+  --resource-group test-rg-sweden \
+  --query "[?policyDefinitionName=='custom-vm-encryption-audit'].{Resource:resourceId, ComplianceState:complianceState}" \
+  -o table
+```
+
+### Monitor Compliance Dashboard
+
+View compliance in Azure Portal:
+```
+Azure Portal → Policy → Compliance
+```
+
+Filter by:
+- Assignment: "ISO 27001" or "region"
+- Compliance State: "Non-compliant"
 
 ## Policy Effects Timeline
 
@@ -270,107 +315,271 @@ az group delete --name test-rg-sweden --yes --no-wait
 
 ### Common Issues
 
-1. **Insufficient Permissions**
+1. **Terraform State Lock**
+   ```
+   Error: Error acquiring the state lock
+   ```
+   **Solution**: 
+   ```bash
+   # Force unlock (use with caution)
+   terraform force-unlock <LOCK_ID>
+   ```
+
+2. **Insufficient Permissions**
    ```
    Error: You do not have authorization to perform action 'Microsoft.Authorization/policyAssignments/write'
    ```
-   **Solution**: Ensure you have `Policy Contributor` role at subscription level
+   **Solution**: Ensure you have `Policy Contributor` role:
+   ```bash
+   az role assignment list --assignee $(az account show --query user.name -o tsv) \
+     --query "[?roleDefinitionName=='Policy Contributor'].{Role:roleDefinitionName, Scope:scope}" -o table
+   ```
 
-2. **Template Validation Errors**
+3. **Policy Requires Managed Identity**
    ```
-   Error: The template deployment failed with error: 'InvalidTemplate'
+   Error: The policy assignment requires a managed identity
    ```
-   **Solution**: Check Bicep syntax and parameter values
+   **Solution**: Add `identity` block to policy assignment in Terraform:
+   ```hcl
+   identity {
+     type = "SystemAssigned"
+   }
+   ```
 
-3. **Policy Conflicts**
+4. **Region Policy Not Blocking Resources**
    ```
-   Error: Resource creation blocked by policy
+   Resource created in non-allowed region
    ```
-   **Solution**: Verify the resource location is in the allowed regions list
+   **Solution**: 
+   - Check enforcement mode is `Default` (not `DoNotEnforce`)
+   - Verify policy assignment scope includes the subscription
+   - Wait 10-15 minutes for policy to propagate
+
+5. **Terraform Provider Authentication**
+   ```
+   Error: Unable to authenticate using the Azure CLI
+   ```
+   **Solution**:
+   ```bash
+   az login
+   az account set --subscription "your-subscription-id"
+   ```
 
 ### Debugging Commands
 
 ```bash
-# Check policy compliance
-az policy state list --query "[?complianceState=='NonCompliant']"
+# Check Terraform state
+terraform state list
+terraform state show <resource>
 
-# View policy assignment details
+# View policy compliance
+az policy state list \
+  --filter "complianceState eq 'NonCompliant'" \
+  --query "[].{Resource:resourceId, Policy:policyDefinitionName, State:complianceState}" \
+  -o table
+
+# View specific policy assignment
 az policy assignment show --name "allowed-regions-sweden-central"
 
-# Check deployment status (for ARM template deployments)
-az deployment sub show --name "your-deployment-name"
+# Check policy definition
+az policy definition show --name "custom-vm-encryption-audit"
 
-# List all custom policy definitions
-az policy definition list --query "[?policyType=='Custom'].{Name:name, DisplayName:displayName}" -o table
+# View policy events (recent evaluations)
+az policy event list \
+  --filter "complianceState eq 'NonCompliant'" \
+  --top 20 \
+  -o table
+```
 
-# List all policy initiatives
-az policy set-definition list --query "[?policyType=='Custom'].{Name:name, DisplayName:displayName}" -o table
+### Re-deploying Policies
+
+If you need to recreate policies:
+
+```bash
+# Destroy current deployment
+terraform destroy
+
+# Re-deploy
+terraform apply
 ```
 
 ## Cleanup
 
-To remove the policies, choose the appropriate method based on how they were deployed:
+### Remove Specific Policy Set
 
-### For CLI Deployed Policies
+#### Region Control Policies
+```bash
+cd deployments/azure/policies/region-control
+terraform destroy
+```
+
+#### ISO 27001 Crypto Policies
+```bash
+cd deployments/azure/policies/iso27001-crypto
+terraform destroy
+```
+
+### Remove All Policies
 
 ```bash
-# Delete policy assignments
-az policy assignment delete --name "allowed-regions-sweden-central"
-az policy assignment delete --name "rg-location-policy-assignment"
-az policy assignment delete --name "region-control-initiative-assignment"
+# Region control
+cd deployments/azure/policies/region-control
+terraform destroy -auto-approve
+
+# ISO 27001 crypto
+cd ../iso27001-crypto
+terraform destroy -auto-approve
+```
+
+### Manual Cleanup (if needed)
+
+If Terraform state is lost or corrupted:
+
+```bash
+# List and delete all policy assignments
+az policy assignment list \
+  --query "[?contains(name, 'iso27001') || contains(name, 'region')].name" \
+  -o tsv | while read name; do
+    az policy assignment delete --name "$name"
+  done
 
 # Delete custom policy definitions
-az policy definition delete --name "custom-rg-location-policy"
-
-# Delete policy set definition
-az policy set-definition delete --name "region-control-initiative"
+az policy definition list \
+  --query "[?policyType=='Custom'].name" \
+  -o tsv | while read name; do
+    az policy definition delete --name "$name"
+  done
 ```
 
-### For ARM Template Deployed Policies
+### Verify Cleanup
 
 ```bash
-# Delete policy assignments (ARM template names may differ)
-az policy assignment delete --name "allowed-regions-sweden-central-arm"
-az policy assignment delete --name "region-control-initiative-assignment"
+# Check no policies remain
+az policy assignment list \
+  --query "[?contains(name, 'iso27001') || contains(name, 'region')].{Name:name, DisplayName:displayName}" \
+  -o table
 
-# Delete custom policy definitions
-az policy definition delete --name "custom-rg-location-policy"
-
-# Delete policy set definition
-az policy set-definition delete --name "region-control-initiative"
+# Should return empty or no matching policies
 ```
 
-### Clean Up All Region-Related Policies
+## Policy Details by Category
 
-```bash
-# List and delete all region-related policy assignments
-az policy assignment list --query "[?contains(name, 'region')].name" -o tsv | xargs -I {} az policy assignment delete --name {}
+### Region Control
+- **Deployment Guide**: [region-control/README.md](region-control/README.md)
+- **Terraform Guide**: [region-control/TERRAFORM.md](region-control/TERRAFORM.md)
+- **Policies**: 2 built-in assignments
+- **Effect**: Deny (blocks non-compliant resources)
+- **Scope**: Subscription-level
 
-# List and delete custom policy definitions
-az policy definition list --query "[?policyType=='Custom' && contains(name, 'region')].name" -o tsv | xargs -I {} az policy definition delete --name {}
+### ISO 27001 Cryptography Compliance
+- **Deployment Guide**: [iso27001-crypto/README.md](iso27001-crypto/README.md)
+- **Policies**: 12 policies (7 built-in, 5 custom)
+- **Resources Covered**: Storage, SQL, Key Vault, Disks, Kusto, AKS, VMs
+- **Effects**: Mixed (Audit, AuditIfNotExists, DeployIfNotExists, Deny)
+- **Compliance Standard**: ISO 27001:2013 A.10.1.1
+- **Scope**: Subscription-level
 
-# List and delete custom policy set definitions
-az policy set-definition list --query "[?policyType=='Custom' && contains(name, 'region')].name" -o tsv | xargs -I {} az policy set-definition delete --name {}
-```
+## Migration Notes
+
+### VM Encryption Policy Migration
+The standalone `vm-encryption/` policy has been consolidated into `iso27001-crypto/` for better organization. 
+
+- **Old location**: `deployments/azure/policies/vm-encryption/`
+- **New location**: `deployments/azure/policies/iso27001-crypto/`
+- **Migration guide**: [vm-encryption/MOVED.md](vm-encryption/MOVED.md)
+
+If you previously deployed the standalone VM encryption policy:
+1. Destroy it: `cd vm-encryption && terraform destroy`
+2. Deploy consolidated policies: `cd ../iso27001-crypto && terraform apply`
+
+## Best Practices
+
+1. **Start with Audit Mode**
+   - Deploy all policies with `enforcement_mode = "DoNotEnforce"`
+   - Monitor compliance for 1-2 weeks
+   - Remediate non-compliant resources
+   - Switch to `enforcement_mode = "Default"`
+
+2. **Use Terraform Workspaces** (optional)
+   ```bash
+   # Create separate workspaces for different environments
+   terraform workspace new dev
+   terraform workspace new prod
+   ```
+
+3. **Version Control**
+   - Commit `.terraform.lock.hcl` to ensure consistent provider versions
+   - Do NOT commit `.terraform/` directory or `*.tfstate` files
+   - Store state remotely (Azure Storage) for team collaboration
+
+4. **Policy Testing**
+   - Always test in non-production subscription first
+   - Use `terraform plan` to preview changes
+   - Verify compliance dashboard after deployment
+
+5. **Documentation**
+   - Update `terraform.tfvars` with clear comments
+   - Document any custom policy modifications
+   - Track policy assignments in your CMDB
 
 ## Security Considerations
 
-1. **Managed Identities**: Policies use system-assigned managed identities for secure operations
+1. **Managed Identities**: Policies with `DeployIfNotExists` effect use system-assigned managed identities for remediation
 2. **Least Privilege**: Custom policies implement minimal required permissions
-3. **Audit Trail**: All policy actions are logged in Azure Activity Log
-4. **Compliance**: Policies support Azure compliance frameworks
+3. **Audit Trail**: All policy actions logged in Azure Activity Log
+4. **State File Security**: Terraform state may contain sensitive data - use remote backend with encryption
+5. **Compliance Reporting**: Policies support ISO 27001, Azure Security Benchmark, and custom compliance frameworks
 
 ## Additional Resources
 
-- [Azure Policy Documentation](https://docs.microsoft.com/en-us/azure/governance/policy/)
+### Azure Policy Documentation
+- [Azure Policy Overview](https://docs.microsoft.com/en-us/azure/governance/policy/overview)
 - [Policy Definition Structure](https://docs.microsoft.com/en-us/azure/governance/policy/concepts/definition-structure)
+- [Policy Assignment Structure](https://docs.microsoft.com/en-us/azure/governance/policy/concepts/assignment-structure)
 - [Built-in Policy Definitions](https://docs.microsoft.com/en-us/azure/governance/policy/samples/built-in-policies)
+- [Policy Effects](https://docs.microsoft.com/en-us/azure/governance/policy/concepts/effects)
+
+### Terraform Azure Provider
+- [Terraform AzureRM Provider](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs)
+- [azurerm_policy_definition](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/policy_definition)
+- [azurerm_subscription_policy_assignment](https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/subscription_policy_assignment)
+
+### Compliance Standards
+- [ISO 27001:2013](https://www.iso.org/standard/54534.html)
+- [Azure Security Benchmark](https://docs.microsoft.com/en-us/security/benchmark/azure/)
+- [Microsoft Cloud Adoption Framework](https://docs.microsoft.com/en-us/azure/cloud-adoption-framework/)
+
+### Azure Regions
 - [Sweden Central Region Overview](https://azure.microsoft.com/en-us/explore/global-infrastructure/geographies/#geographies)
+- [Azure Geographies](https://azure.microsoft.com/en-us/global-infrastructure/geographies/)
 
 ## Support
 
 For issues or questions:
 1. Check the troubleshooting section above
-2. Review Azure Activity Logs
-3. Consult Azure Policy documentation
-4. Contact your Azure administrator
+2. Review individual policy folder README files:
+   - [region-control/README.md](region-control/README.md)
+   - [iso27001-crypto/README.md](iso27001-crypto/README.md)
+3. Review Terraform documentation for azurerm provider
+4. Check Azure Activity Logs for policy evaluation details
+5. Consult Azure Policy documentation
+6. Contact your Azure administrator or cloud governance team
+
+## Contributing
+
+When adding new policy categories:
+1. Create a new folder under `deployments/azure/policies/`
+2. Include these files:
+   - `main.tf` - Terraform configuration
+   - `terraform.tfvars` - Variable defaults
+   - `README.md` - Policy documentation
+3. Update this README with new category information
+4. Test thoroughly in non-production environment
+5. Document compliance standards addressed
+
+---
+
+**Last Updated**: October 19, 2025  
+**Terraform Version**: >= 1.0  
+**AzureRM Provider**: ~> 3.0  
+**Active Policy Sets**: Region Control, ISO 27001 Cryptography
