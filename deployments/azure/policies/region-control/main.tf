@@ -54,9 +54,10 @@ variable "subscription_id" {
 
 # Locals
 locals {
-  subscription_id                 = var.subscription_id != null ? var.subscription_id : data.azurerm_client_config.current.subscription_id
+  subscription_id_raw             = var.subscription_id != null ? var.subscription_id : data.azurerm_client_config.current.subscription_id
+  subscription_id                 = "/subscriptions/${local.subscription_id_raw}"
   allowed_locations_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
-  subscription_scope              = "/subscriptions/${local.subscription_id}"
+  subscription_scope              = local.subscription_id
 }
 
 # Custom Policy Definition for Resource Group Location Control
@@ -101,63 +102,6 @@ resource "azurerm_policy_definition" "custom_rg_location_policy" {
       effect = "deny"
     }
   })
-}
-
-# Policy Set Definition (Initiative)
-resource "azurerm_policy_set_definition" "region_control_initiative" {
-  name         = "region-control-initiative"
-  policy_type  = "Custom"
-  display_name = "Region Control Initiative - Sweden Central"
-  description  = "A collection of policies to control resource deployment regions"
-
-  metadata = jsonencode({
-    category = "General"
-    source   = "Terraform"
-    version  = "1.0.0"
-  })
-
-  parameters = jsonencode({
-    allowedLocations = {
-      type = "Array"
-      metadata = {
-        displayName = "Allowed locations"
-        description = "The list of locations that resources can be created in"
-        strongType  = "location"
-      }
-      defaultValue = var.allowed_regions
-    }
-    enforcementMode = {
-      type = "String"
-      metadata = {
-        displayName = "Enforcement Mode"
-        description = "The enforcement mode for the policies"
-      }
-      allowedValues = ["Default", "DoNotEnforce"]
-      defaultValue  = "Default"
-    }
-  })
-
-  policy_definition_reference {
-    policy_definition_id = local.allowed_locations_definition_id
-    reference_id         = "AllowedLocationsPolicy"
-    parameter_values = jsonencode({
-      listOfAllowedLocations = {
-        value = "[parameters('allowedLocations')]"
-      }
-    })
-  }
-
-  policy_definition_reference {
-    policy_definition_id = azurerm_policy_definition.custom_rg_location_policy.id
-    reference_id         = "ResourceGroupLocationPolicy"
-    parameter_values = jsonencode({
-      allowedLocations = {
-        value = "[parameters('allowedLocations')]"
-      }
-    })
-  }
-
-  depends_on = [azurerm_policy_definition.custom_rg_location_policy]
 }
 
 # Policy Assignment for Allowed Locations (Built-in Policy)
@@ -214,38 +158,6 @@ resource "azurerm_subscription_policy_assignment" "rg_location_assignment" {
   depends_on = [azurerm_policy_definition.custom_rg_location_policy]
 }
 
-# Policy Assignment for Initiative
-resource "azurerm_subscription_policy_assignment" "initiative_assignment" {
-  name                 = "region-control-initiative-assignment"
-  policy_definition_id = azurerm_policy_set_definition.region_control_initiative.id
-  subscription_id      = local.subscription_id
-  display_name         = "Region Control Initiative Assignment - Sweden Central"
-  description          = "Assignment of the region control initiative to enforce Sweden Central deployment"
-  location             = var.allowed_regions[0]
-
-  identity {
-    type = "SystemAssigned"
-  }
-
-  parameters = jsonencode({
-    allowedLocations = {
-      value = var.allowed_regions
-    }
-    enforcementMode = {
-      value = var.enforcement_mode
-    }
-  })
-
-  metadata = jsonencode({
-    category   = "General"
-    source     = "Terraform"
-    version    = "1.0.0"
-    assignedBy = "Terraform Deployment"
-  })
-
-  depends_on = [azurerm_policy_set_definition.region_control_initiative]
-}
-
 # Outputs
 output "allowed_locations_policy_assignment_id" {
   description = "The ID of the allowed locations policy assignment"
@@ -265,16 +177,6 @@ output "custom_resource_group_location_policy_id" {
 output "resource_group_location_policy_assignment_id" {
   description = "The ID of the resource group location policy assignment"
   value       = azurerm_subscription_policy_assignment.rg_location_assignment.id
-}
-
-output "region_control_initiative_id" {
-  description = "The ID of the region control initiative"
-  value       = azurerm_policy_set_definition.region_control_initiative.id
-}
-
-output "initiative_assignment_id" {
-  description = "The ID of the initiative assignment"
-  value       = azurerm_subscription_policy_assignment.initiative_assignment.id
 }
 
 output "configured_allowed_regions" {

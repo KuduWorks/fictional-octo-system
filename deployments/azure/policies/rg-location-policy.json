@@ -1,0 +1,30 @@
+{
+  "mode": "All",
+  "policyRule": {
+    "if": {
+      "allOf": [
+        {
+          "field": "type",
+          "equals": "Microsoft.Resources/resourceGroups"
+        },
+        {
+          "field": "location",
+          "notIn": "[parameters('allowedLocations')]"
+        }
+      ]
+    },
+    "then": {
+      "effect": "deny"
+    }
+  },
+  "parameters": {
+    "allowedLocations": {
+      "type": "Array",
+      "metadata": {
+        "displayName": "Allowed locations",
+        "description": "The list of locations that resource groups can be created in",
+        "strongType": "location"
+      }
+    }
+  }
+}

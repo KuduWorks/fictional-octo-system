@@ -52,32 +52,32 @@ create_custom_policy_definition() {
     
     cat > rg-location-policy.json << EOF
 {
-  "mode": "All",
-  "policyRule": {
-    "if": {
-      "allOf": [
-        {
-          "field": "type",
-          "equals": "Microsoft.Resources/resourceGroups"
-        },
-        {
-          "field": "location",
-          "notIn": "[parameters('allowedLocations')]"
-        }
-      ]
-    },
-    "then": {
-      "effect": "deny"
-    }
-  },
-  "parameters": {
-    "allowedLocations": {
-      "type": "Array",
-      "metadata": {
-        "displayName": "Allowed locations",
-        "description": "The list of locations that resource groups can be created in",
-        "strongType": "location"
+  "if": {
+    "allOf": [
+      {
+        "field": "type",
+        "equals": "Microsoft.Resources/resourceGroups"
+      },
+      {
+        "field": "location",
+        "notIn": "[parameters('allowedLocations')]"
       }
+    ]
+  },
+  "then": {
+    "effect": "deny"
+  }
+}
+EOF
+
+    cat > rg-location-policy-params.json << EOF
+{
+  "allowedLocations": {
+    "type": "Array",
+    "metadata": {
+      "displayName": "Allowed locations",
+      "description": "The list of locations that resource groups can be created in",
+      "strongType": "location"
     }
   }
 }
@@ -88,10 +88,12 @@ EOF
         --display-name "Resource Groups must be in allowed locations" \
         --description "This policy ensures that resource groups are created only in approved Azure regions" \
         --rules rg-location-policy.json \
+        --params rg-location-policy-params.json \
         --mode All \
         --subscription "$SUBSCRIPTION_ID"
     
     rm rg-location-policy.json
+    rm rg-location-policy-params.json
     echo -e "${GREEN}Custom policy definition created successfully!${NC}"
 }
 
