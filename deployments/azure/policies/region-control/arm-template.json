@@ -1,0 +1,208 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "allowedRegions": {
+      "type": "array",
+      "defaultValue": [
+        "swedencentral"
+      ],
+      "metadata": {
+        "description": "List of allowed Azure regions"
+      }
+    },
+    "policyAssignmentName": {
+      "type": "string",
+      "defaultValue": "allowed-regions-policy",
+      "metadata": {
+        "description": "Name for the policy assignment"
+      }
+    },
+    "policyAssignmentDisplayName": {
+      "type": "string",
+      "defaultValue": "Allowed Regions Policy - Sweden Central",
+      "metadata": {
+        "description": "Display name for the policy assignment"
+      }
+    },
+    "enforcementMode": {
+      "type": "string",
+      "defaultValue": "Default",
+      "allowedValues": [
+        "Default",
+        "DoNotEnforce"
+      ],
+      "metadata": {
+        "description": "Policy enforcement mode"
+      }
+    }
+  },
+  "variables": {
+    "allowedLocationsDefinitionId": "/providers/Microsoft.Authorization/policyDefinitions/e56962a6-4747-49cd-b67b-bf8b01975c4c"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "custom-rg-location-policy",
+      "properties": {
+        "displayName": "Resource Groups must be in allowed locations",
+        "description": "This policy ensures that resource groups are created only in approved Azure regions",
+        "policyType": "Custom",
+        "mode": "All",
+        "metadata": {
+          "category": "General",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        },
+        "parameters": {
+          "allowedLocations": {
+            "type": "Array",
+            "metadata": {
+              "displayName": "Allowed locations",
+              "description": "The list of locations that resource groups can be created in",
+              "strongType": "location"
+            }
+          }
+        },
+        "policyRule": {
+          "if": {
+            "allOf": [
+              {
+                "field": "type",
+                "equals": "Microsoft.Resources/resourceGroups"
+              },
+              {
+                "field": "location",
+                "notIn": "[parameters('allowedLocations')]"
+              }
+            ]
+          },
+          "then": {
+            "effect": "deny"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policySetDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "region-control-initiative",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/policyDefinitions', 'custom-rg-location-policy')]"
+      ],
+      "properties": {
+        "displayName": "Region Control Initiative - Sweden Central",
+        "description": "A collection of policies to control resource deployment regions",
+        "policyType": "Custom",
+        "metadata": {
+          "category": "General",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        },
+        "parameters": {
+          "allowedLocations": {
+            "type": "Array",
+            "metadata": {
+              "displayName": "Allowed locations",
+              "description": "The list of locations that resources can be created in",
+              "strongType": "location"
+            },
+            "defaultValue": "[parameters('allowedRegions')]"
+          }
+        },
+        "policyDefinitions": [
+          {
+            "policyDefinitionId": "[variables('allowedLocationsDefinitionId')]",
+            "parameters": {
+              "listOfAllowedLocations": {
+                "value": "[parameters('allowedLocations')]"
+              }
+            },
+            "policyDefinitionReferenceId": "AllowedLocationsPolicy"
+          },
+          {
+            "policyDefinitionId": "[resourceId('Microsoft.Authorization/policyDefinitions', 'custom-rg-location-policy')]",
+            "parameters": {
+              "allowedLocations": {
+                "value": "[parameters('allowedLocations')]"
+              }
+            },
+            "policyDefinitionReferenceId": "ResourceGroupLocationPolicy"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2022-06-01",
+      "name": "[parameters('policyAssignmentName')]",
+      "location": "[parameters('allowedRegions')[0]]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "displayName": "[parameters('policyAssignmentDisplayName')]",
+        "description": "This policy restricts resource deployment to approved Azure regions (Sweden Central)",
+        "policyDefinitionId": "[variables('allowedLocationsDefinitionId')]",
+        "enforcementMode": "[parameters('enforcementMode')]",
+        "parameters": {
+          "listOfAllowedLocations": {
+            "value": "[parameters('allowedRegions')]"
+          }
+        },
+        "metadata": {
+          "category": "General",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2022-06-01",
+      "name": "region-control-initiative-assignment",
+      "location": "[parameters('allowedRegions')[0]]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/policySetDefinitions', 'region-control-initiative')]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "displayName": "Region Control Initiative Assignment - Sweden Central",
+        "description": "Assignment of the region control initiative to enforce Sweden Central deployment",
+        "policyDefinitionId": "[resourceId('Microsoft.Authorization/policySetDefinitions', 'region-control-initiative')]",
+        "enforcementMode": "[parameters('enforcementMode')]",
+        "parameters": {
+          "allowedLocations": {
+            "value": "[parameters('allowedRegions')]"
+          }
+        },
+        "metadata": {
+          "category": "General",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        }
+      }
+    }
+  ],
+  "outputs": {
+    "allowedLocationsPolicyAssignmentId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policyAssignments', parameters('policyAssignmentName'))]"
+    },
+    "customResourceGroupLocationPolicyId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policyDefinitions', 'custom-rg-location-policy')]"
+    },
+    "regionControlInitiativeId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policySetDefinitions', 'region-control-initiative')]"
+    },
+    "configuredAllowedRegions": {
+      "type": "array",
+      "value": "[parameters('allowedRegions')]"
+    }
+  }
+}

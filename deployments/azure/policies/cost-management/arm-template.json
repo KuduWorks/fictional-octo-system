@@ -1,0 +1,198 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2018-05-01/subscriptionDeploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "allowedVmSkus": {
+      "type": "array",
+      "defaultValue": [
+        "Standard_B1s",
+        "Standard_B2s",
+        "Standard_D2s_v3",
+        "Standard_D4s_v3"
+      ],
+      "metadata": {
+        "description": "List of allowed VM SKUs to control costs"
+      }
+    },
+    "requiredTags": {
+      "type": "array",
+      "defaultValue": [
+        "CostCenter",
+        "Environment",
+        "Owner"
+      ],
+      "metadata": {
+        "description": "Required tags for cost tracking"
+      }
+    },
+    "enforcementMode": {
+      "type": "string",
+      "defaultValue": "Default",
+      "allowedValues": [
+        "Default",
+        "DoNotEnforce"
+      ],
+      "metadata": {
+        "description": "Policy enforcement mode"
+      }
+    }
+  },
+  "variables": {
+    "allowedVmSkusPolicyId": "/providers/Microsoft.Authorization/policyDefinitions/cccc23c7-8427-4f53-ad12-b6a63eb452b3"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Authorization/policyDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "require-cost-center-tag",
+      "properties": {
+        "displayName": "Require Cost Center Tag",
+        "description": "This policy requires a cost center tag on all resources for cost tracking",
+        "policyType": "Custom",
+        "mode": "Indexed",
+        "metadata": {
+          "category": "Cost Management",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        },
+        "parameters": {
+          "tagName": {
+            "type": "String",
+            "metadata": {
+              "displayName": "Tag Name",
+              "description": "Name of the tag, such as 'CostCenter'"
+            }
+          }
+        },
+        "policyRule": {
+          "if": {
+            "field": "[concat('tags[', parameters('tagName'), ']')]",
+            "exists": "false"
+          },
+          "then": {
+            "effect": "deny"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2018-05-01",
+      "name": "limit-vm-skus",
+      "location": "swedencentral",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "displayName": "Limit VM SKUs for Cost Control",
+        "description": "This policy limits VM deployments to approved SKUs to control costs",
+        "policyDefinitionId": "[variables('allowedVmSkusPolicyId')]",
+        "enforcementMode": "[parameters('enforcementMode')]",
+        "parameters": {
+          "listOfAllowedSKUs": {
+            "value": "[parameters('allowedVmSkus')]"
+          }
+        },
+        "metadata": {
+          "category": "Cost Management",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policyAssignments",
+      "apiVersion": "2018-05-01",
+      "name": "require-cost-center-tag-assignment",
+      "location": "swedencentral",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/policyDefinitions', 'require-cost-center-tag')]"
+      ],
+      "identity": {
+        "type": "SystemAssigned"
+      },
+      "properties": {
+        "displayName": "Require Cost Center Tag Assignment",
+        "description": "Ensures all resources have a cost center tag for billing",
+        "policyDefinitionId": "[resourceId('Microsoft.Authorization/policyDefinitions', 'require-cost-center-tag')]",
+        "enforcementMode": "[parameters('enforcementMode')]",
+        "parameters": {
+          "tagName": {
+            "value": "CostCenter"
+          }
+        },
+        "metadata": {
+          "category": "Cost Management",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Authorization/policySetDefinitions",
+      "apiVersion": "2021-06-01",
+      "name": "cost-management-initiative",
+      "dependsOn": [
+        "[resourceId('Microsoft.Authorization/policyDefinitions', 'require-cost-center-tag')]"
+      ],
+      "properties": {
+        "displayName": "Cost Management Initiative",
+        "description": "A collection of policies to manage and control Azure costs",
+        "policyType": "Custom",
+        "metadata": {
+          "category": "Cost Management",
+          "source": "ARM Template",
+          "version": "1.0.0"
+        },
+        "parameters": {
+          "allowedVmSkus": {
+            "type": "Array",
+            "defaultValue": "[parameters('allowedVmSkus')]"
+          },
+          "enforcementMode": {
+            "type": "String",
+            "defaultValue": "Default"
+          }
+        },
+        "policyDefinitions": [
+          {
+            "policyDefinitionId": "[variables('allowedVmSkusPolicyId')]",
+            "parameters": {
+              "listOfAllowedSKUs": {
+                "value": "[parameters('allowedVmSkus')]"
+              }
+            },
+            "policyDefinitionReferenceId": "AllowedVmSkus"
+          },
+          {
+            "policyDefinitionId": "[resourceId('Microsoft.Authorization/policyDefinitions', 'require-cost-center-tag')]",
+            "parameters": {
+              "tagName": {
+                "value": "CostCenter"
+              }
+            },
+            "policyDefinitionReferenceId": "RequireCostCenterTag"
+          }
+        ]
+      }
+    }
+  ],
+  "outputs": {
+    "vmSkuPolicyId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policyAssignments', 'limit-vm-skus')]"
+    },
+    "costCenterTagPolicyId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policyDefinitions', 'require-cost-center-tag')]"
+    },
+    "costManagementInitiativeId": {
+      "type": "string",
+      "value": "[resourceId('Microsoft.Authorization/policySetDefinitions', 'cost-management-initiative')]"
+    },
+    "allowedVmSkus": {
+      "type": "array",
+      "value": "[parameters('allowedVmSkus')]"
+    }
+  }
+}
