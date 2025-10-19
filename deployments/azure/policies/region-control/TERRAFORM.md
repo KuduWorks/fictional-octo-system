@@ -89,27 +89,27 @@ terraform apply \
 
 ## What Gets Deployed
 
-Terraform will create:
+Terraform will create **2 built-in policy assignments**:
 
-1. ✅ **Custom Policy Definition** - `custom-rg-location-policy`
+1. ✅ **Allowed Locations Policy Assignment** - `allowed-regions-sweden-central-tf`
+   - Uses built-in policy: `e56962a6-4747-49cd-b67b-bf8b01975c4c`
+   - Controls where resources (VMs, VNets, storage, etc.) can be deployed
+
+2. ✅ **Allowed Resource Group Locations Policy Assignment** - `rg-location-policy-assignment`
+   - Uses built-in policy: `e765b5de-1225-4ba3-bd56-1ac6695af988`
    - Controls where resource groups can be created
 
-2. ✅ **Policy Set Definition** - `region-control-initiative`
-   - Groups related region policies together
+3. ✅ **System-Assigned Managed Identities** for each assignment
 
-3. ✅ **Policy Assignments** (3 assignments):
-   - Built-in allowed locations policy
-   - Custom resource group location policy
-   - Policy initiative assignment
-
-4. ✅ **System-Assigned Managed Identities** for each assignment
+**Note:** Both policies use Azure's built-in policy definitions, so no custom policies are created.
 
 ## Terraform State Management
 
 ### View Current State
 ```bash
 terraform state list
-terraform state show azurerm_policy_definition.custom_rg_location_policy
+terraform state show azurerm_subscription_policy_assignment.allowed_locations_assignment
+terraform state show azurerm_subscription_policy_assignment.rg_location_assignment
 ```
 
 ### Remote State (Recommended for Teams)
@@ -143,10 +143,30 @@ tflint
 
 ### Test Policy Enforcement
 ```bash
-# After deployment, test the policy
-az group create --name "test-blocked" --location "eastus"  # Should fail
-az group create --name "test-allowed" --location "swedencentral"  # Should succeed
-az group delete --name "test-allowed" --yes --no-wait
+# After deployment, WAIT 15-30 MINUTES for policies to take effect
+
+# This should FAIL - resource group in wrong region
+az group create --name "test-blocked-rg" --location "eastus"
+
+# This should SUCCEED - resource group in allowed region
+az group create --name "test-allowed-rg" --location "swedencentral"
+
+# This should FAIL - VNet in wrong region
+az network vnet create \
+    --name "test-vnet" \
+    --resource-group "test-allowed-rg" \
+    --location "eastus" \
+    --address-prefix "10.0.0.0/16"
+
+# This should SUCCEED - VNet in allowed region
+az network vnet create \
+    --name "test-vnet" \
+    --resource-group "test-allowed-rg" \
+    --location "swedencentral" \
+    --address-prefix "10.0.0.0/16"
+
+# Cleanup
+az group delete --name "test-allowed-rg" --yes --no-wait
 ```
 
 ## Updating Policies
@@ -181,7 +201,8 @@ terraform destroy -target=azurerm_subscription_policy_assignment.allowed_locatio
 
 ### Verify Cleanup
 ```bash
-az policy assignment list --query "[?contains(name, 'allowed-regions')].name" -o table
+# Verify policy assignments are removed
+az policy assignment list --query "[?contains(name, 'allowed-regions') || contains(name, 'rg-location')].name" -o table
 ```
 
 ## Troubleshooting

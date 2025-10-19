@@ -1,25 +1,25 @@
+# Retention period variable
+variable "retention_days" {
+  description = "Number of days to retain logs and blobs for compliance."
+  type        = number
+  default     = 30
+}
+
 # Storage Account Diagnostic Settings
 resource "azurerm_monitor_diagnostic_setting" "storage" {
   name                       = "storage-diagnostics"
   target_resource_id         = data.azurerm_storage_account.state_storage_account.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.main.id
 
+  # Metrics will use default retention settings as no explicit retention_policy block is provided.
   metric {
     category = "Transaction"
     enabled  = true
-
-    retention_policy {
-      enabled = false
-    }
   }
 
   metric {
     category = "Capacity"
     enabled  = true
-
-    retention_policy {
-      enabled = false
-    }
   }
 
   # Add dependency on network rules
@@ -38,7 +38,7 @@ resource "azurerm_storage_management_policy" "retention" {
     }
     actions {
       base_blob {
-        delete_after_days_since_modification_greater_than = 30
+        delete_after_days_since_modification_greater_than = var.retention_days
       }
     }
   }
@@ -50,7 +50,7 @@ resource "azurerm_log_analytics_workspace" "main" {
   location            = var.location
   resource_group_name = var.resource_group_name
   sku                 = "PerGB2018"
-  retention_in_days   = 30
+  retention_in_days   = var.retention_days
   tags                = var.tags
 
   depends_on = [azurerm_resource_group.main]
