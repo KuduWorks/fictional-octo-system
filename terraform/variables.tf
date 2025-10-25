@@ -45,9 +45,9 @@ variable "alert_email" {
 }
 
 variable "allowed_ip_addresses" {
-  description = "List of IP addresses allowed to access the storage account"
+  description = "List of IP addresses allowed to access the storage account (managed dynamically by update-ip scripts)"
   type        = list(string)
-  default     = ["85.131.104.114"]
+  default     = []
 }
 # ==================== STORAGE ACCESS METHOD ====================
 
