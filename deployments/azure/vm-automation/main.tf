@@ -191,11 +191,6 @@ resource "azurerm_bastion_host" "bastion" {
     public_ip_address_id = azurerm_public_ip.bastion_ip.id
   }
 }
-
-#
-# ==================== NETWORK INTERFACE ====================
-#
-
 #
 # ==================== NETWORK INTERFACE ====================
 #
@@ -370,11 +365,10 @@ resource "azurerm_automation_schedule" "shutdown_schedule" {
   frequency               = "Day"
   interval                = 1
   timezone                = "Europe/Helsinki"
-  start_time              = timeadd(timestamp(), "24h") # Start tomorrow
-  description             = "Shutdown VM daily at 7:00 PM Finnish Time"
+  start_time              = var.shutdown_time # Use variable for schedule time
+  description             = "Shutdown VM daily at configurable time"
 
-  # Start at 19:00 Finnish time
-  # Note: Azure uses timezone-aware scheduling
+  # Start time is now configurable via var.shutdown_time
 }
 
 # Startup schedule - 7:00 AM Finnish Time
@@ -385,10 +379,10 @@ resource "azurerm_automation_schedule" "startup_schedule" {
   frequency               = "Day"
   interval                = 1
   timezone                = "Europe/Helsinki"
-  start_time              = timeadd(timestamp(), "24h") # Start tomorrow
-  description             = "Start VM daily at 7:00 AM Finnish Time"
+  start_time              = var.startup_time # Use variable for schedule time
+  description             = "Start VM daily at configurable time"
 
-  # Start at 07:00 Finnish time
+  # Start time is now configurable via var.startup_time
 }
 
 #

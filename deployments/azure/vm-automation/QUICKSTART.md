@@ -9,7 +9,7 @@
 ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519_azure -C "azure-vm-automation"
 
 # View your public key (copy this)
-cat ~/.ssh/id_rsa_azure.pub
+cat ~/.ssh/id_ed25519_azure.pub
 ```
 
 ### 2. Edit Configuration

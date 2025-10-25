@@ -99,8 +99,6 @@ Edit `terraform.tfvars`:
 vm_name        = "dev-vm-01"
 ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EA... your-key-here"
 
-# OPTIONAL: Restrict SSH access to your IP
-allowed_ssh_source_ip = "203.0.113.42"  # Your IP address
 ```
 
 ### 3. Deploy
@@ -624,13 +622,11 @@ terraform destroy -target=azurerm_linux_virtual_machine.vm
 2. ✅ **Managed Identity** for automation (no stored credentials)
 3. ✅ **RBAC with least privilege** (VM Contributor scope limited to resource group)
 4. ⚠️ **SSH access** - Restrict `allowed_ssh_source_ip` to your IP
-5. ⚠️ **No Azure Bastion** - Consider adding for production environments
+5. ✅ **Azure Bastion included** - Secure SSH access without public IP exposure
 6. ⚠️ **No backup configured** - Add Azure Backup for production VMs
 
 ### Production Hardening Checklist
 
-- [ ] Change `allowed_ssh_source_ip` from `*` to specific IP/range
-- [ ] Enable Azure Backup for VM
 - [ ] Configure Azure Monitor alerts
 - [ ] Implement Azure Bastion instead of public IP
 - [ ] Enable Azure Disk Encryption (ADE) if required
