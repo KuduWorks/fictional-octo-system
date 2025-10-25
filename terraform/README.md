@@ -26,6 +26,37 @@ This folder contains Terraform code for deploying and managing Azure resources f
 
 ## Getting Started
 
+### 🚀 Quick Start with Dynamic IP (Recommended)
+
+If your IP address changes frequently, use the provided wrapper scripts:
+
+**Bash (Linux/macOS/Git Bash):**
+```bash
+# Make scripts executable (first time only)
+chmod +x update-ip.sh tf.sh
+
+# Use wrapper for all Terraform commands
+./tf.sh init
+./tf.sh plan
+./tf.sh apply
+```
+
+**PowerShell (Windows):**
+```powershell
+# Use wrapper for all Terraform commands
+.\tf.ps1 init
+.\tf.ps1 plan
+.\tf.ps1 apply
+```
+
+The wrapper automatically updates your IP in the storage account firewall before running Terraform.
+
+📖 **See [TERRAFORM_STATE_ACCESS.md](./TERRAFORM_STATE_ACCESS.md) for detailed documentation on dynamic IP handling.**
+
+---
+
+### 📋 Standard Setup
+
 1. **Initialize Terraform**
    ```powershell
    terraform init

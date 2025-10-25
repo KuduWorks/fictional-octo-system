@@ -43,3 +43,15 @@ variable "allowed_ip_addresses" {
   type        = list(string)
   default     = ["85.131.104.114"]
 }
+# ==================== STORAGE ACCESS METHOD ====================
+
+variable "storage_access_method" {
+  description = "Method for accessing storage: 'ip_whitelist', 'private_endpoint', 'managed_identity'"
+  type        = string
+  default     = "ip_whitelist"
+  
+  validation {
+    condition     = contains(["ip_whitelist", "private_endpoint", "managed_identity"], var.storage_access_method)
+    error_message = "Storage access method must be one of: ip_whitelist, private_endpoint, managed_identity"
+  }
+}
