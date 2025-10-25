@@ -46,7 +46,6 @@ vm_image_sku       = "22_04-lts-gen2"
 # NOTE: Update shutdown_time and startup_time to future dates before each deployment to avoid schedule errors.
 shutdown_time = "2025-10-25T19:00:00+02:00"  # 19:00 Finnish Time
 startup_time  = "2025-10-26T07:00:00+02:00"  # 07:00 Finnish Time tomorrow
-startup_time  = "2025-10-26T07:00:00+02:00"  # 07:00 Finnish Time tomorrow
 # ==================== TAGS ====================
 
 tags = {
