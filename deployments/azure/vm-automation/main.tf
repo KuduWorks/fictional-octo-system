@@ -224,6 +224,7 @@ resource "azurerm_linux_virtual_machine" "vm" {
   tags                = local.common_tags
 
   # Enable encryption at host (for ISO 27001 compliance)
+  # Required by Azure Policy
   encryption_at_host_enabled = true
 
   network_interface_ids = [
