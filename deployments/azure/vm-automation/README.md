@@ -294,9 +294,7 @@ terraform output public_ip_address
 
 ### 2. Test SSH Connection
 
-```bash
-ssh -i ~/.ssh/id_rsa_azure azureuser@<public-ip>
-```
+> **Note:** Direct SSH to a public IP is not supported; use Azure Bastion as described above for secure SSH access.
 
 ### 3. Verify Automation Schedules
 
@@ -583,7 +581,7 @@ startup_time  = "06:00"  # Change to 6 AM
 terraform apply
 ```
 
-**Note**: Current implementation uses hardcoded times in schedule resources. For dynamic time changes, you'll need to destroy and recreate schedules.
+**Note**: Shutdown and startup times are configurable via variables in `terraform.tfvars`. To change the schedule, update the values and re-apply with `terraform apply`.
 
 ### Add Additional VMs
 
@@ -621,7 +619,7 @@ terraform destroy -target=azurerm_linux_virtual_machine.vm
 1. ✅ **Encryption at host enabled** for ISO 27001 compliance
 2. ✅ **Managed Identity** for automation (no stored credentials)
 3. ✅ **RBAC with least privilege** (VM Contributor scope limited to resource group)
-4. ⚠️ **SSH access** - Restrict `allowed_ssh_source_ip` to your IP
+4. ✅ **SSH access restricted to Bastion subnet** - NSG allows SSH only from Bastion (10.0.2.0/26)
 5. ✅ **Azure Bastion included** - Secure SSH access without public IP exposure
 6. ⚠️ **No backup configured** - Add Azure Backup for production VMs
 

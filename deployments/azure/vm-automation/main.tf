@@ -490,7 +490,7 @@ output "shutdown_schedule" {
   description = "Shutdown schedule details"
   value = {
     name     = azurerm_automation_schedule.shutdown_schedule.name
-    time     = "19:00"
+    time     = var.shutdown_time
     timezone = "Europe/Helsinki"
   }
 }
@@ -499,7 +499,7 @@ output "startup_schedule" {
   description = "Startup schedule details"
   value = {
     name     = azurerm_automation_schedule.startup_schedule.name
-    time     = "07:00"
+    time     = var.startup_time
     timezone = "Europe/Helsinki"
   }
 }
