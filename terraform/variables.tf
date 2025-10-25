@@ -32,6 +32,12 @@ variable "subnet_prefix" {
   default     = "10.0.1.0/24"
 }
 
+variable "private_endpoints_subnet_prefix" {
+  description = "The address prefix for the private endpoints subnet"
+  type        = string
+  default     = "10.0.2.0/24"
+}
+
 variable "alert_email" {
   description = "Email address for receiving alerts"
   type        = string
@@ -49,7 +55,7 @@ variable "storage_access_method" {
   description = "Method for accessing storage: 'ip_whitelist', 'private_endpoint', 'managed_identity'"
   type        = string
   default     = "ip_whitelist"
-  
+
   validation {
     condition     = contains(["ip_whitelist", "private_endpoint", "managed_identity"], var.storage_access_method)
     error_message = "Storage access method must be one of: ip_whitelist, private_endpoint, managed_identity"
