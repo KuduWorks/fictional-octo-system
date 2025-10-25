@@ -11,6 +11,12 @@ CURRENT_IP=$(curl -s ifconfig.me)
 echo "📍 Current IP: $CURRENT_IP"
 echo ""
 
+# Validate CURRENT_IP is a non-empty valid IPv4 address
+if ! [[ "$CURRENT_IP" =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ ]]; then
+    echo "❌ Failed to retrieve a valid current IP address. Aborting cleanup."
+    exit 1
+fi
+
 echo "📋 All whitelisted IPs:"
 ALL_IPS=$(az storage account show \
   --name "$STORAGE_ACCOUNT" \

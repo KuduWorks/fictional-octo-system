@@ -8,6 +8,10 @@ RESOURCE_GROUP="rg-tfstate"
 
 echo "🔍 Getting current IP address..."
 CURRENT_IP=$(curl -s ifconfig.me)
+if [[ -z "$CURRENT_IP" ]]; then
+    echo "❌ Failed to retrieve current IP address. Please check your network connection and try again."
+    exit 1
+fi
 echo "📍 Current IP: $CURRENT_IP"
 
 echo "🔐 Checking Azure authentication..."

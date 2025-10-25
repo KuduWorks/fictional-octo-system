@@ -6,7 +6,18 @@ $STORAGE_ACCOUNT = "tfstate20251013"
 $RESOURCE_GROUP = "rg-tfstate"
 
 Write-Host "🔍 Getting current IP address..." -ForegroundColor Cyan
-$CURRENT_IP = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content.Trim()
+try {
+    $CURRENT_IP = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content.Trim()
+} catch {
+    Write-Host "❌ Failed to retrieve current IP address." -ForegroundColor Red
+    exit 1
+}
+
+if (-not $CURRENT_IP -or -not ($CURRENT_IP -match '^(?:\d{1,3}\.){3}\d{1,3}$')) {
+    Write-Host "❌ Invalid IP address retrieved: '$CURRENT_IP'" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "📍 Current IP: $CURRENT_IP" -ForegroundColor Green
 Write-Host ""
 

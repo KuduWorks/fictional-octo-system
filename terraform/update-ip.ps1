@@ -6,8 +6,16 @@ $STORAGE_ACCOUNT = "tfstate20251013"
 $RESOURCE_GROUP = "rg-tfstate"
 
 Write-Host "🔍 Getting current IP address..." -ForegroundColor Cyan
-$CURRENT_IP = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content.Trim()
-Write-Host "📍 Current IP: $CURRENT_IP" -ForegroundColor Green
+try {
+    $CURRENT_IP = (Invoke-WebRequest -Uri "https://ifconfig.me/ip" -UseBasicParsing).Content.Trim()
+    if (-not $CURRENT_IP -or ($CURRENT_IP -notmatch '^\d{1,3}(\.\d{1,3}){3}$')) {
+        throw "Failed to retrieve a valid IP address."
+    }
+    Write-Host "📍 Current IP: $CURRENT_IP" -ForegroundColor Green
+} catch {
+    Write-Host "❌ Error retrieving current IP address: $_" -ForegroundColor Red
+    exit 1
+}
 
 Write-Host "🔐 Checking Azure authentication..." -ForegroundColor Cyan
 try {

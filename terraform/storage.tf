@@ -15,15 +15,16 @@ resource "azurerm_storage_account_network_rules" "tfstate" {
   # Default action:
   # - "Deny" for security (only allowed sources can access)
   # - "Allow" temporarily during private endpoint setup
+  # NOTE: Setting default_action to "Allow" for private_endpoint temporarily exposes the storage account.
+  # After private endpoint provisioning, change this to "Deny" to restrict public access.
+  # Consider using Terraform lifecycle hooks or a manual step to update this securely.
   default_action = var.storage_access_method == "private_endpoint" ? "Allow" : "Deny"
   
   # IP whitelist (only used when storage_access_method = "ip_whitelist")
   ip_rules = var.storage_access_method == "ip_whitelist" ? var.allowed_ip_addresses : []
   
-  # Allow Azure services (needed for Terraform, Azure Portal, etc.)
-  bypass = ["AzureServices"]
-  
-  # VNet subnet access (for private endpoints)
+  # VNet subnet access (for service endpoints only; not needed for private endpoints)
+  # virtual_network_subnet_ids argument removed to avoid confusion and misconfiguration
   virtual_network_subnet_ids = var.storage_access_method == "private_endpoint" ? [
     azurerm_subnet.private_endpoints.id
   ] : []
