@@ -10,25 +10,35 @@ This repository contains Infrastructure as Code (IaC) templates and configuratio
 
 ```
 fictional-octo-system/
-├── terraform/           # Terraform configurations
-│   ├── main.tf         # Core infrastructure setup
-│   ├── variables.tf    # Variable definitions
-│   ├── monitoring.tf   # Azure Monitor configuration
-│   ├── backend.tf      # State storage configuration
-│   └── README.md       # Terraform-specific documentation
-├── .github/            # GitHub Actions workflows and templates
-│   └── workflows/      # CI/CD pipeline definitions
-├── LICENSE             # MIT License
-├── SECURITY.md         # Security policy
-└── README.md          # This file
+├── terraform/                    # Core Terraform configurations
+│   ├── main.tf                  # Core infrastructure setup
+│   ├── variables.tf             # Variable definitions
+│   ├── monitoring.tf            # Azure Monitor configuration
+│   ├── backend.tf               # State storage configuration
+│   ├── tf.sh / tf.ps1           # Dynamic IP wrapper scripts
+│   ├── update-ip.sh / update-ip.ps1  # IP management utilities
+│   ├── QUICKSTART_DYNAMIC_IP.md # Quick start guide for dynamic IPs
+│   ├── TERRAFORM_STATE_ACCESS.md # Comprehensive state access guide
+│   └── README.md                # Terraform-specific documentation
+├── deployments/azure/
+│   ├── vm-automation/           # Automated VM deployment with Bastion
+│   └── policies/                # Azure Policy templates (ISO 27001)
+├── .github/                     # GitHub Actions workflows and templates
+│   └── workflows/               # CI/CD pipeline definitions
+├── LICENSE                      # MIT License
+├── SECURITY.md                  # Security policy
+└── README.md                   # This file
 ```
 
 ## Features
 
 ### Infrastructure Management
-- Azure Virtual Network (VNet) deployment
-- Remote state management in Azure Storage
-- Infrastructure as Code using Terraform
+- **Smart IP Management**: Automatic IP whitelisting for dynamic IPs
+- **Secure VM Deployment**: Private VMs with Azure Bastion access
+- **Automated Scheduling**: VM start/stop automation (7 AM/7 PM Finnish time)
+- Azure Virtual Network (VNet) deployment with NAT Gateway
+- Remote state management in Azure Storage (`tfstate20251013`)
+- Infrastructure as Code using Terraform with wrapper scripts
 
 ### Security
 - IP-restricted storage account access
@@ -53,40 +63,61 @@ fictional-octo-system/
 
 ### Quick Start
 
+#### For Infrastructure Deployment (Dynamic IP)
+
 1. Clone the repository:
 ```bash
 git clone https://github.com/kudu-star/fictional-octo-system.git
-cd fictional-octo-system
+cd fictional-octo-system/terraform
 ```
 
-2. Navigate to the Terraform directory:
+2. Use dynamic IP wrapper scripts (recommended):
 ```bash
-cd terraform
+# Make scripts executable (Linux/macOS/Git Bash)
+chmod +x tf.sh update-ip.sh
+
+# Or use PowerShell scripts on Windows
+# No setup needed for .ps1 files
+
+# Deploy with automatic IP management
+./tf.sh init     # or .\tf.ps1 init
+./tf.sh plan     # or .\tf.ps1 plan
+./tf.sh apply    # or .\tf.ps1 apply
 ```
 
-3. Initialize Terraform:
-```bash
-terraform init
-```
-
-4. Configure your variables in `terraform.tfvars`:
+3. Configure your variables in `terraform.tfvars`:
 ```hcl
 resource_group_name = "your-rg-name"
 alert_email = "your.email@domain.com"
-allowed_ip_addresses = ["YOUR.IP.ADDRESS"]
+# No need to manually manage allowed_ip_addresses!
 ```
 
-5. Deploy the infrastructure:
+#### For VM Deployment with Automation
+
 ```bash
-terraform plan
-terraform apply
+cd deployments/azure/vm-automation
+
+# Configure your SSH key in terraform.tfvars
+vim terraform.tfvars
+
+# Deploy VM with Bastion and automation
+./tf.sh init
+./tf.sh apply
 ```
 
-## Security Features
+📖 **Detailed guides**: 
+- [Dynamic IP Quick Start](terraform/QUICKSTART_DYNAMIC_IP.md)
+- [VM Automation Guide](deployments/azure/vm-automation/README.md)
+- [Terraform State Access](terraform/TERRAFORM_STATE_ACCESS.md)
 
-- IP-restricted storage access
-- Azure Monitor integration
-- Diagnostic settings for auditing
+### Security Features
+
+- **Dynamic IP Management**: Automatic IP whitelisting for Terraform state access
+- **Private VM Deployment**: VMs with no public IPs, secured via Azure Bastion
+- **Automated VM Lifecycle**: Daily start/stop schedules (7 AM/7 PM Finnish time)
+- Azure Monitor integration with comprehensive logging
+- Encryption at host for ISO 27001 compliance
+- NAT Gateway for secure outbound connectivity
 - 30-day log retention policy
 
 ## Monitoring Capabilities
@@ -108,10 +139,13 @@ Contributions are welcome! Please read our [Security Policy](SECURITY.md) before
 
 ## Best Practices
 
+- **Use wrapper scripts** (`tf.sh`/`tf.ps1`) instead of direct `terraform` commands
 - Store sensitive data in `terraform.tfvars` (not in version control)
-- Use Azure CLI authentication
+- Use Azure CLI authentication with dynamic IP management
+- **Clean up old IPs** periodically using `cleanup-old-ips.sh`
 - Keep Terraform provider versions up to date
-- Review monitoring thresholds regularly
+- Review monitoring thresholds and VM schedules regularly
+- Use Azure Bastion for secure VM access (no public IPs)
 
 ## License
 
