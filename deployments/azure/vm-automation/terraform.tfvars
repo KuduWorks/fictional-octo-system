@@ -8,7 +8,8 @@ admin_username      = "azureuser"
 # SSH Public Key - REPLACE THIS WITH YOUR PUBLIC KEY
 # Generate one with: ssh-keygen -t rsa -b 4096
 # Then copy from: cat ~/.ssh/id_rsa.pub
-ssh_public_key = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC2VJBGC98jEuDb0nWmasBa9UJzIpqZtKRokfojuorTw36qiViczFuxGXMpefo72PEd+q1kE6fg0lEzULvk5APuU+StgTI9dzeUB7nAIEO+GowG7PIoKDE3vxuhxoGMfI/UqK+xPH3kElBOtPdh2Z2oQ/k09RLRljW+xAFoYQzmMwJ+TVW72AlchiPrcBvqzHaFZSjZyfIavfpWpStm9lyroP5Oq6kduGMQkAveqtYCdFEaAATRoGCSW3IYj4oHp8gl4DHiI0fcp/pak5r4hsnSdI7xNr0tgUEAXAjOfzS2w0d9NHNkb/EGM8+BDRDbr/M9A926+lDW/GQeWq1Xqs/aAWyQfdoCBDlHyNL7Rl6G4gf4RzL1/Y6IMewCvOmtGNfqJvvE39xQSFGG6fXZQbHqrjusJKQ3+9oPPaNz7Z2+RSzICEFiWvXbaDavAOnCewqv3TbUl3nJ9m7gzBeVsb1kQ6AiXYMtxLiT/W2FxWrwLvOwgi0UYJHEr1yavfgmYryoUatVuMFvAbehNHvJEC73oRclojCITAOSD05xKHxrcVInfu+6GROtcaKBN9MzW3tqQcWEjE0VAA9dGNFaVickIbgQtsZVF2zvZ/h/TTeiIUTn4Nd1T02vsnH637qOLHpm7ZSvXEu+3AWo8G8oZhqFqEAXCHIiwsKUDiKBFbTZwQ== azure-vm-automation"
+# ssh_public_key is now stored in terraform.tfvars.secret (excluded from version control)
+# Example: ssh_public_key = "ssh-rsa AAAA... user@host"
 
 # ==================== OPTIONAL SETTINGS ====================
 
@@ -41,9 +42,11 @@ vm_image_sku       = "22_04-lts-gen2"
 # ==================== AUTOMATION SCHEDULE ====================
 # Times are in Finnish timezone (Europe/Helsinki)
 # Finland uses EET (UTC+2) in winter and EEST (UTC+3) in summer
-
 # Use RFC3339 format with timezone (must be in future)
+# Use RFC3339 format with timezone (must be in future)
+# NOTE: Update shutdown_time and startup_time to future dates before each deployment to avoid schedule errors.
 shutdown_time = "2025-10-25T19:00:00+02:00"  # 19:00 Finnish Time
+startup_time  = "2025-10-26T07:00:00+02:00"  # 07:00 Finnish Time tomorrow
 startup_time  = "2025-10-26T07:00:00+02:00"  # 07:00 Finnish Time tomorrow
 
 # ==================== TAGS ====================
