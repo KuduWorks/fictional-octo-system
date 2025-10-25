@@ -20,7 +20,7 @@ Gemfile.lock
 terraform/backend.tf
 terraform/terraform.tfstate
 terraform/terraform.tfstate.backup
-terraform.tfstate.backup
+**/*.tfstate.backup
 # ignore any .tfvars files that may contain sensitive variable definitions
 terraform/*.tfvars
 # ignore crash log files
