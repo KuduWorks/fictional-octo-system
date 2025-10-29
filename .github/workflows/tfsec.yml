@@ -1,4 +1,6 @@
 name: tfsec Terraform Security Scan
+permissions:
+  contents: read
 
 on:
   push:
