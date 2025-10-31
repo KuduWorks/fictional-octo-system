@@ -24,7 +24,11 @@ module "github_deployer" {
   # Keep a backup secret (optional)
   secret_rotation_days = 180
 
-  tags = ["Environment:Production", "CICD:GitHub", "ManagedByTerraform"]
+  tags = { 
+    Environment = "Production"
+    CICD        = "GitHub"
+    ManagedBy   = "Terraform"
+  }
 }
 
 # Grant RBAC permissions on subscription/resource groups
