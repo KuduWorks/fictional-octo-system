@@ -88,7 +88,7 @@ module "frontend_spa" {
 
   secret_rotation_days = 90
 
-  tags = ["Tier:Frontend", "ManagedByTerraform"]
+  tags = { Tier = "Frontend", ManagedBy = "Terraform" }
 }
 
 # Backend Key Vault
