@@ -33,7 +33,7 @@ module "basic_app" {
 
   secret_rotation_days = 90
 
-  tags = ["Environment:Development", "ManagedByTerraform"]
+  tags = { Environment = "Development", ManagedBy = "Terraform" }
 }
 
 # Outputs

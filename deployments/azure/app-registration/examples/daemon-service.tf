@@ -40,7 +40,11 @@ module "daemon_service" {
   store_in_key_vault = true
   key_vault_id       = azurerm_key_vault.main.id
 
-  tags = ["Environment:Production", "ServiceType:Daemon", "ManagedByTerraform"]
+  tags = {
+    Environment = "Production"
+    ServiceType = "Daemon"
+    ManagedBy   = "Terraform"
+  }
 }
 
 # Sample Key Vault (if not already exists)

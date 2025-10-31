@@ -41,7 +41,7 @@ module "backend_api" {
   store_in_key_vault   = true
   key_vault_id         = azurerm_key_vault.backend.id
 
-  tags = ["Tier:Backend", "ManagedByTerraform"]
+  tags = { Tier = "Backend", ManagedBy = "Terraform" }
 }
 
 # Frontend SPA - Consumes backend API
@@ -88,7 +88,7 @@ module "frontend_spa" {
 
   secret_rotation_days = 90
 
-  tags = ["Tier:Frontend", "ManagedByTerraform"]
+  tags = { Tier = "Frontend", ManagedBy = "Terraform" }
 }
 
 # Backend Key Vault

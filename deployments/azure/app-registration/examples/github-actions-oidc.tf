@@ -24,7 +24,11 @@ module "github_deployer" {
   # Keep a backup secret (optional)
   secret_rotation_days = 180
 
-  tags = ["Environment:Production", "CICD:GitHub", "ManagedByTerraform"]
+  tags = { 
+    Environment = "Production"
+    CICD        = "GitHub"
+    ManagedBy   = "Terraform"
+  }
 }
 
 # Grant RBAC permissions on subscription/resource groups
@@ -39,9 +43,9 @@ output "github_secrets_instructions" {
   value = <<-EOT
     Add these secrets to your GitHub repository:
     
-    AZURE_CLIENT_ID: ${azuread_application.app.client_id}
-    AZURE_TENANT_ID: ${data.azuread_client_config.current.tenant_id}
-    AZURE_SUBSCRIPTION_ID: ${var.subscription_id}
+    AZURE_CLIENT_ID: ${module.github_deployer.application_id}
+    AZURE_TENANT_ID: ${module.github_deployer.tenant_id}
+    AZURE_SUBSCRIPTION_ID: ${data.azurerm_client_config.current.subscription_id}
     
     Then use in your workflow:
     

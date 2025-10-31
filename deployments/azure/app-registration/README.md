@@ -610,7 +610,6 @@ variable "tags" {
     ManagedBy = "Terraform"
   }
 }
-g
 # Application tags are derived from tag values
 resource "azuread_application" "app" {
   tags = toset(values(var.tags))  # Converts to ["Terraform"]
