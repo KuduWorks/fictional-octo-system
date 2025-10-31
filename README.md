@@ -24,6 +24,7 @@ fictional-octo-system/
 │   └── README.md                # Terraform-specific documentation
 ├── deployments/azure/
 │   ├── app-registration/        # Azure AD app registration automation
+│   ├── key-vault/               # Azure Key Vault with RBAC
 │   ├── vm-automation/           # Automated VM deployment with Bastion
 │   └── policies/                # Azure Policy templates (ISO 27001)
 ├── .github/                     # GitHub Actions workflows and templates
@@ -49,6 +50,7 @@ fictional-octo-system/
 ### Security & Identity
 > *"Security so good, even your paranoid CISO will approve"* 🔐
 
+- **Key Vault with RBAC**: Secure secrets management using modern role-based access control *(not the legacy access policies with security holes)*
 - **App Registration Automation**: Service principals with automated secret rotation *(because manual rotation is how security breaches happen)*
 - **Federated Identity**: Passwordless authentication via OIDC (GitHub Actions, Kubernetes) *(passwords are so 2015)*
 - **Permission Management**: Graph vs. resource-specific scope guidance *(not just "give it Owner and hope for the best")*
@@ -136,16 +138,33 @@ terraform init
 terraform apply
 ```
 
+#### For Azure Key Vault with RBAC
+
+```bash
+cd deployments/azure/key-vault
+
+# Configure Key Vault settings in terraform.tfvars
+cp terraform.tfvars.example terraform.tfvars
+vim terraform.tfvars
+
+# Deploy Key Vault with RBAC authorization
+terraform init
+terraform apply
+```
+
 📖 **Detailed guides**: 
 - [Dynamic IP Quick Start](terraform/QUICKSTART_DYNAMIC_IP.md)
 - [VM Automation Guide](deployments/azure/vm-automation/README.md)
 - [Azure AD App Registration](deployments/azure/app-registration/README.md)
+- [Azure Key Vault with RBAC](deployments/azure/key-vault/README.md)
 - [Terraform State Access](terraform/TERRAFORM_STATE_ACCESS.md)
 
 ### Security Features
 
 > *"Layered security: Because one wall is never enough when protecting your Azure kingdom"* 🏰
 
+- **Key Vault with RBAC**: Centralized secrets management with modern RBAC authorization *(not the legacy access policies that let Contributors grant themselves access)*
+- **Purge Protection**: Prevent accidental or malicious deletion of secrets *(even admins can't bypass this)*
 - **Azure AD App Registration**: Automated service principal creation and management *(no more "I forgot where I put that client secret")*
 - **Secret Rotation**: Configurable automatic rotation (90-180 days) *(like changing your passwords, but actually happening)*
 - **Passwordless Auth**: OIDC federated credentials for GitHub Actions and Kubernetes *(the future is now, old man)*
