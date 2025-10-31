@@ -117,7 +117,7 @@ variable "purge_protection_enabled" {
 variable "soft_delete_retention_days" {
   description = "Number of days to retain soft-deleted items (7-90 days)."
   type        = number
-  default     = 7
+  default     = 90
 
   validation {
     condition     = var.soft_delete_retention_days >= 7 && var.soft_delete_retention_days <= 90
