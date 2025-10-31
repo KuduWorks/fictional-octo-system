@@ -21,6 +21,7 @@ fictional-octo-system/
 │   ├── TERRAFORM_STATE_ACCESS.md # Comprehensive state access guide
 │   └── README.md                # Terraform-specific documentation
 ├── deployments/azure/
+│   ├── app-registration/        # Azure AD app registration automation
 │   ├── vm-automation/           # Automated VM deployment with Bastion
 │   └── policies/                # Azure Policy templates (ISO 27001)
 ├── .github/                     # GitHub Actions workflows and templates
@@ -36,11 +37,15 @@ fictional-octo-system/
 - **Smart IP Management**: Automatic IP whitelisting for dynamic IPs
 - **Secure VM Deployment**: Private VMs with Azure Bastion access
 - **Automated Scheduling**: VM start/stop automation (7 AM/7 PM Finnish time)
+- **Azure AD Integration**: App registration automation with secret rotation
 - Azure Virtual Network (VNet) deployment with NAT Gateway
 - Remote state management in Azure Storage (`tfstate20251013`)
 - Infrastructure as Code using Terraform with wrapper scripts
 
-### Security
+### Security & Identity
+- **App Registration Automation**: Service principals with automated secret rotation
+- **Federated Identity**: Passwordless authentication via OIDC (GitHub Actions, Kubernetes)
+- **Permission Management**: Graph vs. resource-specific scope guidance
 - IP-restricted storage account access
 - Network security rules
 - Azure Monitor integration
@@ -105,13 +110,31 @@ vim terraform.tfvars
 ./tf.sh apply
 ```
 
+#### For Azure AD App Registration
+
+```bash
+cd deployments/azure/app-registration
+
+# Configure app settings in terraform.tfvars
+cp terraform.tfvars.example terraform.tfvars
+vim terraform.tfvars
+
+# Deploy app registration with service principal
+terraform init
+terraform apply
+```
+
 📖 **Detailed guides**: 
 - [Dynamic IP Quick Start](terraform/QUICKSTART_DYNAMIC_IP.md)
 - [VM Automation Guide](deployments/azure/vm-automation/README.md)
+- [Azure AD App Registration](deployments/azure/app-registration/README.md)
 - [Terraform State Access](terraform/TERRAFORM_STATE_ACCESS.md)
 
 ### Security Features
 
+- **Azure AD App Registration**: Automated service principal creation and management
+- **Secret Rotation**: Configurable automatic rotation (90-180 days)
+- **Passwordless Auth**: OIDC federated credentials for GitHub Actions and Kubernetes
 - **Dynamic IP Management**: Automatic IP whitelisting for Terraform state access
 - **Private VM Deployment**: VMs with no public IPs, secured via Azure Bastion
 - **Automated VM Lifecycle**: Daily start/stop schedules (7 AM/7 PM Finnish time)

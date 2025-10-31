@@ -1,0 +1,58 @@
+# Basic Configuration
+app_display_name = "my-application"
+sign_in_audience = "AzureADMyOrg"
+
+# Web Application Configuration (if needed)
+redirect_uris = [
+  "https://localhost:3000/auth/callback",
+  "https://myapp.example.com/auth/callback"
+]
+
+# Microsoft Graph Permissions
+# Common permission IDs:
+# User.Read (delegated): e1fe6dd8-ba31-4d61-89e7-88639da4683d
+# User.Read.All (application): df021288-bdef-4463-88db-98f22de89214
+# Directory.Read.All (application): 7ab1d382-f21e-4acd-a863-ba3e13f7da61
+
+graph_permissions = [
+  {
+    id    = "e1fe6dd8-ba31-4d61-89e7-88639da4683d"
+    type  = "Scope" # Delegated permission
+    value = "User.Read"
+  },
+  # Uncomment for application permissions (requires admin consent)
+  # {
+  #   id    = "df021288-bdef-4463-88db-98f22de89214"
+  #   type  = "Role" # Application permission
+  #   value = "User.Read.All"
+  # }
+]
+
+# Secret Rotation (90 days recommended)
+secret_rotation_days = 90
+
+# Service Principal Settings
+app_role_assignment_required = false
+notification_emails          = ["admin@example.com"]
+
+# Admin Consent (set to true if you have admin privileges)
+grant_admin_consent = false
+
+# Key Vault Integration (recommended for production)
+store_in_key_vault = true
+key_vault_id       = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/my-rg/providers/Microsoft.KeyVault/vaults/my-keyvault"
+
+# GitHub Actions OIDC (passwordless authentication)
+enable_github_oidc = true
+github_org         = "my-org"
+github_repo        = "my-repo"
+github_branch      = "main"
+
+# Kubernetes OIDC (for AKS workloads)
+# enable_kubernetes_oidc      = true
+# kubernetes_issuer_url       = "https://oidc.prod-aks.azure.com/00000000-0000-0000-0000-000000000000/"
+# kubernetes_namespace        = "default"
+# kubernetes_service_account  = "my-service-account"
+
+# Tags
+tags = { ManagedBy = "Terraform", Environment = "Production" }
