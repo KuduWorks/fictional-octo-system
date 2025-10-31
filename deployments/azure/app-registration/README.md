@@ -1,10 +1,12 @@
 # Azure AD App Registration Automation
 
-This Terraform module automates the creation and management of Azure AD (Entra ID) application registrations, service principals, and client secret rotation. It demonstrates how to wire workloads into Entra ID with best practices for authentication and authorization.
+> *"Because manually clicking through the Azure Portal is so 2015"* 🎭
+
+This Terraform module automates the creation and management of Azure AD (Entra ID) application registrations, service principals, and client secret rotation. It demonstrates how to wire workloads into Entra ID with best practices for authentication and authorization. No more copying GUIDs into sticky notes or storing secrets in a text file called `definitely-not-secrets.txt`.
 
 ## 🎯 Overview
 
-This module handles the complete lifecycle of Azure AD applications:
+This module handles the complete lifecycle of Azure AD applications (so you don't have to):
 
 - **App Registration**: Create and configure Azure AD applications
 - **Service Principals**: Establish service identities for workloads
@@ -17,11 +19,13 @@ This module handles the complete lifecycle of Azure AD applications:
 ## 📋 Prerequisites
 
 - Terraform >= 1.3.0
-- Azure CLI authenticated with appropriate permissions
+- Azure CLI authenticated with appropriate permissions (aka: you've survived `az login`)
 - Azure AD permissions:
   - `Application.ReadWrite.All` (to create apps)
   - `AppRoleAssignment.ReadWrite.All` (for admin consent)
   - `Directory.Read.All` (to read directory objects)
+- ☕ Coffee (recommended but not technically required)
+- 🧘 Patience for Azure AD permission propagation delays
 
 ## 🚀 Quick Start
 
@@ -417,19 +421,21 @@ module "frontend_app" {
 
 ## 🔄 Secret Rotation Strategy
 
+> *"Passwords are like underwear: change them regularly, don't share them, and don't leave them lying around."* 🔐
+
 ### Automatic Rotation
 
-The module uses `time_rotating` resource to automatically rotate secrets:
+The module uses `time_rotating` resource to automatically rotate secrets (because we all know you'll forget):
 
 ```hcl
-secret_rotation_days = 90  # Recommended: 90-180 days
+secret_rotation_days = 90  # Recommended: 90-180 days (or 7 if your org is paranoid)
 ```
 
 **How it works:**
-1. Terraform tracks the rotation schedule
+1. Terraform tracks the rotation schedule (unlike your memory)
 2. On next `terraform apply` after rotation period, a new secret is created
-3. Old secret remains valid until its expiration date
-4. Update your applications with the new secret before old one expires
+3. Old secret remains valid until its expiration date (grace period for when you're on vacation)
+4. Update your applications with the new secret before old one expires (⚠️ Set a calendar reminder!)
 
 ### Manual Secret Rotation
 
@@ -468,7 +474,9 @@ module "cert_app" {
 
 ## 🔍 Finding Permission IDs
 
-### Method 1: Microsoft Graph API
+> *"Because memorizing 128-bit GUIDs is totally a normal human skill"* 🧠
+
+### Method 1: Microsoft Graph API (For the Cool Kids)
 
 ```bash
 # List all available permissions
@@ -482,12 +490,13 @@ az ad sp show --id 00000003-0000-0000-c000-000000000000 \
   --output table
 ```
 
-### Method 2: Azure Portal
+### Method 2: Azure Portal (For Those Who Like Clicking)
 
 1. Navigate to **Azure AD** → **App registrations**
 2. Open any app → **API permissions** → **Add a permission**
 3. Select **Microsoft Graph**
 4. Find the permission and click "Copy" next to the ID
+5. Try not to get distracted by the other 47 tabs you have open 🌐
 
 ### Common Permission IDs
 
@@ -639,21 +648,40 @@ resource "azurerm_key_vault_secret" "client_id" {
 
 ## 🔒 Security Best Practices
 
-1. **Principle of Least Privilege**: Only request necessary permissions
-2. **Use Application Permissions Sparingly**: Prefer delegated when possible
-3. **Federated Credentials**: Use OIDC instead of secrets when available
-4. **Key Vault Storage**: Always store secrets in Key Vault
-5. **Regular Rotation**: Rotate secrets every 90-180 days
-6. **Admin Consent Tracking**: Document why each permission is needed
-7. **Monitoring**: Set up alerts for permission changes and secret access
+> *"Because 'Everyone is Owner' is not a valid security model"* 🛡️
+
+1. **Principle of Least Privilege**: Only request necessary permissions  
+   *(Not "Permission of Most Convenience")*
+
+2. **Use Application Permissions Sparingly**: Prefer delegated when possible  
+   *(Your app probably doesn't need to be God Mode)*
+
+3. **Federated Credentials**: Use OIDC instead of secrets when available  
+   *(Passwords are so 2010. We're in the passwordless future now!)*
+
+4. **Key Vault Storage**: Always store secrets in Key Vault  
+   *(Not in `secrets.txt`, not in environment variables you forgot about, and definitely not in that Slack message from 2019)*
+
+5. **Regular Rotation**: Rotate secrets every 90-180 days  
+   *(Or 7 days if your Azure AD admin is particularly paranoid... they're probably right)*
+
+6. **Admin Consent Tracking**: Document why each permission is needed  
+   *(Future you will thank present you when the auditor asks)*
+
+7. **Monitoring**: Set up alerts for permission changes and secret access  
+   *(So you know when things go wrong before your manager does)* 📊
 
 ## 🤝 Contributing
 
+> *"Pull requests welcome! Bug reports... also welcome, but less exciting"* 😅
+
 Contributions welcome! Please ensure:
-- Terraform code follows HashiCorp style guidelines
-- All variables have descriptions and validation rules
-- Examples are tested and working
-- Documentation is updated
+- Terraform code follows HashiCorp style guidelines *(yes, we run `terraform fmt`)*
+- All variables have descriptions and validation rules *(because "does the thing" is not a valid description)*
+- Examples are tested and working *(on your machine AND someone else's)*
+- Documentation is updated *(code without docs is like a map without labels - technically functional but wildly frustrating)*
+
+**Pro tip**: If your PR includes a meme that explains the fix, it gets priority review 🚀
 
 ## 📄 License
 
