@@ -55,4 +55,4 @@ github_branch      = "main"
 # kubernetes_service_account  = "my-service-account"
 
 # Tags
-tags = ["ManagedByTerraform", "Environment:Production"]
+tags = { ManagedBy = "Terraform", Environment = "Production" }
