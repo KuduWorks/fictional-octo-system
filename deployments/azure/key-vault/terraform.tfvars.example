@@ -1,0 +1,60 @@
+# Required Variables
+key_vault_name      = "kv-myapp-prod-001"  # Must be globally unique (3-24 chars)
+resource_group_name = "rg-keyvault-prod"
+create_resource_group = true  # Set to true to create new resource group, set to false if you prefer to deploy the rg yourself first
+
+# Location
+location = "swedencentral"
+
+# SKU
+sku_name = "standard"  # Options: "standard" or "premium"
+
+# RBAC Role Assignments
+# Grant yourself admin access (recommended during initial setup)
+assign_deployer_admin = true
+
+# Example: Add application service principals as secrets users
+secrets_user_principal_ids = [
+  # "12345678-1234-1234-1234-123456789012",  # App Service managed identity
+  # "87654321-4321-4321-4321-210987654321",  # Function App managed identity
+]
+
+# Example: Add DevOps team members as secrets officers
+secrets_officer_principal_ids = [
+  # "abcdef12-3456-7890-abcd-ef1234567890",  # DevOps team member 1
+  # "fedcba98-7654-3210-fedc-ba9876543210",  # DevOps team member 2
+]
+
+# Security Settings
+purge_protection_enabled    = true   # Recommended for production
+soft_delete_retention_days  = 90     # 7-90 days
+purge_on_destroy           = false   # NEVER set to true in production
+
+# Network Security
+public_network_access_enabled = true  # Set to false for private-only access
+network_acls_default_action  = "Deny"
+network_acls_bypass          = "AzureServices"
+
+# Add your IP address for access during setup
+allowed_ip_addresses = [
+  # "203.0.113.0/24",  # Your office network
+  # "198.51.100.42",   # Your home IP
+]
+
+# Private Endpoint (optional)
+enable_private_endpoint = false
+# private_endpoint_subnet_id = "/subscriptions/YOUR-SUB-ID/resourceGroups/rg-network/providers/Microsoft.Network/virtualNetworks/vnet-prod/subnets/subnet-private-endpoints"
+# private_dns_zone_id = "/subscriptions/YOUR-SUB-ID/resourceGroups/rg-dns/providers/Microsoft.Network/privateDnsZones/privatelink.vaultcore.azure.net"
+
+# Monitoring
+enable_diagnostics  = true
+log_retention_days  = 30
+
+# Tags
+tags = {
+  Environment = "production"
+  ManagedBy   = "terraform"
+  Purpose     = "key-vault"
+  CostCenter  = "engineering"
+  Owner       = "platform-team"
+}
