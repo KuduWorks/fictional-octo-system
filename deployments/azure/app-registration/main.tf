@@ -155,12 +155,15 @@ resource "azuread_application_password" "app_secret" {
   application_id = azuread_application.app.id
   display_name   = "Managed by Terraform - Rotates every ${var.secret_rotation_days} days"
 
-  rotate_when_changed = {
-    rotation = time_rotating.secret_rotation.id
-  }
-
   # Secret will expire after rotation days
   end_date_relative = "${var.secret_rotation_days * 24}h"
+
+  # When the secret rotation resource changes, this triggers replacement of the application password to ensure secrets are rotated regularly for security and compliance.
+  lifecycle {
+    replace_triggered_by = [
+      time_rotating.secret_rotation.id
+    ]
+  }
 }
 
 # Optional: Certificate-based authentication (more secure than secrets)
