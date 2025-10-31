@@ -185,7 +185,7 @@ diagnostic_metrics = [
 
 ```hcl
 purge_protection_enabled   = true
-soft_delete_retention_days = 7  # Max protection
+soft_delete_retention_days = 90  # Max protection
 ```
 
 **Why?** Prevents malicious or accidental permanent deletion. Even admins can't bypass this!
