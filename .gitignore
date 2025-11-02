@@ -33,3 +33,15 @@ deployments/azure/policies/region-control/.terraform/providers/registry.terrafor
 terraform/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
 deployments/azure/policies/vm-encryption/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
 deployments/azure/policies/iso27001-crypto/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
+deployments/azure/policies/iso27001-crypto/terraform.tfstate
+deployments/azure/policies/iso27001-crypto/terraform.tfstate.backup
+deployments/azure/policies/iso27001-crypto/terraform.tfvars
+.gitignore
+deployments/azure/policies/region-control/terraform.tfstate
+deployments/azure/policies/region-control/terraform.tfstate.backup
+deployments/azure/policies/region-control/terraform.tfvars
+deployments/azure/policies/vm-encryption/terraform.tfstate
+deployments/azure/policies/vm-encryption/terraform.tfstate.backup
+deployments/azure/policies/vm-encryption/terraform.tfvars
+deployments/azure/vm-automation/terraform.tfvars
+terraform/.terraform/terraform.tfstate
