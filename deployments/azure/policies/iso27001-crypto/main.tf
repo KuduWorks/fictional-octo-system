@@ -544,3 +544,351 @@ output "custom_policy_definitions" {
     vm_encryption_audit      = azurerm_policy_definition.vm_encryption_audit.id
   }
 }
+
+# MySQL/PostgreSQL Encryption Policies
+resource "azurerm_policy_definition" "mysql_ssl_enforcement" {
+  name         = "iso27001-mysql-ssl-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - MySQL servers should enforce SSL connections"
+  description  = "Ensures MySQL servers require SSL/TLS for connections"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.DBforMySQL/servers"
+        },
+        {
+          field     = "Microsoft.DBforMySQL/servers/sslEnforcement"
+          notEquals = "Enabled"
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+resource "azurerm_policy_definition" "postgresql_ssl_enforcement" {
+  name         = "iso27001-postgresql-ssl-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - PostgreSQL servers should enforce SSL connections"
+  description  = "Ensures PostgreSQL servers require SSL/TLS for connections"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.DBforPostgreSQL/servers"
+        },
+        {
+          field     = "Microsoft.DBforPostgreSQL/servers/sslEnforcement"
+          notEquals = "Enabled"
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# Cosmos DB Encryption
+resource "azurerm_policy_definition" "cosmosdb_cmk_required" {
+  name         = "iso27001-cosmosdb-cmk-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Cosmos DB should use customer-managed keys"
+  description  = "Audits Cosmos DB accounts without customer-managed key encryption"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.DocumentDB/databaseAccounts"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.DocumentDB/databaseAccounts/keyVaultKeyUri"
+              exists = "false"
+            },
+            {
+              field  = "Microsoft.DocumentDB/databaseAccounts/keyVaultKeyUri"
+              equals = ""
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# API Management TLS Policy
+resource "azurerm_policy_definition" "apim_tls_version" {
+  name         = "iso27001-apim-tls-12-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - API Management should use TLS 1.2 or higher"
+  description  = "Ensures API Management services use secure TLS versions"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.ApiManagement/service"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.ApiManagement/service/customProperties.Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10"
+              equals = "true"
+            },
+            {
+              field  = "Microsoft.ApiManagement/service/customProperties.Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11"
+              equals = "true"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# App Service TLS Policy
+resource "azurerm_subscription_policy_assignment" "app_service_tls_12" {
+  name                 = "iso27001-appservice-tls"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/f0e6e85b-9b9f-4a4b-b67b-f730d42ac38c"
+  display_name         = "ISO 27001 - App Service apps should use TLS 1.2 or higher"
+  description          = "Enforces minimum TLS version for App Service apps"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+}
+
+# Function App TLS Policy
+resource "azurerm_subscription_policy_assignment" "function_app_tls_12" {
+  name                 = "iso27001-function-tls"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/f9d614c5-c173-4d56-95a7-b4437057d193"
+  display_name         = "ISO 27001 - Function Apps should use TLS 1.2 or higher"
+  description          = "Enforces minimum TLS version for Function Apps"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+}
+
+# Service Bus CMK Policy
+resource "azurerm_policy_definition" "servicebus_cmk_required" {
+  name         = "iso27001-servicebus-cmk-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Service Bus namespaces should use customer-managed keys"
+  description  = "Audits Service Bus namespaces without CMK encryption"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.ServiceBus/namespaces"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.ServiceBus/namespaces/encryption.keySource"
+              notEquals = "Microsoft.KeyVault"
+            },
+            {
+              field  = "Microsoft.ServiceBus/namespaces/encryption.keySource"
+              exists = "false"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# Event Hub CMK Policy
+resource "azurerm_policy_definition" "eventhub_cmk_required" {
+  name         = "iso27001-eventhub-cmk-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Event Hub namespaces should use customer-managed keys"
+  description  = "Audits Event Hub namespaces without CMK encryption"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.EventHub/namespaces"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.EventHub/namespaces/encryption.keySource"
+              notEquals = "Microsoft.KeyVault"
+            },
+            {
+              field  = "Microsoft.EventHub/namespaces/encryption.keySource"
+              exists = "false"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# Container Registry CMK Policy
+resource "azurerm_policy_definition" "acr_cmk_required" {
+  name         = "iso27001-acr-cmk-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Container registries should use customer-managed keys"
+  description  = "Audits container registries without CMK encryption"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.ContainerRegistry/registries"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.ContainerRegistry/registries/encryption.status"
+              notEquals = "enabled"
+            },
+            {
+              field  = "Microsoft.ContainerRegistry/registries/encryption.status"
+              exists = "false"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# Azure Machine Learning Workspace Encryption
+resource "azurerm_policy_definition" "ml_workspace_cmk" {
+  name         = "iso27001-ml-workspace-cmk"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - ML workspaces should use customer-managed keys"
+  description  = "Audits Machine Learning workspaces without CMK encryption"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.MachineLearningServices/workspaces"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.MachineLearningServices/workspaces/encryption.status"
+              notEquals = "Enabled"
+            },
+            {
+              field  = "Microsoft.MachineLearningServices/workspaces/encryption.status"
+              exists = "false"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "audit"
+    }
+  })
+}
+
+# Cognitive Services CMK
+resource "azurerm_subscription_policy_assignment" "cognitive_services_cmk" {
+  name                 = "iso27001-cognitive-cmk"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/67121cc7-ff39-4ab8-b7e3-95b84dab487d"
+  display_name         = "ISO 27001 - Cognitive Services should use customer-managed keys"
+  description          = "Enforces CMK encryption for Cognitive Services accounts"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+}

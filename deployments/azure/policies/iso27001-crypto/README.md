@@ -72,25 +72,47 @@ Then deploy to assess current compliance before enforcing.
 ### 2. SQL Database Policies (1 policy)
 - **TDE with CMK** - Require customer-managed Transparent Data Encryption
 
-### 3. Key Vault Policies (2 policies)
+### 3. Database Encryption Policies (4 policies) **NEW**
+- **MySQL SSL Enforcement** - Require SSL/TLS for MySQL connections
+- **PostgreSQL SSL Enforcement** - Require SSL/TLS for PostgreSQL connections
+- **Cosmos DB CMK** - Require customer-managed keys for Cosmos DB
+- **Azure Database for MariaDB SSL** - Enforce SSL connections
+
+### 4. Key Vault Policies (2 policies)
 - **Soft Delete Enabled** - Protect against accidental deletion
 - **Purge Protection** - Prevent permanent key deletion
 
-### 4. Disk Encryption Policies (1 policy)
+### 5. Disk Encryption Policies (1 policy)
 - **Managed Disks with CMK** - Require disk encryption sets
 
-### 5. Data Explorer (Kusto) Policies (2 policies)
+### 6. Data Explorer (Kusto) Policies (2 policies)
 - **Cluster Disk Encryption** - Enable disk encryption on clusters
 - **Customer-Managed Keys** - Require CMK for Kusto databases
 
-### 6. AKS Policies (2 policies)
+### 7. AKS Policies (2 policies)
 - **Azure Policy Add-on** - Ensure policy enforcement in clusters
 - **Host Encryption** - Require encryption at host for node pools
 
-### 7. Virtual Machine Policies (1 policy)
+### 8. Virtual Machine Policies (1 policy)
 - **VM Encryption Audit** - Require VMs to have either EncryptionAtHost OR Azure Disk Encryption (ADE)
 
-**Total: 12 policies** (7 built-in, 5 custom)
+### 9. Networking & Communication Encryption (3 policies) **NEW**
+- **API Management TLS 1.2+** - Enforce modern TLS versions for APIM
+- **App Service TLS 1.2+** - Require TLS 1.2 or higher for web apps
+- **Function App TLS 1.2+** - Require TLS 1.2 or higher for functions
+
+### 10. Messaging Services Encryption (2 policies) **NEW**
+- **Service Bus CMK** - Require customer-managed keys for Service Bus
+- **Event Hub CMK** - Require customer-managed keys for Event Hub
+
+### 11. Container Services Encryption (1 policy) **NEW**
+- **Container Registry CMK** - Require CMK for Azure Container Registry
+
+### 12. AI & Machine Learning Encryption (2 policies) **NEW**
+- **ML Workspace CMK** - Require CMK for Machine Learning workspaces
+- **Cognitive Services CMK** - Require CMK for Cognitive Services
+
+**Total: 24 policies** (10 built-in, 14 custom)
 
 ## Configuration
 
