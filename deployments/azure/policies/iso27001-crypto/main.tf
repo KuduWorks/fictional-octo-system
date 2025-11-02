@@ -706,6 +706,12 @@ resource "azurerm_subscription_policy_assignment" "function_app_tls_12" {
     control    = "A.10.1.1"
     assignedBy = "Terraform"
   })
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  location = "swedencentral"  # Required when identity is specified
 }
 
 # Service Bus CMK Policy
