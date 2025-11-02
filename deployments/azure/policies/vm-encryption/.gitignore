@@ -1,52 +1,65 @@
-# Terraform state files
+# ==================== TERRAFORM STATE FILES ====================
+# These contain sensitive subscription IDs, tenant IDs, and resource configurations
 *.tfstate
 *.tfstate.*
 *.tfstate.backup
+terraform.tfstate
+terraform.tfstate.backup
 
-# Terraform directories
+# ==================== TERRAFORM DIRECTORIES ====================
 .terraform/
 .terraform.lock.hcl
 
-# Sensitive variable files
+# ==================== SENSITIVE VARIABLES ====================
+# Variable files that may contain secrets, keys, or sensitive configuration
 terraform.tfvars
 secrets.tfvars
 *.auto.tfvars
 
-# Override files
+# ==================== OVERRIDE FILES ====================
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Terraform plan files
+# ==================== TERRAFORM PLANS ====================
 *.tfplan
 *.tfplan.json
 
-# Crash logs
-crash.log
-crash.*.log
-
-# Azure credentials
+# ==================== AZURE CREDENTIALS ====================
+# Certificate and key files
 *.pem
 *.key
 *.crt
 *.pfx
+
+# Azure CLI credentials
 .azure/
 
-# Backup files
+# ==================== BACKEND CONFIGURATION ====================
+# Backend config may contain storage account keys
+backend.tf
 backend.tf.backup
+
+# ==================== CRASH LOGS ====================
+crash.log
+crash.*.log
+
+# ==================== BACKUP FILES ====================
 *.backup
 *.bak
 
-# IDE
+# ==================== IDE / EDITOR ====================
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# ==================== OS FILES ====================
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Logs
+# ==================== LOGS ====================
 *.log
+logs/

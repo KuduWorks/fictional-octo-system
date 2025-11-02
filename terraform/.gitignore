@@ -1,59 +1,70 @@
-# Terraform state files
+# ==================== TERRAFORM STATE FILES ====================
+# These contain sensitive subscription IDs, tenant IDs, and resource configurations
 *.tfstate
 *.tfstate.*
 *.tfstate.backup
+terraform.tfstate
+terraform.tfstate.backup
 
-# Terraform directories
+# ==================== TERRAFORM DIRECTORIES ====================
 .terraform/
 .terraform.lock.hcl
 
-# Backend configuration with sensitive information
+# ==================== BACKEND CONFIGURATION ====================
+# Backend config contains storage account keys and connection strings
 backend.tf
 
-# Sensitive variable files
+# ==================== SENSITIVE VARIABLES ====================
+# Variable files that may contain secrets, keys, or sensitive configuration
 terraform.tfvars
 secrets.tfvars
 *.auto.tfvars
 
-# Override files
+# ==================== OVERRIDE FILES ====================
 override.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
 
-# Terraform plan files
+# ==================== TERRAFORM PLANS ====================
 *.tfplan
 *.tfplan.json
 
-# Crash logs
-crash.log
-crash.*.log
-
-# Azure credentials and certificates
+# ==================== AZURE CREDENTIALS ====================
+# Certificate and key files
 *.pem
 *.key
 *.crt
 *.pfx
+
+# Azure CLI credentials and tokens
 .azure/
 credentials.json
 
-# Backup files
+# ==================== CRASH LOGS ====================
+crash.log
+crash.*.log
+
+# ==================== BACKUP FILES ====================
 *.backup
 *.bak
 
-# IDE
+# ==================== IDE / EDITOR ====================
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# OS
+# ==================== OS FILES ====================
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Logs
+# ==================== LOGS ====================
 *.log
+logs/
 
-# Azure Functions (if present)
+# ==================== AZURE FUNCTIONS ====================
+# If you have Azure Functions in this directory
 local.settings.json
 .python_packages/
