@@ -33,3 +33,77 @@ deployments/azure/policies/region-control/.terraform/providers/registry.terrafor
 terraform/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
 deployments/azure/policies/vm-encryption/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
 deployments/azure/policies/iso27001-crypto/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
+
+# Jekyll - GitHub Pages
+_site/
+.sass-cache/
+.jekyll-cache/
+.jekyll-metadata
+/vendor
+Gemfile.lock
+
+# Terraform
+**/*.tfstate
+**/*.tfstate.*
+**/*.tfstate.backup
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfvars
+**/override.tf
+**/override.tf.json
+**/*_override.tf
+**/*_override.tf.json
+**/*.tfplan
+**/terraform/backend.tf
+
+# Azure credentials and sensitive files
+**/*.pem
+**/*.key
+**/*.crt
+**/*.pfx
+**/secrets.auto.tfvars
+**/credentials.json
+**/.azure/
+
+# Crash logs
+**/crash.log
+**/crash.*.log
+
+# IDE
+.vscode/
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+*~
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Executables
+*.exe
+*.dll
+
+# Logs
+*.log
+logs/
+
+# Backup files
+*.bak
+*.backup
+*~
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Azure Functions (if applicable)
+local.settings.json
+__blobstorage__
+__queuestorage__
+__azurite_db*__.json
+.python_packages/

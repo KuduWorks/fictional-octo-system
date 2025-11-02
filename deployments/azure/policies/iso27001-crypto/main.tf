@@ -548,7 +548,6 @@ output "custom_policy_definitions" {
     mysql_ssl_enforcement    = azurerm_policy_definition.mysql_ssl_enforcement.id
     postgresql_ssl_enforcement = azurerm_policy_definition.postgresql_ssl_enforcement.id
     cosmosdb_cmk_required    = azurerm_policy_definition.cosmosdb_cmk_required.id
-    apim_tls_version         = azurerm_policy_definition.apim_tls_version.id
     servicebus_cmk_required  = azurerm_policy_definition.servicebus_cmk_required.id
     eventhub_cmk_required    = azurerm_policy_definition.eventhub_cmk_required.id
     acr_cmk_required         = azurerm_policy_definition.acr_cmk_required.id
@@ -671,60 +670,6 @@ resource "azurerm_subscription_policy_assignment" "cosmosdb_cmk_assignment" {
     assignedBy = "Terraform"
   })
   depends_on = [azurerm_policy_definition.cosmosdb_cmk_required]
-}
-
-# API Management TLS Policy
-resource "azurerm_policy_definition" "apim_tls_version" {
-  name         = "iso27001-apim-tls-12-required"
-  policy_type  = "Custom"
-  mode         = "Indexed"
-  display_name = "ISO 27001 - API Management should use TLS 1.2 or higher"
-  description  = "Ensures API Management services use secure TLS versions"
-
-  metadata = jsonencode({
-    category = "ISO 27001 - Cryptography"
-    control  = "A.10.1.1"
-  })
-
-  policy_rule = jsonencode({
-    if = {
-      allOf = [
-        {
-          field  = "type"
-          equals = "Microsoft.ApiManagement/service"
-        },
-        {
-          anyOf = [
-            {
-              field  = "Microsoft.ApiManagement/service/customProperties.Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls10"
-              equals = "true"
-            },
-            {
-              field  = "Microsoft.ApiManagement/service/customProperties.Microsoft.WindowsAzure.ApiManagement.Gateway.Security.Protocols.Tls11"
-              equals = "true"
-            }
-          ]
-        }
-      ]
-    }
-    then = {
-      effect = "audit"
-    }
-  })
-}
-
-resource "azurerm_subscription_policy_assignment" "apim_tls_version_assignment" {
-  name                 = "iso27001-apim-tls-12-required"
-  policy_definition_id = azurerm_policy_definition.apim_tls_version.id
-  subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - API Management should use TLS 1.2 or higher"
-  description          = "Ensures API Management services use secure TLS versions"
-  metadata = jsonencode({
-    category   = "ISO 27001 - Cryptography"
-    control    = "A.10.1.1"
-    assignedBy = "Terraform"
-  })
-  depends_on = [azurerm_policy_definition.apim_tls_version]
 }
 
 # App Service TLS Policy

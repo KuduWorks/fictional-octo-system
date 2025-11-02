@@ -1,0 +1,59 @@
+# Terraform state files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+
+# Terraform directories
+.terraform/
+.terraform.lock.hcl
+
+# Backend configuration with sensitive information
+backend.tf
+
+# Sensitive variable files
+terraform.tfvars
+secrets.tfvars
+*.auto.tfvars
+
+# Override files
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Terraform plan files
+*.tfplan
+*.tfplan.json
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Azure credentials and certificates
+*.pem
+*.key
+*.crt
+*.pfx
+.azure/
+credentials.json
+
+# Backup files
+*.backup
+*.bak
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Azure Functions (if present)
+local.settings.json
+.python_packages/
