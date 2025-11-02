@@ -39,3 +39,6 @@ deployments/azure/policies/region-control/terraform.tfstate.backup
 deployments/azure/policies/vm-encryption/terraform.tfstate
 deployments/azure/policies/vm-encryption/terraform.tfstate.backup
 terraform/.terraform/terraform.tfstate
+
+# Never ignore the .gitignore file itself
+!.gitignore
