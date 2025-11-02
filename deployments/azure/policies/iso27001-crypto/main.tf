@@ -676,7 +676,7 @@ resource "azurerm_subscription_policy_assignment" "cosmosdb_cmk_assignment" {
 resource "azurerm_subscription_policy_assignment" "app_service_tls_12" {
   name                 = "iso27001-appservice-tls"
   subscription_id      = local.subscription_id
-  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/f0e6e85b-9b9f-4a4b-b67b-f730d42f1b0b"  # Verify this ID exists
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/f0e6e85b-9b9f-4a4b-b67b-f730d42f1b0b"
   display_name         = "ISO 27001 - App Service apps should use TLS 1.2 or higher"
   description          = "Enforces minimum TLS version for App Service apps"
 
