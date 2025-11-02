@@ -1,4 +1,5 @@
 # Terraform state files
+# Do NOT commit terraform.tfstate or terraform.tfstate.backup files. They are ignored by this file and must not be tracked in git.
 *.tfstate
 *.tfstate.*
 *.tfstate.backup
