@@ -512,7 +512,7 @@ output "subscription_id" {
 }
 
 output "enforcement_mode" {
-  description = "The enforcement mode of the policies"
+  description = "The enforcement mode variable value (note: only applies to policies where 'enforce' is set using this variable)"
   value       = var.enforcement_mode
 }
 
@@ -531,6 +531,9 @@ output "policy_assignments" {
     aks_azure_policy_addon       = azurerm_subscription_policy_assignment.aks_azure_policy_addon.id
     aks_encryption_at_host       = azurerm_subscription_policy_assignment.aks_encryption_at_host_assignment.id
     vm_encryption_audit          = azurerm_subscription_policy_assignment.vm_encryption_audit.id
+    app_service_tls_12           = azurerm_subscription_policy_assignment.app_service_tls_12.id
+    function_app_tls_12          = azurerm_subscription_policy_assignment.function_app_tls_12.id
+    cognitive_services_cmk       = azurerm_subscription_policy_assignment.cognitive_services_cmk.id
   }
 }
 
@@ -542,6 +545,14 @@ output "custom_policy_definitions" {
     kusto_cmk_required       = azurerm_policy_definition.kusto_cmk_required.id
     aks_encryption_at_host   = azurerm_policy_definition.aks_encryption_at_host.id
     vm_encryption_audit      = azurerm_policy_definition.vm_encryption_audit.id
+    mysql_ssl_enforcement    = azurerm_policy_definition.mysql_ssl_enforcement.id
+    postgresql_ssl_enforcement = azurerm_policy_definition.postgresql_ssl_enforcement.id
+    cosmosdb_cmk_required    = azurerm_policy_definition.cosmosdb_cmk_required.id
+    apim_tls_version         = azurerm_policy_definition.apim_tls_version.id
+    servicebus_cmk_required  = azurerm_policy_definition.servicebus_cmk_required.id
+    eventhub_cmk_required    = azurerm_policy_definition.eventhub_cmk_required.id
+    acr_cmk_required         = azurerm_policy_definition.acr_cmk_required.id
+    ml_workspace_cmk         = azurerm_policy_definition.ml_workspace_cmk.id
   }
 }
 
@@ -648,6 +659,20 @@ resource "azurerm_policy_definition" "cosmosdb_cmk_required" {
   })
 }
 
+resource "azurerm_subscription_policy_assignment" "cosmosdb_cmk_assignment" {
+  name                 = "iso27001-cosmosdb-cmk-required"
+  policy_definition_id = azurerm_policy_definition.cosmosdb_cmk_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Cosmos DB should use customer-managed keys"
+  description          = "Audits Cosmos DB accounts without customer-managed key encryption"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.cosmosdb_cmk_required]
+}
+
 # API Management TLS Policy
 resource "azurerm_policy_definition" "apim_tls_version" {
   name         = "iso27001-apim-tls-12-required"
@@ -686,6 +711,20 @@ resource "azurerm_policy_definition" "apim_tls_version" {
       effect = "audit"
     }
   })
+}
+
+resource "azurerm_subscription_policy_assignment" "apim_tls_version_assignment" {
+  name                 = "iso27001-apim-tls-12-required"
+  policy_definition_id = azurerm_policy_definition.apim_tls_version.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - API Management should use TLS 1.2 or higher"
+  description          = "Ensures API Management services use secure TLS versions"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.apim_tls_version]
 }
 
 # App Service TLS Policy
@@ -758,6 +797,20 @@ resource "azurerm_policy_definition" "servicebus_cmk_required" {
   })
 }
 
+resource "azurerm_subscription_policy_assignment" "servicebus_cmk_assignment" {
+  name                 = "iso27001-servicebus-cmk-required"
+  policy_definition_id = azurerm_policy_definition.servicebus_cmk_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Service Bus namespaces should use customer-managed keys"
+  description          = "Audits Service Bus namespaces without CMK encryption"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.servicebus_cmk_required]
+}
+
 # Event Hub CMK Policy
 resource "azurerm_policy_definition" "eventhub_cmk_required" {
   name         = "iso27001-eventhub-cmk-required"
@@ -796,6 +849,20 @@ resource "azurerm_policy_definition" "eventhub_cmk_required" {
       effect = "audit"
     }
   })
+}
+
+resource "azurerm_subscription_policy_assignment" "eventhub_cmk_assignment" {
+  name                 = "iso27001-eventhub-cmk-required"
+  policy_definition_id = azurerm_policy_definition.eventhub_cmk_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Event Hub namespaces should use customer-managed keys"
+  description          = "Audits Event Hub namespaces without CMK encryption"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.eventhub_cmk_required]
 }
 
 # Container Registry CMK Policy
@@ -838,6 +905,20 @@ resource "azurerm_policy_definition" "acr_cmk_required" {
   })
 }
 
+resource "azurerm_subscription_policy_assignment" "acr_cmk_assignment" {
+  name                 = "iso27001-acr-cmk-required"
+  policy_definition_id = azurerm_policy_definition.acr_cmk_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Container registries should use customer-managed keys"
+  description          = "Audits container registries without CMK encryption"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.acr_cmk_required]
+}
+
 # Azure Machine Learning Workspace Encryption
 resource "azurerm_policy_definition" "ml_workspace_cmk" {
   name         = "iso27001-ml-workspace-cmk"
@@ -876,6 +957,20 @@ resource "azurerm_policy_definition" "ml_workspace_cmk" {
       effect = "audit"
     }
   })
+}
+
+resource "azurerm_subscription_policy_assignment" "ml_workspace_cmk_assignment" {
+  name                 = "iso27001-ml-workspace-cmk"
+  policy_definition_id = azurerm_policy_definition.ml_workspace_cmk.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - ML workspaces should use customer-managed keys"
+  description          = "Audits Machine Learning workspaces without CMK encryption"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.ml_workspace_cmk]
 }
 
 # Cognitive Services CMK
