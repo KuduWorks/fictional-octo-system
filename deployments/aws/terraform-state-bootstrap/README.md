@@ -5,8 +5,66 @@ This directory contains a one-time setup to create the S3 bucket and DynamoDB ta
 ## Why Bootstrap?
 
 You have a chicken-and-egg problem: You need an S3 bucket to store state, but you need Terraform to create the bucket. This module solves that by creating the bucket first without a backend, then you migrate to using it.
+## Setup Process
 
-## Setup Process (✅ COMPLETED)
+This is a one-time setup that creates the foundational infrastructure for storing Terraform state in AWS.
+
+### Prerequisites
+
+- AWS CLI configured with appropriate permissions
+- Terraform installed
+- Access to create S3 buckets and DynamoDB tables
+
+### Step 1: Create the State Storage
+
+```bash
+cd deployments/aws/terraform-state-bootstrap/
+
+# Initialize (uses local state initially)
+terraform init
+
+# Review the plan
+terraform plan
+
+# Create the S3 bucket and DynamoDB table
+terraform apply
+```
+
+This will create:
+- **S3 Bucket**: `fictional-octo-system-tfstate-<your-account-id>` (encrypted, versioned)
+- **DynamoDB Table**: `terraform-state-locks` (for state locking)
+- **IAM Policy**: `TerraformStateAccess` (for access control)
+
+### Step 2: Migrate Bootstrap State to S3
+
+After creating the bucket, migrate the bootstrap module's state to S3:
+
+```bash
+# Uncomment the backend block in main.tf
+# Then migrate the state
+terraform init -migrate-state
+```
+
+The bootstrap state will now be stored in S3 at `bootstrap/terraform.tfstate`.
+
+### Step 3: Configure Other Modules
+
+Other AWS modules can now use the S3 backend. Example for the encryption baseline:
+
+```bash
+cd ../policies/encryption-baseline/
+
+# Copy and configure variables
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars with your settings
+
+# Initialize with S3 backend
+terraform init
+
+# Deploy
+terraform plan
+terraform apply
+```
 
 ### Step 1: Create the State Storage ✅
 
