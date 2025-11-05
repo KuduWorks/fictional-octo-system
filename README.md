@@ -1,18 +1,24 @@
 # Fictional Octo System
 
-> *"Because managing Azure infrastructure should feel less like wrestling an octopus and more like conducting an orchestra"* 🐙🎵
+> *"Because managing multi-cloud infrastructure should feel less like wrestling an octopus and more like conducting an orchestra"* 🐙🎵
 
-An Azure infrastructure deployment repository for managing cloud infrastructure resources, monitoring, and security configurations.
+A multi-cloud infrastructure deployment repository for managing Azure and AWS resources, monitoring, and security configurations. *(Why choose one cloud when you can complicate your life with both?)* ☁️☁️
 
 ## Overview
 
-This repository contains Infrastructure as Code (IaC) templates and configurations for deploying and managing Azure resources, with a focus on secure storage, monitoring, and virtual networking components. *(In other words: Everything you need to run Azure like a boss, minus the existential dread of manual deployments)*
+This repository contains Infrastructure as Code (IaC) templates and configurations for deploying and managing both **Azure** and **AWS** resources, with a focus on secure storage, monitoring, and virtual networking components. *(In other words: Everything you need to run multi-cloud infrastructure like a boss, with double the complexity and double the buzzwords)*
+
+**Multi-Cloud Strategy**: We deploy similar infrastructure patterns across both Azure and AWS, allowing for:
+- 🎯 **Vendor flexibility** *(when one cloud provider has an outage, you have... another cloud provider with an outage)*
+- 💼 **Team skill development** *(because learning one cloud platform wasn't challenging enough)*
+- 📊 **Cost optimization** *(use the cheaper option for each service, if you can figure out their pricing)*
+- 🌍 **Geographic reach** *(Azure in some places, AWS in others, sanity nowhere)*
 
 ## Repository Structure
 
 ```
 fictional-octo-system/
-├── terraform/                    # Core Terraform configurations
+├── terraform/                    # Core Terraform configurations (Azure)
 │   ├── main.tf                  # Core infrastructure setup
 │   ├── variables.tf             # Variable definitions
 │   ├── monitoring.tf            # Azure Monitor configuration
@@ -22,23 +28,39 @@ fictional-octo-system/
 │   ├── QUICKSTART_DYNAMIC_IP.md # Quick start guide for dynamic IPs
 │   ├── TERRAFORM_STATE_ACCESS.md # Comprehensive state access guide
 │   └── README.md                # Terraform-specific documentation
-├── deployments/azure/
-│   ├── app-registration/        # Azure AD app registration automation
-│   ├── key-vault/               # Azure Key Vault with RBAC
-│   ├── vm-automation/           # Automated VM deployment with Bastion
-│   └── policies/                # Azure Policy templates (ISO 27001)
+├── deployments/
+│   ├── azure/                   # 🔵 Azure Infrastructure
+│   │   ├── app-registration/    # Azure AD app registration automation
+│   │   ├── key-vault/           # Azure Key Vault with RBAC
+│   │   ├── vm-automation/       # Automated VM deployment with Bastion
+│   │   └── policies/            # Azure Policy templates (ISO 27001)
+│   └── aws/                     # 🟠 AWS Infrastructure
+│       ├── terraform-state-bootstrap/  # S3 + DynamoDB for state management
+│       ├── policies/            # AWS Config rules for compliance
+│       ├── iam/                 # IAM roles and OIDC providers
+│       ├── kms/                 # KMS key management
+│       ├── secrets/             # Secrets Manager configuration
+│       ├── compute/             # EC2 Systems Manager automation
+│       ├── networking/          # VPC and networking components
+│       └── README.md            # AWS-specific documentation
 ├── .github/                     # GitHub Actions workflows and templates
 │   └── workflows/               # CI/CD pipeline definitions
 ├── LICENSE                      # MIT License
 ├── SECURITY.md                  # Security policy
-└── README.md                   # This file
+└── README.md                   # This file (you are here 📍)
 ```
 
 ## Features
 
-> *"All the things you wish Azure did automatically, now actually automated"* 🚀
+> *"All the things you wish Azure AND AWS did automatically, now actually automated"* 🚀
 
-### Infrastructure Management
+### Multi-Cloud Infrastructure
+- **Dual Cloud Deployment**: Parallel infrastructure patterns in Azure and AWS *(because one cloud provider is too easy)*
+- **Unified Terraform State**: Separate state backends per cloud (Azure Blob Storage for Azure, S3 for AWS) *(organized chaos)*
+- **Region Strategy**: Stockholm (eu-north-1) for AWS, matching Azure's Northern Europe presence *(keeping latency low and Finns happy)*
+- **Policy Mirroring**: ISO 27001 compliance patterns across both clouds *(double the compliance, double the fun)*
+
+### Infrastructure Management (Azure)
 - **Smart IP Management**: Automatic IP whitelisting for dynamic IPs *(because nobody likes manually updating firewall rules at 9 PM)*
 - **Secure VM Deployment**: Private VMs with Azure Bastion access *(no public IPs here, we're not savages)*
 - **Automated Scheduling**: VM start/stop automation (7 AM/7 PM Finnish time) *(saving money while you sleep)*
@@ -62,10 +84,24 @@ fictional-octo-system/
 ### Monitoring
 > *"If it's not monitored, it doesn't exist (until it breaks at 3 AM)"* 📊
 
+**Azure:**
 - Log Analytics Workspace *(all your logs in one place, like a well-organized filing cabinet)*
 - Storage metrics collection *(because storage costs can sneak up on you)*
 - Availability monitoring *(the early warning system you actually need)*
 - Alert configurations *(emails that matter, not spam)*
+
+**AWS:**
+- AWS Config for compliance monitoring *(the robot that checks your homework)*
+- CloudWatch for logs and metrics *(like Log Analytics, but with more confusing pricing)*
+- SNS for alerting *(because your phone needs more notifications at 3 AM)*
+- Config rules for encryption enforcement *(encrypt all the things!)*
+
+### Infrastructure Management (AWS)
+- **Terraform State Backend**: S3 bucket with DynamoDB locking in eu-north-1 *(because Stockholm > Virginia for Finnish users)*
+- **AWS Config Rules**: Automated compliance checking (encryption, HTTPS, KMS) *(robots enforcing security policies)*
+- **IAM OIDC Integration**: Passwordless GitHub Actions authentication *(coming soon™)*
+- **Secrets Manager**: AWS equivalent to Key Vault *(planned)*
+- **Systems Manager**: EC2 automation and patch management *(planned)*
 
 ## Getting Started
 
@@ -153,11 +189,18 @@ terraform apply
 ```
 
 📖 **Detailed guides**: 
+
+**Azure Deployments:**
 - [Dynamic IP Quick Start](terraform/QUICKSTART_DYNAMIC_IP.md)
 - [VM Automation Guide](deployments/azure/vm-automation/README.md)
 - [Azure AD App Registration](deployments/azure/app-registration/README.md)
 - [Azure Key Vault with RBAC](deployments/azure/key-vault/README.md)
 - [Terraform State Access](terraform/TERRAFORM_STATE_ACCESS.md)
+
+**AWS Deployments:**
+- [AWS Infrastructure Overview](deployments/aws/README.md) *(Start here for AWS setup)*
+- [Terraform State Bootstrap](deployments/aws/terraform-state-bootstrap/README.md) *(Do this first)*
+- [Encryption Baseline Policies](deployments/aws/policies/encryption-baseline/README.md)
 
 ### Security Features
 
@@ -199,11 +242,27 @@ Contributions are welcome! Please read our [Security Policy](SECURITY.md) before
 
 > *"Best practices: Because 'it works on my machine' is not a deployment strategy"* 🌟
 
-- **Use wrapper scripts** (`tf.sh`/`tf.ps1`) instead of direct `terraform` commands  
-  *(they're there for a reason, not just decoration)*
+### General (Both Clouds)
 
 - Store sensitive data in `terraform.tfvars` (not in version control)  
   *(if I see secrets in your git history, we're having a conversation)*
+
+- Keep Terraform provider versions up to date  
+  *(version 1.0 from 2017 is not "stable", it's ancient)*
+
+- Review monitoring thresholds and schedules regularly  
+  *(what made sense in January is chaos by December)*
+
+- Use `.gitignore` to exclude state files and secrets  
+  *(each module has one, use it)*
+
+- Always run `terraform plan` before `apply`  
+  *(surprises are for birthdays, not production deployments)*
+
+### Azure-Specific
+
+- **Use wrapper scripts** (`tf.sh`/`tf.ps1`) instead of direct `terraform` commands  
+  *(they're there for a reason, not just decoration)*
 
 - Use Azure CLI authentication with dynamic IP management  
   *(because your IP changes more than your mind)*
@@ -211,14 +270,22 @@ Contributions are welcome! Please read our [Security Policy](SECURITY.md) before
 - **Clean up old IPs** periodically using `cleanup-old-ips.sh`  
   *(digital hoarding is still hoarding)*
 
-- Keep Terraform provider versions up to date  
-  *(version 1.0 from 2017 is not "stable", it's ancient)*
-
-- Review monitoring thresholds and VM schedules regularly  
-  *(what made sense in January is chaos by December)*
-
 - Use Azure Bastion for secure VM access (no public IPs)  
   *(exposing port 22 to the internet is how you make friends with hackers)*
+
+### AWS-Specific
+
+- **Always deploy state backend first** (terraform-state-bootstrap)  
+  *(you need somewhere to store your state before creating other resources)*
+
+- Use `eu-north-1` (Stockholm) region for consistency  
+  *(unless you have a good reason, stick with the plan)*
+
+- Leverage AWS Config for compliance automation  
+  *(let robots enforce your security policies)*
+
+- Use IAM roles with OIDC instead of long-lived credentials  
+  *(passwordless is the way, grasshopper)*
 
 ## License
 
