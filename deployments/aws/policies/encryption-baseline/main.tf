@@ -135,7 +135,7 @@ resource "aws_iam_role_policy_attachment" "config_policy" {
 
 # S3 bucket for Config delivery
 resource "aws_s3_bucket" "config_bucket" {
-  bucket = "aws-config-encryption-baseline-${local.account_id}-${local.region}"
+  bucket = "aws-config-encryption-baseline-${local.account_id}"
 }
 
 resource "aws_s3_bucket_server_side_encryption_configuration" "config_bucket_encryption" {
