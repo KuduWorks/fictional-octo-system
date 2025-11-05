@@ -9,10 +9,23 @@ terraform {
   }
   
   # Store this module's state in S3
+  # ⚠️ IMPORTANT: Backend configuration does not support variables.
+  # You MUST manually update the bucket name below with your AWS account ID
+  # before migrating state to S3.
+  #
+  # Steps:
+  # 1. First run: Comment out this entire backend block and run `terraform init`
+  #    and `terraform apply` to create the S3 bucket (state stored locally).
+  # 2. After bucket creation: Update the bucket name below to match your
+  #    actual bucket name (which includes your AWS account ID).
+  # 3. Uncomment this block and run `terraform init -migrate-state` to move
+  #    the local state to S3.
+  #
+  # Example bucket name format: fictional-octo-system-tfstate-<YOUR-ACCOUNT-ID>
   backend "s3" {
-    bucket         = "fictional-octo-system-tfstate-494367313227"
+    bucket         = "fictional-octo-system-tfstate-494367313227"  # ⚠️ UPDATE THIS
     key            = "bootstrap/terraform.tfstate"
-    region         = "eu-north-1"
+    region         = "eu-north-1"  # ⚠️ Update if using a different region
     encrypt        = true
     dynamodb_table = "terraform-state-locks"
   }
