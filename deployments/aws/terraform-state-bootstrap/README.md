@@ -21,7 +21,7 @@ terraform apply
 ```
 
 This created:
-- **S3 Bucket**: `fictional-octo-system-tfstate-494367313227` (encrypted, versioned, in **eu-north-1 Stockholm**)
+- **S3 Bucket**: `fictional-octo-system-tfstate-<account-id>` (encrypted, versioned, in **eu-north-1 Stockholm**)
 - **DynamoDB Table**: `terraform-state-locks` (for state locking, in **eu-north-1**)
 - **IAM Policy**: `TerraformStateAccess` (for access control)
 
