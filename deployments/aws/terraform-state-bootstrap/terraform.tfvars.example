@@ -1,0 +1,17 @@
+# AWS Configuration
+# eu-north-1 (Stockholm) is closest to Finland
+# Other EU options: eu-west-1 (Ireland), eu-central-1 (Frankfurt)
+aws_region = "eu-north-1"
+
+# S3 Bucket (leave empty for auto-generated name with account ID)
+state_bucket_name = ""
+
+# DynamoDB Table
+lock_table_name = "terraform-state-locks"
+
+# State Version Retention
+state_version_retention_days = 90
+
+# Optional Features
+enable_logging        = false  # Set to true for access logging
+create_access_policy  = true   # Create IAM policy for state access

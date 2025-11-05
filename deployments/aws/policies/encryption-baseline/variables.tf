@@ -1,0 +1,29 @@
+variable "aws_region" {
+  description = "AWS region to deploy resources"
+  type        = string
+  default     = "us-east-1"
+}
+
+variable "environment" {
+  description = "Environment name (e.g., dev, staging, prod)"
+  type        = string
+  default     = "prod"
+}
+
+variable "config_recorder_name" {
+  description = "Name of the AWS Config recorder"
+  type        = string
+  default     = "encryption-baseline-recorder"
+}
+
+variable "enable_scps" {
+  description = "Whether to create Service Control Policies (requires AWS Organizations)"
+  type        = bool
+  default     = false
+}
+
+variable "remediation_enabled" {
+  description = "Enable automatic remediation for non-compliant resources"
+  type        = bool
+  default     = false
+}

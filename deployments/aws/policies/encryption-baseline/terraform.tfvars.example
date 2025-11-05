@@ -1,0 +1,15 @@
+# AWS Configuration
+# eu-north-1 (Stockholm) - closest to Finland
+aws_region = "eu-north-1"
+
+# Environment
+environment = "prod"
+
+# AWS Config
+config_recorder_name = "encryption-baseline-recorder"
+
+# Service Control Policies (requires AWS Organizations)
+enable_scps = false
+
+# Automatic Remediation
+remediation_enabled = false

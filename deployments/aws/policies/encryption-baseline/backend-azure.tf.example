@@ -1,0 +1,14 @@
+# Alternative backend configuration using Azure Storage
+# Uncomment this and comment out backend.tf if you want to use Azure for AWS state
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "terraform-state-rg"
+    storage_account_name = "yourstorageaccount"
+    container_name       = "tfstate-aws"
+    key                  = "aws/policies/encryption-baseline/terraform.tfstate"
+    
+    # The storage account should be in your Azure subscription
+    # You'll need Azure credentials configured even for AWS deployments
+  }
+}
