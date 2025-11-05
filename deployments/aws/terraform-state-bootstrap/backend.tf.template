@@ -1,0 +1,28 @@
+# Backend Configuration Template
+# 
+# This is a template for the backend configuration in main.tf.
+# Copy the backend block below and replace <YOUR-ACCOUNT-ID> with your actual
+# AWS account ID.
+#
+# To get your AWS account ID, run:
+#   aws sts get-caller-identity --query Account --output text
+#
+# NOTE: Terraform backend blocks do NOT support variables, so you must
+# manually replace the placeholder with your actual account ID.
+
+terraform {
+  backend "s3" {
+    bucket         = "fictional-octo-system-tfstate-<YOUR-ACCOUNT-ID>"
+    key            = "bootstrap/terraform.tfstate"
+    region         = "eu-north-1"  # Change to your preferred region
+    encrypt        = true
+    dynamodb_table = "terraform-state-locks"
+  }
+}
+
+# Steps to use this template:
+# 1. Get your AWS account ID
+# 2. Replace <YOUR-ACCOUNT-ID> in the bucket name above
+# 3. Update the region if needed
+# 4. Copy this backend block to main.tf (replacing the existing one)
+# 5. Run: terraform init -migrate-state
