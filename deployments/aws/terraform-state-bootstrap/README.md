@@ -66,54 +66,6 @@ terraform plan
 terraform apply
 ```
 
-### Step 1: Create the State Storage ✅
-
-```bash
-cd deployments/aws/terraform-state-bootstrap/
-
-# Initialize (uses local state initially)
-terraform init
-
-# Create the S3 bucket and DynamoDB table
-terraform apply
-```
-
-This created:
-- **S3 Bucket**: `fictional-octo-system-tfstate-<account-id>` (encrypted, versioned, in **eu-north-1 Stockholm**)
-- **DynamoDB Table**: `terraform-state-locks` (for state locking, in **eu-north-1**)
-- **IAM Policy**: `TerraformStateAccess` (for access control)
-
-### Step 2: Migrate Bootstrap State to S3 ✅
-
-After creating the bucket, the bootstrap module's state was migrated to S3:
-
-```bash
-# Backend block uncommented in main.tf
-terraform init -migrate-state
-```
-
-**Status**: Bootstrap state is now stored in `s3://fictional-octo-system-tfstate-494367313227/bootstrap/terraform.tfstate`
-
-### Step 3: Use in Other Modules
-
-Now all other AWS modules can use the S3 backend. The `encryption-baseline` module is ready to deploy:
-
-```bash
-cd ../policies/encryption-baseline/
-
-# Copy example config
-cp terraform.tfvars.example terraform.tfvars
-
-# Initialize with S3 backend
-terraform init
-
-# Deploy AWS Config rules
-terraform plan
-terraform apply
-```
-
-This will create AWS Config rules for encryption compliance in **eu-north-1** (Stockholm).
-
 ## State File Organization
 
 ```
