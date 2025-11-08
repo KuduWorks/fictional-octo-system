@@ -15,7 +15,7 @@ if ! command -v az &> /dev/null; then
 fi
 
 # Check if logged in
-if ! az account show &> /dev/null; then
+if ! az account show --only-show-errors &> /dev/null; then
     echo "❌ Not logged in to Azure CLI"
     echo "Run: az login"
     exit 1
@@ -24,21 +24,35 @@ fi
 echo "✅ Azure CLI is installed and you're logged in"
 echo ""
 
-# Get current user info
+# Get current user info with a single API call
 echo "📋 Your Identity:"
 echo "----------------"
-MY_OBJECT_ID=$(az ad signed-in-user show --query id -o tsv)
-MY_EMAIL=$(az ad signed-in-user show --query userPrincipalName -o tsv)
-MY_NAME=$(az ad signed-in-user show --query displayName -o tsv)
+if command -v jq &> /dev/null; then
+    USER_INFO=$(az ad signed-in-user show --query '{id:id, email:userPrincipalName, name:displayName}' -o json --only-show-errors)
+    MY_OBJECT_ID=$(echo "$USER_INFO" | jq -r '.id')
+    MY_EMAIL=$(echo "$USER_INFO" | jq -r '.email')
+    MY_NAME=$(echo "$USER_INFO" | jq -r '.name')
+else
+    # Fallback to individual calls if jq is not available
+    MY_OBJECT_ID=$(az ad signed-in-user show --query id -o tsv --only-show-errors)
+    MY_EMAIL=$(az ad signed-in-user show --query userPrincipalName -o tsv --only-show-errors)
+    MY_NAME=$(az ad signed-in-user show --query displayName -o tsv --only-show-errors)
+fi
 
 echo "Name:      $MY_NAME"
 echo "Email:     $MY_EMAIL"
 echo "Object ID: $MY_OBJECT_ID"
 echo ""
 
-# Get current subscription
-SUB_NAME=$(az account show --query name -o tsv)
-SUB_ID=$(az account show --query id -o tsv)
+# Get current subscription with a single API call
+if command -v jq &> /dev/null; then
+    SUB_INFO=$(az account show --query '{name:name, id:id}' -o json --only-show-errors)
+    SUB_NAME=$(echo "$SUB_INFO" | jq -r '.name')
+    SUB_ID=$(echo "$SUB_INFO" | jq -r '.id')
+else
+    SUB_NAME=$(az account show --query name -o tsv --only-show-errors)
+    SUB_ID=$(az account show --query id -o tsv --only-show-errors)
+fi
 
 echo "📍 Current Subscription:"
 echo "------------------------"
