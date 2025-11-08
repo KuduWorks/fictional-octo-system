@@ -26,7 +26,8 @@ $ALL_IPS = az storage account show `
   --name $STORAGE_ACCOUNT `
   --resource-group $RESOURCE_GROUP `
   --query "networkRuleSet.ipRules[].value" `
-  --output tsv
+  --output tsv `
+  --only-show-errors
 
 if ([string]::IsNullOrWhiteSpace($ALL_IPS)) {
     Write-Host "   (none)" -ForegroundColor Gray
@@ -59,6 +60,7 @@ if ($response -match "^[Yy]$") {
             --account-name $STORAGE_ACCOUNT `
             --resource-group $RESOURCE_GROUP `
             --ip-address $CURRENT_IP `
+            --only-show-errors `
             2>$null
     } catch {
         # IP might already exist, ignore error
@@ -72,7 +74,8 @@ if ($response -match "^[Yy]$") {
             az storage account network-rule remove `
                 --account-name $STORAGE_ACCOUNT `
                 --resource-group $RESOURCE_GROUP `
-                --ip-address $IP
+                --ip-address $IP `
+                --only-show-errors
         }
     }
     
@@ -84,7 +87,8 @@ if ($response -match "^[Yy]$") {
         --name $STORAGE_ACCOUNT `
         --resource-group $RESOURCE_GROUP `
         --query "networkRuleSet.ipRules[].value" `
-        --output table
+        --output table `
+        --only-show-errors
 } else {
     Write-Host ""
     Write-Host "❌ Cleanup cancelled." -ForegroundColor Red

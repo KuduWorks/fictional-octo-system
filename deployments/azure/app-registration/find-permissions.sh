@@ -16,7 +16,7 @@ if ! command -v az &> /dev/null; then
 fi
 
 # Check if logged in
-if ! az account show &> /dev/null; then
+if ! az account show --only-show-errors &> /dev/null; then
     echo "❌ Not logged in to Azure CLI"
     echo "   Run: az login"
     exit 1
@@ -36,7 +36,7 @@ search_permissions() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     az ad sp show --id 00000003-0000-0000-c000-000000000000 \
         --query "oauth2PermissionScopes[?contains(value, '${search_term}')].{ID:id, Name:value, AdminConsent:adminConsentDescription}" \
-        --output table 2>/dev/null || echo "No delegated permissions found"
+        --output table --only-show-errors 2>/dev/null || echo "No delegated permissions found"
     
     echo ""
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
@@ -44,7 +44,7 @@ search_permissions() {
     echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
     az ad sp show --id 00000003-0000-0000-c000-000000000000 \
         --query "appRoles[?contains(value, '${search_term}')].{ID:id, Name:value, Description:description}" \
-        --output table 2>/dev/null || echo "No application permissions found"
+        --output table --only-show-errors 2>/dev/null || echo "No application permissions found"
 }
 
 # Function to generate Terraform snippet
@@ -91,7 +91,7 @@ while true; do
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             az ad sp show --id 00000003-0000-0000-c000-000000000000 \
                 --query "oauth2PermissionScopes[].{ID:id, Name:value, RequiresAdmin:isEnabled}" \
-                --output table | head -50
+                --output table --only-show-errors | head -50
             echo ""
             echo "(Showing first 50 results. Use option 1 to search specific permissions)"
             ;;
@@ -101,7 +101,7 @@ while true; do
             echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
             az ad sp show --id 00000003-0000-0000-c000-000000000000 \
                 --query "appRoles[].{ID:id, Name:value, Enabled:isEnabled}" \
-                --output table | head -50
+                --output table --only-show-errors | head -50
             echo ""
             echo "(Showing first 50 results. Use option 1 to search specific permissions)"
             ;;
@@ -115,7 +115,7 @@ while true; do
             # Check in delegated permissions
             result=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 \
                 --query "oauth2PermissionScopes[?id=='${perm_id}'].{ID:id, Name:value, Type:'Scope', Admin:adminConsentDescription, User:userConsentDescription}" \
-                --output json 2>/dev/null)
+                --output json --only-show-errors 2>/dev/null)
             
             if [ "$result" != "[]" ]; then
                 echo "$result" | jq -r '.[] | "ID:          \(.ID)\nName:        \(.Name)\nType:        \(.Type)\nAdmin Desc:  \(.Admin)\nUser Desc:   \(.User)"'
@@ -123,7 +123,7 @@ while true; do
                 # Check in application permissions
                 result=$(az ad sp show --id 00000003-0000-0000-c000-000000000000 \
                     --query "appRoles[?id=='${perm_id}'].{ID:id, Name:value, Type:'Role', Description:description}" \
-                    --output json 2>/dev/null)
+                    --output json --only-show-errors 2>/dev/null)
                 
                 if [ "$result" != "[]" ]; then
                     echo "$result" | jq -r '.[] | "ID:          \(.ID)\nName:        \(.Name)\nType:        \(.Type)\nDescription: \(.Description)"'

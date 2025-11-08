@@ -19,7 +19,7 @@ try {
 
 Write-Host "🔐 Checking Azure authentication..." -ForegroundColor Cyan
 try {
-    az account show | Out-Null
+    az account show --only-show-errors | Out-Null
 } catch {
     Write-Host "❌ Not logged in to Azure. Running 'az login'..." -ForegroundColor Yellow
     az login
@@ -31,9 +31,11 @@ try {
         --account-name $STORAGE_ACCOUNT `
         --resource-group $RESOURCE_GROUP `
         --ip-address $CURRENT_IP `
+        --only-show-errors `
         2>$null
+    Write-Host "   ✓ IP added successfully" -ForegroundColor Green
 } catch {
-    Write-Host "⚠️  IP already exists or addition failed" -ForegroundColor Yellow
+    Write-Host "   ⚠️  IP already exists or addition failed" -ForegroundColor Yellow
 }
 
 Write-Host "📋 Current firewall rules:" -ForegroundColor Cyan
@@ -41,7 +43,8 @@ az storage account show `
     --name $STORAGE_ACCOUNT `
     --resource-group $RESOURCE_GROUP `
     --query "networkRuleSet.ipRules[].value" `
-    --output table
+    --output table `
+    --only-show-errors
 
 Write-Host ""
 Write-Host "✅ IP firewall updated! You can now run Terraform commands." -ForegroundColor Green

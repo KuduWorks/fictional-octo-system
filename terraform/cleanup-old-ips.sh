@@ -22,7 +22,8 @@ ALL_IPS=$(az storage account show \
   --name "$STORAGE_ACCOUNT" \
   --resource-group "$RESOURCE_GROUP" \
   --query "networkRuleSet.ipRules[].value" \
-  --output tsv)
+  --output tsv \
+  --only-show-errors)
 
 if [ -z "$ALL_IPS" ]; then
     echo "   (none)"
@@ -31,13 +32,13 @@ if [ -z "$ALL_IPS" ]; then
     exit 0
 fi
 
-echo "$ALL_IPS" | while read -r IP; do
+while IFS= read -r IP; do
     if [ "$IP" = "$CURRENT_IP" ]; then
         echo "   $IP (current - will keep)"
     else
         echo "   $IP (old - will remove)"
     fi
-done
+done <<< "$ALL_IPS"
 
 echo ""
 read -p "❓ Remove all IPs except current ($CURRENT_IP)? (y/N): " -n 1 -r
@@ -52,18 +53,20 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         --account-name "$STORAGE_ACCOUNT" \
         --resource-group "$RESOURCE_GROUP" \
         --ip-address "$CURRENT_IP" \
+        --only-show-errors \
         2>/dev/null || true
     
     # Remove all IPs except current
-    echo "$ALL_IPS" | while read -r IP; do
+    while IFS= read -r IP; do
         if [ "$IP" != "$CURRENT_IP" ]; then
             echo "   Removing $IP..."
             az storage account network-rule remove \
                 --account-name "$STORAGE_ACCOUNT" \
                 --resource-group "$RESOURCE_GROUP" \
-                --ip-address "$IP"
+                --ip-address "$IP" \
+                --only-show-errors
         fi
-    done
+    done <<< "$ALL_IPS"
     
     echo ""
     echo "✅ Cleanup complete!"
@@ -73,7 +76,8 @@ if [[ $REPLY =~ ^[Yy]$ ]]; then
         --name "$STORAGE_ACCOUNT" \
         --resource-group "$RESOURCE_GROUP" \
         --query "networkRuleSet.ipRules[].value" \
-        --output table
+        --output table \
+        --only-show-errors
 else
     echo ""
     echo "❌ Cleanup cancelled."

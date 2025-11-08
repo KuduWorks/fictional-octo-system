@@ -149,14 +149,14 @@ main() {
         exit 1
     fi
     
-    if ! az account show &> /dev/null; then
+    if ! az account show --only-show-errors &> /dev/null; then
         echo -e "${YELLOW}Please log in to Azure...${NC}"
         az login
     fi
     
     # Get subscription info
     if [ -z "$SUBSCRIPTION_ID" ]; then
-        SUBSCRIPTION_ID=$(az account show --query id -o tsv)
+        SUBSCRIPTION_ID=$(az account show --query id -o tsv --only-show-errors)
     fi
     
     az account set --subscription "$SUBSCRIPTION_ID"

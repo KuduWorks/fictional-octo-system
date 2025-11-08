@@ -15,7 +15,7 @@ fi
 echo "📍 Current IP: $CURRENT_IP"
 
 echo "🔐 Checking Azure authentication..."
-az account show > /dev/null 2>&1 || {
+az account show --only-show-errors > /dev/null 2>&1 || {
     echo "❌ Not logged in to Azure. Running 'az login'..."
     az login
 }
@@ -25,14 +25,16 @@ az storage account network-rule add \
     --account-name "$STORAGE_ACCOUNT" \
     --resource-group "$RESOURCE_GROUP" \
     --ip-address "$CURRENT_IP" \
-    2>/dev/null || echo "⚠️  IP already exists or addition failed"
+    --only-show-errors \
+    2>/dev/null && echo "   ✓ IP added successfully" || echo "   ⚠️  IP already exists or addition failed"
 
 echo "📋 Current firewall rules:"
 az storage account show \
     --name "$STORAGE_ACCOUNT" \
     --resource-group "$RESOURCE_GROUP" \
     --query "networkRuleSet.ipRules[].value" \
-    --output table
+    --output table \
+    --only-show-errors
 
 echo ""
 echo "✅ IP firewall updated! You can now run Terraform commands."
