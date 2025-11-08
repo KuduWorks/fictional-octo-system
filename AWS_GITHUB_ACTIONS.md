@@ -31,7 +31,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+          role-to-assume: arn:aws:iam::123456789012:role/github-actions-readonly
           aws-region: eu-north-1
       
       - name: Run AWS Commands
@@ -127,7 +127,7 @@ steps:
   - name: Initial Authentication
     uses: aws-actions/configure-aws-credentials@v4
     with:
-      role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+      role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
       aws-region: eu-north-1
   
   - name: Long Running Task Part 1
@@ -137,7 +137,7 @@ steps:
   - name: Re-authenticate
     uses: aws-actions/configure-aws-credentials@v4
     with:
-      role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+      role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
       aws-region: eu-north-1
   
   - name: Long Running Task Part 2
