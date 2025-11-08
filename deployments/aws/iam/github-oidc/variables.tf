@@ -69,3 +69,9 @@ variable "tfstate_bucket_name" {
   description = "Base name for the Terraform state S3 bucket (without account ID suffix)"
   type        = string
 }
+
+variable "s3_bucket_prefix" {
+  description = "Prefix for S3 buckets that can be managed (e.g., 'myapp-' allows 'myapp-*' buckets)"
+  type        = string
+  default     = "github-managed-"
+}
