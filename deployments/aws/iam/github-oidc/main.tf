@@ -211,10 +211,17 @@ resource "aws_iam_role_policy" "github_deploy" {
         Resource = "*"
       },
       {
-        Sid    = "EC2Permissions"
+        Sid    = "EC2DescribePermissions"
         Effect = "Allow"
         Action = [
-          "ec2:Describe*",
+          "ec2:Describe*"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "EC2ResourcePermissions"
+        Effect = "Allow"
+        Action = [
           "ec2:CreateVpc",
           "ec2:DeleteVpc",
           "ec2:ModifyVpcAttribute",
@@ -229,7 +236,16 @@ resource "aws_iam_role_policy" "github_deploy" {
           "ec2:CreateTags",
           "ec2:DeleteTags"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:vpc/*",
+          "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:subnet/*",
+          "arn:aws:ec2:${var.aws_region}:${data.aws_caller_identity.current.account_id}:security-group/*"
+        ]
+        Condition = {
+          StringEquals = {
+            "aws:RequestedRegion" = var.aws_region
+          }
+        }
       },
       {
         Sid    = "S3Permissions"
@@ -270,7 +286,11 @@ resource "aws_iam_role_policy" "github_deploy" {
           "config:DeleteDeliveryChannel",
           "config:DeleteConfigRule"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:config:${var.aws_region}:${data.aws_caller_identity.current.account_id}:config-rule/*",
+          "arn:aws:config:${var.aws_region}:${data.aws_caller_identity.current.account_id}:configuration-recorder/*",
+          "arn:aws:config:${var.aws_region}:${data.aws_caller_identity.current.account_id}:delivery-channel/*"
+        ]
       },
       {
         Sid    = "BudgetsPermissions"
@@ -282,7 +302,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "budgets:DeleteBudgetAction",
           "budgets:UpdateBudgetAction"
         ]
-        Resource = "*"
+        Resource = "arn:aws:budgets::${data.aws_caller_identity.current.account_id}:budget/*"
       },
       {
         Sid    = "SNSPermissions"
@@ -298,10 +318,10 @@ resource "aws_iam_role_policy" "github_deploy" {
           "sns:TagResource",
           "sns:UntagResource"
         ]
-        Resource = "*"
+        Resource = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:github-*"
       },
       {
-        Sid    = "KMSPermissions"
+        Sid    = "KMSKeyPermissions"
         Effect = "Allow"
         Action = [
           "kms:CreateKey",
@@ -310,11 +330,21 @@ resource "aws_iam_role_policy" "github_deploy" {
           "kms:PutKeyPolicy",
           "kms:CreateAlias",
           "kms:DeleteAlias",
-          "kms:ListAliases",
-          "kms:ListKeys",
           "kms:TagResource",
           "kms:UntagResource",
           "kms:ScheduleKeyDeletion"
+        ]
+        Resource = [
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*",
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/github-*"
+        ]
+      },
+      {
+        Sid    = "KMSListPermissions"
+        Effect = "Allow"
+        Action = [
+          "kms:ListAliases",
+          "kms:ListKeys"
         ]
         Resource = "*"
       }
