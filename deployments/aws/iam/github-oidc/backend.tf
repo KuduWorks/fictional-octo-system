@@ -4,8 +4,8 @@
 terraform {
   backend "s3" {
     # S3 bucket created by terraform-state-bootstrap module
-    # AWS Account ID removed for security
-    bucket = "fictional-octo-system-tfstate-494367313227"
+    # AWS Account ID replaced with placeholder for security
+    bucket = "fictional-octo-system-tfstate-<AWS_ACCOUNT_ID>"
     
     # Path within the bucket where this module's state is stored
     key = "aws/iam/github-oidc/terraform.tfstate"
