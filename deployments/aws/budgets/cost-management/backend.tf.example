@@ -1,0 +1,20 @@
+# Backend Configuration for Terraform State
+# 
+# Copy this file to main.tf (replace the commented backend section)
+# after you've set up the terraform-state-bootstrap module
+#
+# Usage:
+#   1. Get your AWS account ID: aws sts get-caller-identity --query Account --output text
+#   2. Replace YOUR-ACCOUNT-ID below with your actual account ID
+#   3. Uncomment the backend block in main.tf
+#   4. Run: terraform init
+
+terraform {
+  backend "s3" {
+    bucket         = "fictional-octo-system-tfstate-YOUR-ACCOUNT-ID"  # ⚠️ UPDATE THIS
+    key            = "aws/budgets/cost-management/terraform.tfstate"
+    region         = "eu-north-1"  # Must match your state bucket region
+    encrypt        = true
+    dynamodb_table = "terraform-state-locks"
+  }
+}
