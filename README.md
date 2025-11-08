@@ -36,6 +36,7 @@ fictional-octo-system/
 │   │   └── policies/            # Azure Policy templates (ISO 27001)
 │   └── aws/                     # 🟠 AWS Infrastructure
 │       ├── terraform-state-bootstrap/  # S3 + DynamoDB for state management
+│       ├── budgets/             # AWS Budgets and cost management
 │       ├── policies/            # AWS Config rules for compliance
 │       ├── iam/                 # IAM roles and OIDC providers
 │       ├── kms/                 # KMS key management
@@ -92,12 +93,14 @@ fictional-octo-system/
 
 **AWS:**
 - AWS Config for compliance monitoring *(the robot that checks your homework)*
+- AWS Budgets for cost tracking and alerts *(emails when you're about to exceed your limit)*
 - CloudWatch for logs and metrics *(like Log Analytics, but with more confusing pricing)*
 - SNS for alerting *(because your phone needs more notifications at 3 AM)*
 - Config rules for encryption enforcement *(encrypt all the things!)*
 
 ### Infrastructure Management (AWS)
 - **Terraform State Backend**: S3 bucket with DynamoDB locking in eu-north-1 *(because Stockholm > Virginia for Finnish users)*
+- **AWS Budgets & Cost Management**: Automated spending limits with email alerts *(know before you owe)*
 - **AWS Config Rules**: Automated compliance checking (encryption, HTTPS, KMS) *(robots enforcing security policies)*
 - **IAM OIDC Integration**: Passwordless GitHub Actions authentication *(coming soon™)*
 - **Secrets Manager**: AWS equivalent to Key Vault *(planned)*
@@ -200,6 +203,7 @@ terraform apply
 **AWS Deployments:**
 - [AWS Infrastructure Overview](deployments/aws/README.md) *(Start here for AWS setup)*
 - [Terraform State Bootstrap](deployments/aws/terraform-state-bootstrap/README.md) *(Do this first)*
+- [AWS Budget & Cost Management](deployments/aws/budgets/cost-management/QUICKSTART.md) *(Set spending limits before you deploy)*
 - [Encryption Baseline Policies](deployments/aws/policies/encryption-baseline/README.md)
 
 ### Security Features
