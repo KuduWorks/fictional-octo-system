@@ -180,23 +180,33 @@ resource "aws_iam_role_policy" "github_deploy" {
           "iam:CreateRole",
           "iam:DeleteRole",
           "iam:GetRole",
-          "iam:ListRoles",
           "iam:PutRolePolicy",
           "iam:DeleteRolePolicy",
           "iam:AttachRolePolicy",
           "iam:DetachRolePolicy",
           "iam:GetRolePolicy",
-          "iam:ListRolePolicies",
-          "iam:ListAttachedRolePolicies",
           "iam:TagRole",
           "iam:UntagRole",
           "iam:CreatePolicy",
           "iam:DeletePolicy",
           "iam:GetPolicy",
           "iam:GetPolicyVersion",
-          "iam:ListPolicyVersions",
           "iam:TagPolicy",
           "iam:UntagPolicy"
+        ]
+        Resource = [
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github-actions/*",
+          "arn:aws:iam::${data.aws_caller_identity.current.account_id}:policy/github-actions/*"
+        ]
+      },
+      {
+        Sid    = "IAMListPermissions"
+        Effect = "Allow"
+        Action = [
+          "iam:ListRoles",
+          "iam:ListRolePolicies",
+          "iam:ListAttachedRolePolicies",
+          "iam:ListPolicyVersions"
         ]
         Resource = "*"
       },
@@ -244,8 +254,8 @@ resource "aws_iam_role_policy" "github_deploy" {
           "s3:PutBucketTagging"
         ]
         Resource = [
-          "arn:aws:s3:::*",
-          "arn:aws:s3:::*/*"
+          "arn:aws:s3:::${var.s3_bucket_prefix}*",
+          "arn:aws:s3:::${var.s3_bucket_prefix}*/*"
         ]
       },
       {

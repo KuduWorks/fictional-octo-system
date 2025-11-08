@@ -20,3 +20,7 @@ create_admin_role    = false  # Admin access (use with caution - only from main 
 readonly_role_name = "github-actions-readonly"
 deploy_role_name   = "github-actions-deploy"
 admin_role_name    = "github-actions-admin"
+
+# Required variables for resource tagging and state storage
+github_repository   = "fictional-octo-system"  # For resource tagging
+tfstate_bucket_name = "fictional-octo-system-tfstate"  # Without account ID suffix
