@@ -25,7 +25,7 @@ This module sets up **OpenID Connect (OIDC) federation** between GitHub Actions 
 - name: Configure AWS
   uses: aws-actions/configure-aws-credentials@v4
   with:
-    role-to-assume: arn:aws:iam::123456:role/github-actions-deploy  # ✅ No secrets!
+    role-to-assume: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-deploy  # ✅ No secrets!
     aws-region: eu-north-1
 ```
 
@@ -194,11 +194,13 @@ After deployment, save the role ARNs (you'll need them in GitHub Actions):
 
 ```bash
 terraform output deploy_role_arn
-# Example output: arn:aws:iam::123456789012:role/github-actions-deploy
+# Example output: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-deploy
 
 terraform output readonly_role_arn
-# Example output: arn:aws:iam::123456789012:role/github-actions-readonly
+# Example output: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-readonly
 ```
+
+> **📝 Note:** Replace `YOUR-ACCOUNT-ID` with your actual AWS account ID in the examples below. Get it with: `aws sts get-caller-identity --query Account --output text`
 
 ## 📝 Using in GitHub Actions
 
@@ -221,7 +223,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-actions-readonly
+          role-to-assume: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-readonly
           aws-region: eu-north-1
       
       - name: Check Current AWS Costs
@@ -253,7 +255,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
+          role-to-assume: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-deploy
           aws-region: eu-north-1
       
       - name: Setup Terraform
@@ -293,7 +295,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
+          role-to-assume: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-deploy
           aws-region: eu-north-1
       
       - name: Deploy
@@ -360,8 +362,8 @@ aws cloudtrail lookup-events \
 
 1. **Check the role ARN in your workflow**
    ```yaml
-   role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
-   # Make sure account ID and role name are correct
+   role-to-assume: arn:aws:iam::YOUR-ACCOUNT-ID:role/github-actions-deploy
+   # Replace YOUR-ACCOUNT-ID with your actual AWS account ID
    ```
 
 2. **Verify permissions in workflow**
