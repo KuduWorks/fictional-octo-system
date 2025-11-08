@@ -45,7 +45,7 @@ jobs:
           echo "==============="
           
           aws budgets describe-budgets \
-            --account-id 494367313227 \
+            --account-id $(aws sts get-caller-identity --query Account --output text) \
             --max-results 10 \
             --output table || echo "No budgets found or insufficient permissions"
       

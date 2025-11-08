@@ -78,4 +78,5 @@ jobs:
           echo ""
           echo "Deployed modules: ${{ github.event.inputs.module || 'encryption-baseline, cost-management' }}"
           echo "Region: eu-north-1"
-          echo "Account: 494367313227"
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          echo "Account: $ACCOUNT_ID"

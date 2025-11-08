@@ -20,7 +20,7 @@ provider "aws" {
       Environment = var.environment
       ManagedBy   = "Terraform"
       Module      = "github-oidc"
-      Repository  = "fictional-octo-system"
+      Repository  = var.github_repository
     }
   }
 }
@@ -159,8 +159,8 @@ resource "aws_iam_role_policy" "github_deploy" {
           "s3:ListBucket"
         ]
         Resource = [
-          "arn:aws:s3:::fictional-octo-system-tfstate-${data.aws_caller_identity.current.account_id}",
-          "arn:aws:s3:::fictional-octo-system-tfstate-${data.aws_caller_identity.current.account_id}/*"
+          "arn:aws:s3:::${var.tfstate_bucket_name}-${data.aws_caller_identity.current.account_id}",
+          "arn:aws:s3:::${var.tfstate_bucket_name}-${data.aws_caller_identity.current.account_id}/*"
         ]
       },
       {

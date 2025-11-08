@@ -25,7 +25,7 @@ jobs:
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
           aws-region: eu-north-1
       
       - name: Setup Terraform

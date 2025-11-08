@@ -23,6 +23,11 @@ variable "github_repositories" {
   default     = ["fictional-octo-system"]
 }
 
+variable "github_repository" {
+  description = "GitHub repository name for tagging purposes"
+  type        = string
+}
+
 # Role Configuration
 variable "create_readonly_role" {
   description = "Whether to create a read-only IAM role for GitHub Actions"
@@ -58,4 +63,9 @@ variable "admin_role_name" {
   description = "Name of the admin IAM role"
   type        = string
   default     = "github-actions-admin"
+}
+
+variable "tfstate_bucket_name" {
+  description = "Base name for the Terraform state S3 bucket (without account ID suffix)"
+  type        = string
 }

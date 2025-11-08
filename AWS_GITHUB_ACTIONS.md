@@ -6,10 +6,10 @@ This file provides quick copy-paste examples for using AWS OIDC in GitHub Action
 
 ```yaml
 # Read-Only Role (for checks, reports, plans)
-role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+role-to-assume: arn:aws:iam::123456789012:role/github-actions-readonly
 
 # Deploy Role (for infrastructure changes)
-role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
 ```
 
 ## 📝 Basic Workflow Template
@@ -80,7 +80,7 @@ jobs:
 - name: Configure AWS Credentials
   uses: aws-actions/configure-aws-credentials@v4
   with:
-    role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+    role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
     aws-region: eu-north-1
 
 - name: Deploy Infrastructure
@@ -111,7 +111,7 @@ steps:
   - name: Configure AWS Credentials
     uses: aws-actions/configure-aws-credentials@v4
     with:
-      role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+      role-to-assume: arn:aws:iam::123456789012:role/github-actions-deploy
       aws-region: ${{ matrix.region }}
   
   - name: Deploy to Region
@@ -150,7 +150,7 @@ steps:
 - name: Configure AWS Credentials
   uses: aws-actions/configure-aws-credentials@v4
   with:
-    role-to-assume: ${{ github.ref == 'refs/heads/main' && 'arn:aws:iam::494367313227:role/github-actions-deploy' || 'arn:aws:iam::494367313227:role/github-actions-readonly' }}
+    role-to-assume: ${{ github.ref == 'refs/heads/main' && 'arn:aws:iam::123456789012:role/github-actions-deploy' || 'arn:aws:iam::123456789012:role/github-actions-readonly' }}
     aws-region: eu-north-1
 ```
 
@@ -160,13 +160,13 @@ steps:
 - name: Login to ECR
   run: |
     aws ecr get-login-password --region eu-north-1 | \
-      docker login --username AWS --password-stdin 494367313227.dkr.ecr.eu-north-1.amazonaws.com
+      docker login --username AWS --password-stdin 123456789012.dkr.ecr.eu-north-1.amazonaws.com
 
 - name: Build and Push
   run: |
     docker build -t my-app .
-    docker tag my-app:latest 494367313227.dkr.ecr.eu-north-1.amazonaws.com/my-app:latest
-    docker push 494367313227.dkr.ecr.eu-north-1.amazonaws.com/my-app:latest
+    docker tag my-app:latest 123456789012.dkr.ecr.eu-north-1.amazonaws.com/my-app:latest
+    docker push 123456789012.dkr.ecr.eu-north-1.amazonaws.com/my-app:latest
 ```
 
 ## 🐛 Debugging
@@ -197,5 +197,5 @@ steps:
 
 - Full documentation: `deployments/aws/iam/github-oidc/README.md`
 - All workflows: `.github/workflows/README.md`
-- AWS Account ID: `494367313227`
+- AWS Account ID: `123456789012`
 - Default Region: `eu-north-1` (Stockholm)
