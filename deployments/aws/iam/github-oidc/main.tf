@@ -270,10 +270,8 @@ resource "aws_iam_role_policy" "github_deploy" {
           "s3:PutBucketTagging"
         ]
         Resource = [
-          "arn:aws:s3:::fictional-octo-system-*",
-          "arn:aws:s3:::fictional-octo-system-*/*",
-          "arn:aws:s3:::terraform-*",
-          "arn:aws:s3:::terraform-*/*"
+          "arn:aws:s3:::${var.s3_bucket_prefix}*",
+          "arn:aws:s3:::${var.s3_bucket_prefix}*/*"
         ]
       },
       {
