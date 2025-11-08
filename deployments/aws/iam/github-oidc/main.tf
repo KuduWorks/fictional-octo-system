@@ -270,7 +270,11 @@ resource "aws_iam_role_policy" "github_deploy" {
           "config:DeleteDeliveryChannel",
           "config:DeleteConfigRule"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:config:${var.aws_region}:${data.aws_caller_identity.current.account_id}:config-rule/*",
+          "arn:aws:config:${var.aws_region}:${data.aws_caller_identity.current.account_id}:configuration-recorder/*",
+          "arn:aws:config:${var.aws_region}:${data.aws_caller_identity.current.account_id}:delivery-channel/*"
+        ]
       },
       {
         Sid    = "BudgetsPermissions"
@@ -282,7 +286,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "budgets:DeleteBudgetAction",
           "budgets:UpdateBudgetAction"
         ]
-        Resource = "*"
+        Resource = "arn:aws:budgets::${data.aws_caller_identity.current.account_id}:budget/*"
       },
       {
         Sid    = "SNSPermissions"
@@ -298,7 +302,7 @@ resource "aws_iam_role_policy" "github_deploy" {
           "sns:TagResource",
           "sns:UntagResource"
         ]
-        Resource = "*"
+        Resource = "arn:aws:sns:${var.aws_region}:${data.aws_caller_identity.current.account_id}:terraform-*"
       },
       {
         Sid    = "KMSPermissions"
@@ -316,7 +320,10 @@ resource "aws_iam_role_policy" "github_deploy" {
           "kms:UntagResource",
           "kms:ScheduleKeyDeletion"
         ]
-        Resource = "*"
+        Resource = [
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:key/*",
+          "arn:aws:kms:${var.aws_region}:${data.aws_caller_identity.current.account_id}:alias/terraform-*"
+        ]
       }
     ]
   })
