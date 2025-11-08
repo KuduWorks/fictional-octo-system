@@ -8,6 +8,9 @@ This directory contains Terraform configurations for AWS infrastructure that mir
 
 *A well-organized chaos of Terraform modules:*
 
+- **budgets/** - Cost management and billing alerts 💰
+  - `cost-management/` - Track spending before the CFO does!
+  
 - **policies/** - The "thou shalt not" section 📜
   - `encryption-baseline/` - Encrypt ALL the things! (mirrors Azure ISO 27001 crypto)
   - `region-control/` - "Sorry, you can't deploy here" rules
@@ -56,6 +59,7 @@ terraform apply   # "YOLO! Creating resources..." 🎲
 
 | Azure Service | AWS Equivalent | Translation Notes |
 |--------------|----------------|-------------------|
+| Cost Management + Budgets | AWS Budgets | Azure: Built-in. AWS: Also built-in. Both send scary emails! 💸 |
 | Azure Policy | AWS Config Rules + SCPs | Azure: One service. AWS: Two services walk into a bar... |
 | App Registration | IAM Roles + OIDC Provider | AWS: "Why use secrets when you can use math?" 🔐 |
 | Key Vault | KMS + Secrets Manager | AWS split this into two services (naturally) |
