@@ -159,18 +159,14 @@ create_deploy_role   = true   # For Terraform deployments
 create_admin_role    = false  # Only enable if absolutely needed
 ```
 
-### Step 2: Update Backend Configuration
+### Step 2: Backend Configuration
 
-Edit `backend.tf` and replace `YOUR-ACCOUNT-ID` with your AWS account ID:
+The AWS account ID is already configured in `backend.tf`. No changes are needed unless you want to use a different account.
+
+If you do need to update the account ID, you can find your AWS account ID with:
 
 ```bash
-# Get your account ID
 aws sts get-caller-identity --query Account --output text
-
-# Edit backend.tf
-nano backend.tf
-# Change: fictional-octo-system-tfstate-YOUR-ACCOUNT-ID
-# To:     fictional-octo-system-tfstate-123456789012  (your actual ID)
 ```
 
 ### Step 3: Deploy
