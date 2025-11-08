@@ -129,8 +129,8 @@ resource "aws_iam_role" "config_role" {
 
 # Attach AWS managed policy for Config
 resource "aws_iam_role_policy_attachment" "config_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWS_ConfigRole"
   role       = aws_iam_role.config_role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/ConfigRole"
 }
 
 # S3 bucket for Config delivery
@@ -164,6 +164,21 @@ resource "aws_s3_bucket_policy" "config_bucket_policy" {
   policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
+      {
+        Sid    = "DenyInsecureTransport"
+        Effect = "Deny"
+        Principal = "*"
+        Action   = "s3:*"
+        Resource = [
+          aws_s3_bucket.config_bucket.arn,
+          "${aws_s3_bucket.config_bucket.arn}/*"
+        ]
+        Condition = {
+          Bool = {
+            "aws:SecureTransport" = "false"
+          }
+        }
+      },
       {
         Sid    = "AWSConfigBucketPermissionsCheck"
         Effect = "Allow"
@@ -202,10 +217,11 @@ resource "aws_s3_bucket_policy" "config_bucket_policy" {
 
 # AWS Config Recorder
 resource "aws_config_configuration_recorder" "main" {
-  name     = var.config_recorder_name
+  name     = "encryption-baseline-recorder"
   role_arn = aws_iam_role.config_role.arn
 
   recording_group {
+    all_supported = false
     resource_types = [
       "AWS::S3::Bucket",
       "AWS::EC2::Volume",
