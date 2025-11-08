@@ -12,7 +12,7 @@ This directory contains automated workflows for both Azure and AWS infrastructur
 ### AWS Workflows
 - **Method**: OIDC (OpenID Connect) via IAM Identity Provider
 - **Action**: `aws-actions/configure-aws-credentials@v4`
-- **Secrets Required**: None! (Uses OIDC role assumption)
+- **Secrets Required**: `AWS_ROLE_TO_ASSUME` (Uses OIDC role assumption)
 - **Roles**:
   - `github-actions-readonly`: Read-only access for checks and reports
   - `github-actions-deploy`: Deployment access for infrastructure changes
