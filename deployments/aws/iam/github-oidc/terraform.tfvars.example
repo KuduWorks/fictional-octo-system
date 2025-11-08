@@ -1,0 +1,22 @@
+# Example Terraform Variables Configuration
+# Copy this file to terraform.tfvars and customize
+
+# AWS Configuration
+aws_region  = "eu-north-1"  # Stockholm region (or change to your preferred region)
+environment = "prod"
+
+# GitHub Configuration
+github_org          = "KuduWorks"  # Your GitHub organization or username
+github_repositories = [
+  "fictional-octo-system"  # Repositories that can use these IAM roles
+]
+
+# IAM Roles to Create
+create_readonly_role = true   # Read-only access (safe for most workflows)
+create_deploy_role   = true   # Deployment access (can create/modify resources)
+create_admin_role    = false  # Admin access (use with caution - only from main branch)
+
+# Role Names (optional - defaults are fine)
+readonly_role_name = "github-actions-readonly"
+deploy_role_name   = "github-actions-deploy"
+admin_role_name    = "github-actions-admin"

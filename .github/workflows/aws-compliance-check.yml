@@ -1,0 +1,68 @@
+name: AWS Compliance Check
+on:
+  schedule:
+    - cron: '0 8 * * *'  # Daily at 8am UTC
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  compliance-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+          aws-region: eu-north-1
+      
+      - name: Check AWS Config Compliance
+        run: |
+          echo "🔍 AWS Config Compliance Report"
+          echo "==============================="
+          echo ""
+          
+          echo "Configuration Recorders:"
+          aws configservice describe-configuration-recorders
+          
+          echo ""
+          echo "Compliance Summary:"
+          aws configservice describe-compliance-by-config-rule \
+            --output table
+      
+      - name: Check Encryption Rules
+        run: |
+          echo ""
+          echo "🔐 Encryption Rule Compliance"
+          echo "============================="
+          
+          # S3 Bucket Encryption
+          echo ""
+          echo "S3 Bucket Encryption:"
+          aws configservice get-compliance-details-by-config-rule \
+            --config-rule-name s3-bucket-encryption \
+            --query 'EvaluationResults[*].[EvaluationResultIdentifier.EvaluationResultQualifier.ResourceId,ComplianceType]' \
+            --output table || echo "Rule not found or no results"
+          
+          # EBS Encryption
+          echo ""
+          echo "EBS Encryption:"
+          aws configservice get-compliance-details-by-config-rule \
+            --config-rule-name ebs-encryption \
+            --query 'EvaluationResults[*].[EvaluationResultIdentifier.EvaluationResultQualifier.ResourceId,ComplianceType]' \
+            --output table || echo "Rule not found or no results"
+      
+      - name: List Non-Compliant Resources
+        run: |
+          echo ""
+          echo "⚠️  Non-Compliant Resources"
+          echo "==========================="
+          
+          aws configservice describe-compliance-by-config-rule \
+            --compliance-types NON_COMPLIANT \
+            --query 'ComplianceByConfigRules[*].[ConfigRuleName,Compliance.ComplianceType]' \
+            --output table || echo "No non-compliant resources found"

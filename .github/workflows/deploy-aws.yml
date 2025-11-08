@@ -1,0 +1,81 @@
+name: Deploy AWS Infrastructure
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployments/aws/**/*.tf'
+      - 'deployments/aws/**/*.tfvars'
+  workflow_dispatch:
+    inputs:
+      module:
+        description: 'Module to deploy'
+        required: true
+        type: choice
+        options:
+          - all
+          - encryption-baseline
+          - cost-management
+          - github-oidc
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+          aws-region: eu-north-1
+      
+      - name: Verify AWS Identity
+        run: |
+          echo "✅ Connected to AWS as:"
+          aws sts get-caller-identity
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+      
+      - name: Deploy Encryption Baseline
+        if: github.event.inputs.module == 'encryption-baseline' || github.event.inputs.module == 'all' || github.event.inputs.module == ''
+        run: |
+          echo "🔐 Deploying Encryption Baseline..."
+          cd deployments/aws/policies/encryption-baseline
+          terraform init
+          terraform plan
+          terraform apply -auto-approve
+      
+      - name: Deploy Cost Management
+        if: github.event.inputs.module == 'cost-management' || github.event.inputs.module == 'all' || github.event.inputs.module == ''
+        run: |
+          echo "💰 Deploying Cost Management..."
+          cd deployments/aws/budgets/cost-management
+          terraform init
+          terraform plan
+          terraform apply -auto-approve
+      
+      - name: Deploy GitHub OIDC
+        if: github.event.inputs.module == 'github-oidc' || github.event.inputs.module == 'all'
+        run: |
+          echo "🔑 Deploying GitHub OIDC..."
+          cd deployments/aws/iam/github-oidc
+          terraform init
+          terraform plan
+          terraform apply -auto-approve
+      
+      - name: Deployment Summary
+        run: |
+          echo "✅ Deployment Complete!"
+          echo "======================"
+          echo ""
+          echo "Deployed modules: ${{ github.event.inputs.module || 'encryption-baseline, cost-management' }}"
+          echo "Region: eu-north-1"
+          echo "Account: 494367313227"

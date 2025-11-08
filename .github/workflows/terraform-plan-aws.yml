@@ -1,0 +1,68 @@
+name: Terraform Plan - AWS
+on:
+  pull_request:
+    paths:
+      - 'deployments/aws/**/*.tf'
+      - 'deployments/aws/**/*.tfvars'
+
+permissions:
+  id-token: write
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform-plan:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module:
+          - deployments/aws/policies/encryption-baseline
+          - deployments/aws/budgets/cost-management
+          - deployments/aws/iam/github-oidc
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+          aws-region: eu-north-1
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ~1.0
+      
+      - name: Terraform Init
+        run: |
+          cd ${{ matrix.module }}
+          terraform init
+      
+      - name: Terraform Plan
+        id: plan
+        run: |
+          cd ${{ matrix.module }}
+          terraform plan -no-color -input=false
+        continue-on-error: true
+      
+      - name: Comment PR with Plan
+        uses: actions/github-script@v7
+        if: github.event_name == 'pull_request'
+        env:
+          PLAN: "${{ steps.plan.outputs.stdout }}"
+        with:
+          script: |
+            const output = `#### Terraform Plan for \`${{ matrix.module }}\`
+            
+            \`\`\`
+            ${process.env.PLAN}
+            \`\`\`
+            
+            *Pushed by: @${{ github.actor }}, Action: \`${{ github.event_name }}\`*`;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.name,
+              body: output
+            })

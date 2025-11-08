@@ -1,0 +1,69 @@
+name: AWS Cost Report
+on:
+  schedule:
+    - cron: '0 9 * * MON'  # Every Monday at 9am UTC
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  cost-report:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+          aws-region: eu-north-1
+      
+      - name: Verify AWS Connection
+        run: |
+          echo "✅ Connected to AWS account:"
+          aws sts get-caller-identity
+      
+      - name: Get Current Month Costs
+        run: |
+          echo "📊 AWS Cost Report for $(date +%B %Y)"
+          echo "================================"
+          
+          START_DATE=$(date -d "$(date +%Y-%m-01)" +%Y-%m-%d)
+          END_DATE=$(date +%Y-%m-%d)
+          
+          aws ce get-cost-and-usage \
+            --time-period Start=$START_DATE,End=$END_DATE \
+            --granularity MONTHLY \
+            --metrics BlendedCost \
+            --output table
+      
+      - name: Check Budget Status
+        run: |
+          echo "💰 Budget Status"
+          echo "==============="
+          
+          aws budgets describe-budgets \
+            --account-id 494367313227 \
+            --max-results 10 \
+            --output table || echo "No budgets found or insufficient permissions"
+      
+      - name: List Active Resources
+        run: |
+          echo "🔍 Active AWS Resources"
+          echo "======================"
+          
+          echo ""
+          echo "S3 Buckets:"
+          aws s3 ls
+          
+          echo ""
+          echo "EC2 Instances:"
+          aws ec2 describe-instances \
+            --query 'Reservations[*].Instances[*].[InstanceId,State.Name,InstanceType,Tags[?Key==`Name`].Value|[0]]' \
+            --output table || echo "No EC2 instances"
+          
+          echo ""
+          echo "AWS Config Status:"
+          aws configservice describe-configuration-recorders --output table || echo "No Config recorders"
