@@ -7,7 +7,6 @@ variable "aws_region" {
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string
-  default     = "dev"
 }
 
 variable "config_recorder_name" {

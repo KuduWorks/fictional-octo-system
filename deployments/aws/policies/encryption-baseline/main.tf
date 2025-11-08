@@ -221,7 +221,14 @@ resource "aws_config_configuration_recorder" "main" {
   role_arn = aws_iam_role.config_role.arn
 
   recording_group {
-    all_supported = true
+    all_supported = false
+    resource_types = [
+      "AWS::S3::Bucket",
+      "AWS::EC2::Volume",
+      "AWS::RDS::DBInstance",
+      "AWS::DynamoDB::Table",
+      "AWS::CloudTrail::Trail"
+    ]
   }
 }
 
