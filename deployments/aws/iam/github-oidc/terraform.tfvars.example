@@ -7,6 +7,7 @@ environment = "prod"
 
 # GitHub Configuration
 github_org          = "KuduWorks"  # Your GitHub organization or username
+github_repository   = "fictional-octo-system"  # Repository used for tagging
 github_repositories = [
   "fictional-octo-system"  # Repositories that can use these IAM roles
 ]
