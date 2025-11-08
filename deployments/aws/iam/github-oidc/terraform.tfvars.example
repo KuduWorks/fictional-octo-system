@@ -23,6 +23,5 @@ deploy_role_name   = "github-actions-deploy"
 admin_role_name    = "github-actions-admin"
 
 # Required variables for resource tagging and state storage
-github_repository   = "fictional-octo-system"  # For resource tagging
 tfstate_bucket_name = "fictional-octo-system-tfstate"  # Without account ID suffix
 s3_bucket_prefix    = "github-managed-"  # Prefix for S3 buckets that GitHub Actions can manage
