@@ -5,9 +5,17 @@ on:
     branches:
       - main
       - develop
+    paths:
+      - 'deployments/aws/**'
+      - 'terraform/**'
+      - '.github/workflows/deploy-aws.yml'
   pull_request:
     branches:
       - main
+    paths:
+      - 'deployments/aws/**'
+      - 'terraform/**'
+      - '.github/workflows/deploy-aws.yml'
   workflow_dispatch:
 
 # Required for OIDC authentication
