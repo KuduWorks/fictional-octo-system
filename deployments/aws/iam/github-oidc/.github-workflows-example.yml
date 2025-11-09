@@ -96,9 +96,23 @@ jobs:
         working-directory: ./terraform
         run: terraform init
 
+      - name: Download Terraform Plan Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: ./terraform
+
+      - name: Check for Terraform Plan File
+        working-directory: ./terraform
+        run: |
+          if [ ! -f tfplan ]; then
+            echo "Terraform plan file (tfplan) not found!"
+            exit 1
+          fi
+
       - name: Terraform Apply
         working-directory: ./terraform
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
 
   # Job 3: AWS CLI Examples
   aws-operations:
