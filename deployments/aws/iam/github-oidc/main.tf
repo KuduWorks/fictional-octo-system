@@ -24,6 +24,9 @@ resource "aws_iam_openid_connect_provider" "github" {
     "sts.amazonaws.com"
   ]
 
+  # This is GitHub's current OIDC thumbprint as of June 2024.
+  # If GitHub rotates their certificate, this value must be updated.
+  # See: https://docs.github.com/en/actions/deployment/security-hardening-your-deployments/about-security-hardening-with-openid-connect#updating-the-thumbprint
   thumbprint_list = ["6938fd4d98bab03faadb97b34396831e3780aea1"]
 
   tags = {
