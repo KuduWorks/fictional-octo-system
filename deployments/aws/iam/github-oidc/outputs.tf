@@ -25,40 +25,5 @@ output "aws_account_id" {
 
 output "github_actions_workflow_example" {
   description = "Example GitHub Actions workflow configuration"
-  value       = <<-EOT
-    # Add this to your .github/workflows/deploy.yml
-    
-    name: Deploy to AWS
-    on:
-      push:
-        branches: [main, develop]
-    
-    permissions:
-      id-token: write
-      contents: read
-    
-    jobs:
-      deploy:
-        runs-on: ubuntu-latest
-        steps:
-          - uses: actions/checkout@v4
-          
-          - name: Configure AWS Credentials
-            uses: aws-actions/configure-aws-credentials@v4
-            with:
-              role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-              # Replace 'secrets.AWS_DEPLOY_ROLE_ARN' with your actual role ARN or set it as a GitHub Actions secret.
-              aws-region: ${{ secrets.AWS_REGION }}
-              # Replace 'secrets.AWS_REGION' with your AWS region or set it as a GitHub Actions secret.
-          
-          - name: Verify AWS Identity
-            run: aws sts get-caller-identity
-          
-          - name: Deploy with Terraform
-            run: |
-              cd terraform
-              terraform init
-              terraform plan
-              terraform apply -auto-approve
-  EOT
+  value = "- name: Configure AWS Credentials\n  uses: aws-actions/configure-aws-credentials@v4\n  with:\n    role-to-assume: $${{ secrets.AWS_DEPLOY_ROLE_ARN }}\n    aws-region: us-east-1"
 }
