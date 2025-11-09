@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -149,24 +149,24 @@ resource "aws_iam_policy" "github_deploy" {
           "dynamodb:GetItem",
           "dynamodb:PutItem",
           "dynamodb:DeleteItem",
-          
+
           # EC2 and networking
           "ec2:Describe*",
           "ec2:CreateTags",
           "ec2:DeleteTags",
-          
+
           # IAM (limited)
           "iam:GetRole",
           "iam:GetRolePolicy",
           "iam:ListRolePolicies",
           "iam:ListAttachedRolePolicies",
-          
+
           # CloudWatch
           "logs:CreateLogGroup",
           "logs:CreateLogStream",
           "logs:PutLogEvents",
           "logs:DescribeLogGroups",
-          
+
           # Tags
           "tag:GetResources",
           "tag:TagResources",

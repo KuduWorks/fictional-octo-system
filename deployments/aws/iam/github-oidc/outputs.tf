@@ -25,7 +25,7 @@ output "aws_account_id" {
 
 output "github_actions_workflow_example" {
   description = "Example GitHub Actions workflow configuration"
-  value = <<-EOT
+  value       = <<-EOT
     # Add this to your .github/workflows/deploy.yml
     
     name: Deploy to AWS
