@@ -46,9 +46,10 @@ output "github_actions_workflow_example" {
           - name: Configure AWS Credentials
             uses: aws-actions/configure-aws-credentials@v4
             with:
-              role-to-assume: ${try(aws_iam_role.github_deploy[0].arn, "<REPLACE_WITH_YOUR_DEPLOY_ROLE_ARN>")}
-              # If you did not create the deploy role, replace <REPLACE_WITH_YOUR_DEPLOY_ROLE_ARN> with your actual role ARN or remove this line.
-              aws-region: ${var.aws_region}
+              role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
+              # Replace 'secrets.AWS_DEPLOY_ROLE_ARN' with your actual role ARN or set it as a GitHub Actions secret.
+              aws-region: ${{ secrets.AWS_REGION }}
+              # Replace 'secrets.AWS_REGION' with your AWS region or set it as a GitHub Actions secret.
           
           - name: Verify AWS Identity
             run: aws sts get-caller-identity
