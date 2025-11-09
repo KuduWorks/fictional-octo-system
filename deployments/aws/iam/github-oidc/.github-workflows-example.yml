@@ -29,6 +29,7 @@ jobs:
 
       - name: Configure AWS Credentials (Read-Only Role)
         uses: aws-actions/configure-aws-credentials@v4
+        # Replace 'YOUR_ACCOUNT_ID' below with your actual AWS account ID, or use the Terraform output that provides this value.
         with:
           role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/github-actions-readonly
           aws-region: eu-north-1
@@ -74,6 +75,7 @@ jobs:
 
       - name: Configure AWS Credentials (Deploy Role)
         uses: aws-actions/configure-aws-credentials@v4
+        # Replace 'YOUR_ACCOUNT_ID' below with your actual AWS account ID, or use the Terraform output that provides this value.
         with:
           role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/github-actions-deploy
           aws-region: eu-north-1
@@ -136,6 +138,7 @@ jobs:
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
+        # Replace 'YOUR_ACCOUNT_ID' below with your actual AWS account ID, or use the Terraform output that provides this value.
         with:
           role-to-assume: arn:aws:iam::YOUR_ACCOUNT_ID:role/github-actions-deploy
           aws-region: ${{ matrix.region }}

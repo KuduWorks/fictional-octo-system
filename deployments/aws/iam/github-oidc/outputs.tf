@@ -46,7 +46,7 @@ output "github_actions_workflow_example" {
           - name: Configure AWS Credentials
             uses: aws-actions/configure-aws-credentials@v4
             with:
-              role-to-assume: ${var.create_deploy_role ? aws_iam_role.github_deploy[0].arn : "arn:aws:iam::ACCOUNT_ID:role/github-actions-deploy"}
+              role-to-assume: ${var.create_deploy_role ? aws_iam_role.github_deploy[0].arn : "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/github-actions-deploy"}
               aws-region: ${var.aws_region}
           
           - name: Verify AWS Identity
