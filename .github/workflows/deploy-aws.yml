@@ -65,7 +65,6 @@ jobs:
       - name: Terraform Plan
         working-directory: ./terraform
         run: terraform plan -no-color
-        continue-on-error: true
 
   # Job 2: Terraform Apply (only on main branch merge)
   apply:
