@@ -4,7 +4,7 @@ on:
   push:
     branches:
       - main
-      - aws-oidc-2
+      - develop
   pull_request:
     branches:
       - main
@@ -27,7 +27,7 @@ jobs:
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::494367313227:role/github-actions-readonly
+          role-to-assume: ${{ secrets.AWS_READONLY_ROLE_ARN }}
           aws-region: eu-north-1
           role-session-name: GitHubActions-${{ github.run_id }}
 
@@ -74,7 +74,7 @@ jobs:
       - name: Configure AWS Credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::494367313227:role/github-actions-deploy
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/github-actions-deploy
           aws-region: eu-north-1
           role-session-name: GitHubActions-Deploy-${{ github.run_id }}
           role-duration-seconds: 3600
