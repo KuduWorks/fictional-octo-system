@@ -24,7 +24,7 @@ resource "aws_iam_openid_connect_provider" "github" {
     "sts.amazonaws.com"
   ]
 
-  # thumbprint_list is omitted; AWS will automatically validate GitHub's certificate chain
+  thumbprint_list = []
 
   tags = {
     Name        = "github-actions-oidc"
