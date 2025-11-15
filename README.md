@@ -4,6 +4,16 @@
 
 A multi-cloud infrastructure deployment repository for managing Azure and AWS resources, monitoring, and security configurations. *(Why choose one cloud when you can complicate your life with both?)* ☁️☁️
 
+## ⚠️ IMPORTANT: Read This First
+
+**Before deploying anything, please read [WARNINGS.md](WARNINGS.md)** - it contains critical information about:
+- 💸 Cost warnings (Azure Bastion, NAT Gateway, AWS data transfer, etc.)
+- 🔒 Security considerations (state files, secrets management, network exposure)
+- ⚙️ Operational gotchas (dynamic IPs, state locking, resource deletion)
+- 📋 Pre-deployment checklist
+
+*Skipping this file may result in unexpected costs, security issues, or operational problems.*
+
 ## Overview
 
 This repository contains Infrastructure as Code (IaC) templates and configurations for deploying and managing both **Azure** and **AWS** resources, with a focus on secure storage, monitoring, and virtual networking components. *(In other words: Everything you need to run multi-cloud infrastructure like a boss, with double the complexity and double the buzzwords)*
@@ -48,6 +58,7 @@ fictional-octo-system/
 │   └── workflows/               # CI/CD pipeline definitions
 ├── LICENSE                      # MIT License
 ├── SECURITY.md                  # Security policy
+├── WARNINGS.md                  # ⚠️ Critical warnings and notices (READ THIS FIRST!)
 └── README.md                   # This file (you are here 📍)
 ```
 
@@ -111,6 +122,8 @@ fictional-octo-system/
 ### Prerequisites
 
 > *"The bare minimum you need before embarking on this cloud adventure"* 🎒
+
+**📖 REQUIRED READING**: Before you start, read [WARNINGS.md](WARNINGS.md) to understand critical cost, security, and operational considerations.
 
 - Azure CLI installed and configured *(bonus points if `az login` works on the first try)*
 - Terraform (version >= 1.3.0) *(keeping it modern, unlike that Jenkins server from 2014)*
@@ -300,6 +313,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 > *"We're here to help (during business hours, mostly)"* 💬
 
 For questions, issues, or support:
+- **READ FIRST**: Review [WARNINGS.md](WARNINGS.md) for common issues and important notices
 - Create an issue in this repository *(use the template, please)*
 - Review our [Security Policy](SECURITY.md) for security-related concerns *(don't put credentials in issue titles, it's happened)*
 
