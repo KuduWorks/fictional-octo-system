@@ -46,8 +46,6 @@ jobs:
         run: |
           echo "✅ Successfully authenticated with Azure using OIDC!"
           az account show
-          az account list --output table
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
