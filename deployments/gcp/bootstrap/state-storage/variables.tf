@@ -172,7 +172,6 @@ variable "labels" {
 variable "project_id" {
   description = "The GCP project ID where resources will be created (required: must be provided by the user)"
   type        = string
-  default     = ""  # Project ID must be provided
   
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.project_id))
