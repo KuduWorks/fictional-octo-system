@@ -25,6 +25,7 @@ on:
 permissions:
   id-token: write   # Required for requesting JWT token
   contents: read    # Required for checking out code
+  pull-requests: write  # For posting plan output as PR comments
 
 jobs:
   # Job 1: Terraform Plan
@@ -64,7 +65,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
-        run: terraform init
+        run: terraform init -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" -backend-config="key=${{ secrets.TF_STATE_KEY }}" -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
 
       - name: Terraform Format Check
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
@@ -91,19 +92,14 @@ jobs:
           path: ${{ steps.determine-dir.outputs.terraform_dir }}/tfplan
           retention-days: 5
 
-      - name: Upload Terraform Plan
-        uses: actions/upload-artifact@v4
-        with:
-          name: terraform-plan-${{ github.run_id }}
-          path: ${{ steps.determine-dir.outputs.terraform_dir }}/tfplan
-          retention-days: 5
+
 
   # Job 2: Terraform Apply (only on main branch merge)
   apply:
     name: Terraform Apply
     runs-on: ubuntu-latest
     needs: plan
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment:
       name: azure-production
     steps:
@@ -158,4 +154,4 @@ jobs:
 
       - name: Output Terraform Results
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
-        run: terraform output
+        run: terraform output || echo "No outputs defined"
