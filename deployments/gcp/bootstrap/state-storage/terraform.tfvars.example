@@ -9,8 +9,8 @@
 gcp_region = "europe-north1"
 
 # GCS Location (can be region or multi-region)
-# Options: EUROPE-NORTH1 (Finland), EU (Multi-region), EUROPE-WEST1 (Belgium)
-gcs_location = "EUROPE-NORTH1"
+# Options: europe-north1 (Finland), eu (Multi-region), europe-west1 (Belgium)
+gcs_location = "europe-north1"
 
 # Environment name
 environment = "dev"
