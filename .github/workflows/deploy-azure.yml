@@ -98,7 +98,6 @@ jobs:
           path: ${{ steps.determine-dir.outputs.terraform_dir }}/tfplan
           retention-days: 5
 
-
   # Job 2: Terraform Apply (only on main branch merge)
   apply:
     name: Terraform Apply
