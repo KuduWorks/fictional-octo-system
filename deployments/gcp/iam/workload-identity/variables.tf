@@ -106,7 +106,7 @@ variable "store_keys_in_secret_manager" {
 variable "project_id" {
   description = "The GCP project ID where resources will be created"
   type        = string
-  default     = "" # Project ID must be provided
+  default     = "kudu-star-dev-01"
 
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.project_id)) && var.project_id != ""
