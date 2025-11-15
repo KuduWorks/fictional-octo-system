@@ -109,8 +109,8 @@ variable "project_id" {
   default     = "kudu-star-dev-01"
 
   validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.project_id))
-    error_message = "Project ID must contain only lowercase letters, numbers, and hyphens."
+    condition     = can(regex("^[a-z0-9-]+$", var.project_id)) && var.project_id != ""
+    error_message = "Project ID is required and must contain only lowercase letters, numbers, and hyphens."
   }
 }
 
