@@ -59,8 +59,9 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "terraform_dir=${{ inputs.terraform_directory }}" >> $GITHUB_OUTPUT
           else
-            # Default to key-vault for automated runs
-            echo "terraform_dir=deployments/azure/key-vault" >> $GITHUB_OUTPUT
+            # Detect changed directory under deployments/azure/
+            CHANGED_DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^deployments/azure/' | head -1 | xargs dirname)
+            echo "terraform_dir=${CHANGED_DIR:-deployments/azure/key-vault}" >> $GITHUB_OUTPUT
           fi
 
       - name: Terraform Init
