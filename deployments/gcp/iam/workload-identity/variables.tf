@@ -106,11 +106,11 @@ variable "store_keys_in_secret_manager" {
 variable "project_id" {
   description = "The GCP project ID where resources will be created"
   type        = string
-  default     = "kudu-star-dev-01"
+  default     = ""  # Project ID must be provided
 
   validation {
-    condition     = can(regex("^[a-z0-9-]+$", var.project_id))
-    error_message = "Project ID must contain only lowercase letters, numbers, and hyphens."
+    condition     = var.project_id != "" && can(regex("^[a-z0-9-]+$", var.project_id))
+    error_message = "Project ID is required and must contain only lowercase letters, numbers, and hyphens."
   }
 }
 

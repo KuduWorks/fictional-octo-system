@@ -71,7 +71,12 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
 
       - name: Terraform Format Check
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
@@ -97,8 +102,6 @@ jobs:
           name: terraform-plan-${{ github.run_id }}
           path: ${{ steps.determine-dir.outputs.terraform_dir }}/tfplan
           retention-days: 5
-
-
 
   # Job 2: Terraform Apply (only on main branch merge)
   apply:
@@ -137,7 +140,12 @@ jobs:
 
       - name: Terraform Init
         working-directory: ${{ needs.plan.outputs.terraform_dir }}
-        run: terraform init
+        run: |
+          terraform init \
+            -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
+            -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
+            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
 
       - name: Terraform Apply
         working-directory: ${{ needs.plan.outputs.terraform_dir }}

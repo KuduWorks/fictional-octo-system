@@ -215,6 +215,7 @@ resource "google_project_iam_member" "github_actions_additional_roles" {
 # }
 
 resource "google_project_iam_audit_config" "storage_audit" {
+  count   = var.enable_audit_logging ? 1 : 0
   project = local.project_id
   service = "storage.googleapis.com"
   
