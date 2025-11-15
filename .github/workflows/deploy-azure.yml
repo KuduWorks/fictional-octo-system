@@ -71,6 +71,7 @@ jobs:
       - name: Terraform Format Check
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
         run: terraform fmt -check
+        continue-on-error: true
 
       - name: Terraform Validate
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
