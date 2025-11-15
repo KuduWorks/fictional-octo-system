@@ -28,6 +28,7 @@ terraform/crash.log
 .vscode/settings.json
 # ignore executable files
 *.exe
+actionlint
 deployments/azure/policies/region-control/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
 terraform/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
 deployments/azure/policies/vm-encryption/.terraform/providers/registry.terraform.io/hashicorp/azurerm/3.117.1/windows_amd64/LICENSE.txt
