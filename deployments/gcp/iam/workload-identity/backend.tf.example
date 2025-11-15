@@ -1,0 +1,32 @@
+# GCS Backend Configuration for Workload Identity Module
+# 
+# Copy this file to backend.tf and update PROJECT-ID with your actual GCP project ID
+# 
+# Steps:
+# 1. cp backend.tf.example backend.tf
+# 2. sed -i 's/PROJECT-ID/your-actual-project-id/g' backend.tf
+# 3. terraform init
+# 
+# Example: If your project ID is "my-gcp-project-123456"
+# Bucket: fictional-octo-system-tfstate-my-gcp-project-123456
+# Prefix: gcp/iam/workload-identity/terraform.tfstate
+
+terraform {
+  backend "gcs" {
+    bucket = "fictional-octo-system-tfstate-PROJECT-ID"
+    prefix = "gcp/iam/workload-identity/terraform.tfstate"
+  }
+}
+
+# Notes:
+# - This backend configuration assumes the bootstrap module has been deployed
+# - The GCS bucket must exist before running terraform init
+# - Application Default Credentials are used for authentication
+# - State locking is handled automatically by GCS backend
+# 
+# Verify bucket exists:
+# gsutil ls gs://fictional-octo-system-tfstate-PROJECT-ID
+# 
+# If bucket doesn't exist, deploy bootstrap module first:
+# cd ../../bootstrap/state-storage/
+# terraform apply

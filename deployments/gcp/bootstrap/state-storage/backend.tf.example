@@ -1,0 +1,30 @@
+# GCS Backend Configuration for Bootstrap Module
+# 
+# ⚠️ IMPORTANT: This file is used for migrating bootstrap state to GCS
+# 
+# Steps to use this file:
+# 1. Copy this file to backend.tf: cp backend.tf.example backend.tf
+# 2. Replace PROJECT-ID with your actual GCP project ID
+# 3. Run: terraform init -migrate-state
+# 4. Confirm migration when prompted
+# 
+# Example project ID: my-gcp-project-123456
+# Bucket name will be: fictional-octo-system-tfstate-my-gcp-project-123456
+
+terraform {
+  backend "gcs" {
+    bucket = "fictional-octo-system-tfstate-PROJECT-ID"
+    prefix = "bootstrap/terraform.tfstate"
+  }
+}
+
+# Notes:
+# - No credentials needed - uses Application Default Credentials
+# - Bucket must exist before migration (created by initial terraform apply)
+# - State locking is automatic with GCS backend (no separate locking service needed)
+# - Prefix organizes state files within the bucket
+# 
+# Alternative prefixes for different environments:
+# - bootstrap/dev/terraform.tfstate
+# - bootstrap/staging/terraform.tfstate
+# - bootstrap/prod/terraform.tfstate
