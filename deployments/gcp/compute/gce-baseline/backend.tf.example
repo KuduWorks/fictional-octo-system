@@ -1,0 +1,6 @@
+terraform {
+  backend "gcs" {
+    bucket = "fictional-octo-system-tfstate-PROJECT-ID"
+    prefix = "gcp/compute/gce-baseline/terraform.tfstate"
+  }
+}

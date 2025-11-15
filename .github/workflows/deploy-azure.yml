@@ -1,0 +1,151 @@
+name: Deploy to Azure with OIDC
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'deployments/azure/**'
+      - '.github/workflows/deploy-azure.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'deployments/azure/**'
+      - '.github/workflows/deploy-azure.yml'
+  workflow_dispatch:
+    inputs:
+      terraform_directory:
+        description: 'Terraform directory to deploy (e.g., deployments/azure/key-vault)'
+        required: true
+        type: string
+
+# Required for OIDC authentication
+permissions:
+  id-token: write   # Required for requesting JWT token
+  contents: read    # Required for checking out code
+  pull-requests: write  # For posting plan output as PR comments
+
+jobs:
+  # Job 1: Terraform Plan
+  plan:
+    name: Terraform Plan
+    runs-on: ubuntu-latest
+    outputs:
+      terraform_dir: ${{ steps.determine-dir.outputs.terraform_dir }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify Azure Identity
+        run: |
+          echo "✅ Successfully authenticated with Azure using OIDC!"
+          az account show
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Determine Terraform Directory
+        id: determine-dir
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "terraform_dir=${{ inputs.terraform_directory }}" >> $GITHUB_OUTPUT
+          else
+            # Use github.event.pull_request.base.sha for PRs or HEAD~1 for pushes
+            BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
+              BASE_SHA="HEAD~1"
+            fi
+            CHANGED_DIR=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '^deployments/azure/' | head -1 | xargs dirname)
+            echo "terraform_dir=${CHANGED_DIR:-deployments/azure/key-vault}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Terraform Init
+        working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
+        run: terraform init
+
+      - name: Terraform Format Check
+        working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
+        run: terraform fmt -check
+        continue-on-error: true
+
+      - name: Terraform Validate
+        working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
+        run: terraform plan -no-color -out=tfplan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
+
+      - name: Upload Terraform Plan
+        uses: actions/upload-artifact@v4
+        with:
+          name: terraform-plan-${{ github.run_id }}
+          path: ${{ steps.determine-dir.outputs.terraform_dir }}/tfplan
+          retention-days: 5
+
+  # Job 2: Terraform Apply (only on main branch merge)
+  apply:
+    name: Terraform Apply
+    runs-on: ubuntu-latest
+    needs: plan
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    environment:
+      name: azure-production
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Azure Login via OIDC
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Verify Azure Identity
+        run: |
+          echo "🚀 Deploying with identity:"
+          az account show
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.0
+
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan-${{ github.run_id }}
+          path: ${{ needs.plan.outputs.terraform_dir }}
+
+      - name: Terraform Init
+        working-directory: ${{ needs.plan.outputs.terraform_dir }}
+        run: terraform init
+
+      - name: Terraform Apply
+        working-directory: ${{ needs.plan.outputs.terraform_dir }}
+        run: terraform apply -auto-approve tfplan
+        env:
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_USE_OIDC: true
+
+      - name: Output Terraform Results
+        working-directory: ${{ needs.plan.outputs.terraform_dir }}
+        run: terraform output

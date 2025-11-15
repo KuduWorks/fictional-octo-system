@@ -1,0 +1,235 @@
+# Workload Identity Federation Configuration
+# Copy this file to terraform.tfvars and customize for your repositories
+
+# =============================================================================
+# BASIC CONFIGURATION
+# =============================================================================
+
+# GCP Region
+gcp_region = "europe-north1"
+
+# Environment
+environment = "dev"
+
+# Workload Identity Pool (created by bootstrap module)
+workload_identity_pool_name = "github-actions-pool"
+
+# =============================================================================
+# GITHUB REPOSITORIES CONFIGURATION
+# =============================================================================
+
+# Configure GitHub repositories that need GCP access
+github_repositories = {
+  # Main repository (fictional-octo-system)
+  "main" = {
+    org          = "KuduWorks"
+    repo         = "fictional-octo-system"
+    display_name = "Fictional Octo System"
+    branches     = ["main", "develop"]  # Empty list = all branches allowed
+    roles = [
+      "roles/storage.objectAdmin",     # For Terraform state access
+      "roles/compute.viewer",          # View compute resources
+      "roles/iam.serviceAccountUser",  # Use service accounts
+      "roles/secretmanager.viewer",    # View secrets
+    ]
+    custom_roles = []  # Custom roles to assign (must be created first)
+  },
+  
+  # Example: Additional repository for microservices
+  "microservices" = {
+    org          = "KuduWorks"
+    repo         = "gcp-microservices"
+    display_name = "GCP Microservices"
+    branches     = ["main", "staging"]
+    roles = [
+      "roles/run.admin",               # Cloud Run administration
+      "roles/storage.admin",           # Storage administration
+      "roles/cloudsql.admin",          # Cloud SQL administration
+      "roles/secretmanager.admin",     # Secret Manager administration
+    ]
+    custom_roles = ["terraform_deployer"]  # Example custom role
+  },
+  
+  # Example: Infrastructure-only repository
+  "infrastructure" = {
+    org          = "KuduWorks"
+    repo         = "gcp-infrastructure"
+    display_name = "GCP Infrastructure"
+    branches     = ["main"]  # Production deployments only from main
+    roles = [
+      "roles/editor",                  # Broad permissions for infrastructure
+      "roles/iam.securityAdmin",       # Manage IAM policies
+      "roles/resourcemanager.projectIamAdmin", # Project-level IAM
+    ]
+    custom_roles = []
+  }
+}
+
+# =============================================================================
+# CUSTOM IAM ROLES
+# =============================================================================
+
+# Define custom IAM roles for specific use cases
+custom_roles = {
+  "terraform_deployer" = {
+    title       = "Terraform Deployer"
+    description = "Custom role for Terraform deployments with minimal required permissions"
+    stage       = "GA"
+    permissions = [
+      "compute.instances.create",
+      "compute.instances.delete",
+      "compute.instances.get",
+      "compute.instances.list",
+      "compute.instances.setMetadata",
+      "compute.instances.setTags",
+      "storage.buckets.create",
+      "storage.buckets.delete",
+      "storage.buckets.get",
+      "storage.buckets.list",
+      "storage.objects.create",
+      "storage.objects.delete",
+      "storage.objects.get",
+      "storage.objects.list"
+    ]
+  },
+  
+  "app_deployer" = {
+    title       = "Application Deployer"
+    description = "Custom role for application deployments to Cloud Run and App Engine"
+    stage       = "GA"
+    permissions = [
+      "run.services.create",
+      "run.services.delete",
+      "run.services.get",
+      "run.services.list",
+      "run.services.update",
+      "appengine.applications.get",
+      "appengine.services.update",
+      "appengine.versions.create",
+      "appengine.versions.delete"
+    ]
+  }
+}
+
+# =============================================================================
+# TERRAFORM STATE ACCESS
+# =============================================================================
+
+# Grant access to Terraform state bucket (recommended)
+enable_terraform_state_access = true
+
+# Terraform state bucket name (will be auto-detected if left empty)
+# Format: fictional-octo-system-tfstate-PROJECT-ID
+terraform_state_bucket = ""
+
+# =============================================================================
+# SERVICE ACCOUNT KEYS (NOT RECOMMENDED)
+# =============================================================================
+
+# Create service account keys (strongly discouraged - use Workload Identity Federation instead)
+create_service_account_keys = false
+
+# Store keys in Secret Manager (only if create_service_account_keys = true)
+store_keys_in_secret_manager = false
+
+# =============================================================================
+# LABELS AND TAGS
+# =============================================================================
+
+# Additional labels for resources
+labels = {
+  project     = "fictional-octo-system"
+  team        = "platform"
+  cost_center = "engineering"
+  managed_by  = "terraform"
+}
+
+# =============================================================================
+# CONFIGURATION EXAMPLES FOR DIFFERENT SCENARIOS
+# =============================================================================
+
+# --- SINGLE REPOSITORY SETUP ---
+# github_repositories = {
+#   "main" = {
+#     org          = "YourOrg"
+#     repo         = "your-repo"
+#     display_name = "Your Application"
+#     branches     = ["main"]
+#     roles = [
+#       "roles/storage.objectAdmin",
+#       "roles/compute.viewer"
+#     ]
+#     custom_roles = []
+#   }
+# }
+
+# --- DEVELOPMENT ENVIRONMENT (PERMISSIVE) ---
+# github_repositories = {
+#   "dev" = {
+#     org          = "YourOrg"
+#     repo         = "your-repo"
+#     display_name = "Development"
+#     branches     = []  # All branches allowed
+#     roles = [
+#       "roles/editor",  # Broad permissions for development
+#       "roles/iam.serviceAccountUser"
+#     ]
+#     custom_roles = []
+#   }
+# }
+
+# --- PRODUCTION ENVIRONMENT (RESTRICTIVE) ---
+# github_repositories = {
+#   "prod" = {
+#     org          = "YourOrg"
+#     repo         = "your-repo"
+#     display_name = "Production"
+#     branches     = ["main"]  # Only main branch
+#     roles = [
+#       "roles/run.admin",           # Specific service permissions only
+#       "roles/storage.objectAdmin",
+#       "roles/cloudsql.client"
+#     ]
+#     custom_roles = ["app_deployer"]  # Custom minimal permissions
+#   }
+# }
+
+# --- MICROSERVICES ARCHITECTURE ---
+# github_repositories = {
+#   "frontend" = {
+#     org          = "YourOrg"
+#     repo         = "frontend-service"
+#     display_name = "Frontend Service"
+#     branches     = ["main", "develop"]
+#     roles = ["roles/storage.admin", "roles/cdn.admin"]
+#     custom_roles = []
+#   },
+#   "backend-api" = {
+#     org          = "YourOrg"
+#     repo         = "backend-api"
+#     display_name = "Backend API"
+#     branches     = ["main", "develop"]
+#     roles = ["roles/run.admin", "roles/cloudsql.admin"]
+#     custom_roles = ["app_deployer"]
+#   },
+#   "infrastructure" = {
+#     org          = "YourOrg"
+#     repo         = "infrastructure"
+#     display_name = "Infrastructure"
+#     branches     = ["main"]
+#     roles = ["roles/editor"]
+#     custom_roles = ["terraform_deployer"]
+#   }
+# }
+
+# =============================================================================
+# SECURITY CONSIDERATIONS
+# =============================================================================
+
+# 1. Use minimal IAM roles - grant only what's needed
+# 2. Restrict branches for production deployments
+# 3. Consider separate service accounts per environment
+# 4. Prefer Workload Identity Federation over service account keys
+# 5. Use custom roles for fine-grained permissions
+# 6. Enable audit logging to monitor access
+# 7. Regularly review and rotate permissions

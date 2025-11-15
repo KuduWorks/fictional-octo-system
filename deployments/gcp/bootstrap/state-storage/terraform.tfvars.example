@@ -1,0 +1,125 @@
+# GCP Bootstrap Configuration Example
+# Copy this file to terraform.tfvars and customize for your environment
+
+# =============================================================================
+# BASIC CONFIGURATION
+# =============================================================================
+
+# GCP Region (Finland for Nordic consistency)
+gcp_region = "europe-north1"
+
+# GCS Location (can be region or multi-region)
+# Options: europe-north1 (Finland), eu (Multi-region), europe-west1 (Belgium)
+gcs_location = "europe-north1"
+
+# Environment name
+environment = "dev"
+
+# =============================================================================
+# STORAGE CONFIGURATION
+# =============================================================================
+
+# State bucket name (leave empty for auto-generated: fictional-octo-system-tfstate-PROJECT-ID)
+state_bucket_name = ""
+
+# State version retention (days)
+state_version_retention_days = 90
+
+# Number of newer versions to keep
+state_version_retention_count = 10
+
+# KMS key for bucket encryption (optional - leave empty for Google-managed)
+# kms_key_name = "projects/PROJECT-ID/locations/europe-north1/keyRings/terraform-state/cryptoKeys/state-bucket"
+kms_key_name = ""
+
+# Enable audit logging for state bucket access
+enable_audit_logging = false
+
+# =============================================================================
+# GITHUB ACTIONS CONFIGURATION
+# =============================================================================
+
+# GitHub organization name
+github_org = "KuduWorks"
+
+# GitHub repository name
+github_repo = "fictional-octo-system"
+
+# Service account name for GitHub Actions
+github_actions_sa_name = "github-actions-terraform"
+
+# Workload Identity Pool name (organization-wide)
+workload_identity_pool_name = "github-actions-pool"
+
+# =============================================================================
+# DEPLOYMENT PERMISSIONS (USE WITH CAUTION)
+# =============================================================================
+
+# Grant additional deployment roles to GitHub Actions service account
+# WARNING: This grants broad permissions - use minimal permissions in production
+enable_deployment_roles = false
+
+# Additional IAM roles for deployment (only if enable_deployment_roles = true)
+deployment_roles = [
+  "roles/compute.instanceAdmin.v1",
+  "roles/iam.serviceAccountUser",
+  "roles/storage.admin",
+  "roles/cloudsql.admin"
+]
+
+# =============================================================================
+# LABELS AND TAGS
+# =============================================================================
+
+# Additional labels to apply to resources
+labels = {
+  project     = "fictional-octo-system"
+  team        = "platform"
+  cost_center = "engineering"
+  owner       = "platform-team"
+}
+
+# =============================================================================
+# CONFIGURATION EXAMPLES FOR DIFFERENT ENVIRONMENTS
+# =============================================================================
+
+# --- DEVELOPMENT ENVIRONMENT ---
+# environment = "dev"
+# enable_audit_logging = false
+# enable_deployment_roles = true  # More permissive for development
+# state_version_retention_days = 30
+
+# --- STAGING ENVIRONMENT ---
+# environment = "staging"
+# enable_audit_logging = true
+# enable_deployment_roles = false  # More restrictive
+# state_version_retention_days = 60
+
+# --- PRODUCTION ENVIRONMENT ---
+# environment = "prod"
+# enable_audit_logging = true
+# enable_deployment_roles = false  # Minimal permissions only
+# state_version_retention_days = 365
+# kms_key_name = "projects/PROJECT-ID/locations/europe-north1/keyRings/terraform-state/cryptoKeys/state-bucket"
+
+# =============================================================================
+# MULTI-REGION CONFIGURATION
+# =============================================================================
+
+# For multi-region setup (higher availability, higher cost)
+# gcs_location = "EU"  # European Union multi-region
+
+# For single-region alternatives
+# gcs_location = "EUROPE-WEST1"  # Belgium
+# gcs_location = "EUROPE-WEST4"  # Netherlands
+# gcs_location = "EUROPE-WEST3"  # Frankfurt
+
+# =============================================================================
+# ORGANIZATION-WIDE WORKLOAD IDENTITY
+# =============================================================================
+
+# Use consistent pool name across all projects for organization-wide identity federation
+# workload_identity_pool_name = "github-actions-pool"
+
+# For project-specific pools (alternative approach)
+# workload_identity_pool_name = "fictional-octo-system-github"
