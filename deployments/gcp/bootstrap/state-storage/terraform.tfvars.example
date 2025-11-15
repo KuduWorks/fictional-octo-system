@@ -9,8 +9,8 @@
 gcp_region = "europe-north1"
 
 # GCS Location (can be region or multi-region)
-# Options: EUROPE-NORTH1 (Finland), EU (Multi-region), EUROPE-WEST1 (Belgium)
-gcs_location = "EUROPE-NORTH1"
+# Options: europe-north1 (Finland), eu (Multi-region), europe-west1 (Belgium)
+gcs_location = "europe-north1"
 
 # Environment name
 environment = "dev"
@@ -110,9 +110,9 @@ labels = {
 # gcs_location = "EU"  # European Union multi-region
 
 # For single-region alternatives
-# gcs_location = "EUROPE-WEST1"  # Belgium
-# gcs_location = "EUROPE-WEST4"  # Netherlands
-# gcs_location = "EUROPE-WEST3"  # Frankfurt
+# gcs_location = "europe-west1"  # Belgium
+# gcs_location = "europe-west4"  # Netherlands
+# gcs_location = "europe-west3"  # Frankfurt
 
 # =============================================================================
 # ORGANIZATION-WIDE WORKLOAD IDENTITY
