@@ -8,9 +8,9 @@ variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string
   default     = "dev"
-  
+
   validation {
-    condition = contains(["dev", "staging", "prod", "test"], var.environment)
+    condition     = contains(["dev", "staging", "prod", "test"], var.environment)
     error_message = "Environment must be one of: dev, staging, prod, test."
   }
 }
@@ -24,14 +24,14 @@ variable "workload_identity_pool_name" {
 variable "github_repositories" {
   description = "Map of GitHub repositories and their configurations"
   type = map(object({
-    org           = string
-    repo          = string
-    display_name  = string
-    branches      = list(string)  # Empty list allows all branches
-    roles         = list(string)  # IAM roles to grant
-    custom_roles  = list(string)  # Custom IAM roles to grant
+    org          = string
+    repo         = string
+    display_name = string
+    branches     = list(string) # Empty list allows all branches
+    roles        = list(string) # IAM roles to grant
+    custom_roles = list(string) # Custom IAM roles to grant
   }))
-  
+
   default = {
     "main" = {
       org          = "KuduWorks"
@@ -46,7 +46,7 @@ variable "github_repositories" {
       custom_roles = []
     }
   }
-  
+
   validation {
     condition = alltrue([
       for k, v in var.github_repositories :
@@ -65,9 +65,9 @@ variable "custom_roles" {
     permissions = list(string)
     stage       = string
   }))
-  
+
   default = {}
-  
+
   validation {
     condition = alltrue([
       for k, v in var.custom_roles :
@@ -106,7 +106,8 @@ variable "store_keys_in_secret_manager" {
 variable "project_id" {
   description = "The GCP project ID where resources will be created"
   type        = string
-  
+  default     = "kudu-star-dev-01" # Add this line
+
   validation {
     condition     = can(regex("^[a-z0-9-]+$", var.project_id))
     error_message = "Project ID must contain only lowercase letters, numbers, and hyphens."

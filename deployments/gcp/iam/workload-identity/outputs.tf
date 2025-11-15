@@ -35,9 +35,9 @@ output "github_secrets_config" {
     for k, repo in var.github_repositories : k => {
       repository_name = "${repo.org}/${repo.repo}"
       secrets = {
-        GCP_PROJECT_ID            = local.project_id
-        WIF_PROVIDER             = google_iam_workload_identity_pool_provider.github_repos[k].name
-        WIF_SERVICE_ACCOUNT      = google_service_account.github_repos[k].email
+        GCP_PROJECT_ID      = local.project_id
+        WIF_PROVIDER        = google_iam_workload_identity_pool_provider.github_repos[k].name
+        WIF_SERVICE_ACCOUNT = google_service_account.github_repos[k].email
       }
     }
   }
@@ -99,15 +99,15 @@ output "configuration_summary" {
     total_repositories = length(var.github_repositories)
     repositories = {
       for k, repo in var.github_repositories : k => {
-        full_name    = "${repo.org}/${repo.repo}"
-        branches     = length(repo.branches) > 0 ? repo.branches : ["all branches"]
-        roles        = repo.roles
-        custom_roles = repo.custom_roles
+        full_name       = "${repo.org}/${repo.repo}"
+        branches        = length(repo.branches) > 0 ? repo.branches : ["all branches"]
+        roles           = repo.roles
+        custom_roles    = repo.custom_roles
         service_account = google_service_account.github_repos[k].email
       }
     }
     workload_identity_pool = google_iam_workload_identity_pool.github_actions.name
-    authentication_method = "Workload Identity Federation (OIDC)"
+    authentication_method  = "Workload Identity Federation (OIDC)"
     security_benefits = [
       "No long-lived secrets",
       "Short-lived tokens (1 hour max)",
@@ -141,9 +141,9 @@ output "iam_roles_summary" {
   description = "Summary of IAM roles granted to each service account"
   value = {
     for k, repo in var.github_repositories : k => {
-      service_account = google_service_account.github_repos[k].email
-      predefined_roles = repo.roles
-      custom_roles = repo.custom_roles
+      service_account        = google_service_account.github_repos[k].email
+      predefined_roles       = repo.roles
+      custom_roles           = repo.custom_roles
       terraform_state_access = var.enable_terraform_state_access
     }
   }
