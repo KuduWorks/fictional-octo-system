@@ -60,19 +60,18 @@ jobs:
           if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
             echo "terraform_dir=${{ inputs.terraform_directory }}" >> $GITHUB_OUTPUT
           else
-            # Detect changed directory under deployments/azure/
-            CHANGED_DIR=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^deployments/azure/' | head -1 | xargs dirname)
+            # Use github.event.pull_request.base.sha for PRs or HEAD~1 for pushes
+            BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before }}"
+            if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
+              BASE_SHA="HEAD~1"
+            fi
+            CHANGED_DIR=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '^deployments/azure/' | head -1 | xargs dirname)
             echo "terraform_dir=${CHANGED_DIR:-deployments/azure/key-vault}" >> $GITHUB_OUTPUT
           fi
 
       - name: Terraform Init
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
-        run: |
-          terraform init \
-            -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
-            -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
-            -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
+        run: terraform init
 
       - name: Terraform Format Check
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
@@ -98,8 +97,6 @@ jobs:
           name: terraform-plan-${{ github.run_id }}
           path: ${{ steps.determine-dir.outputs.terraform_dir }}/tfplan
           retention-days: 5
-
-
 
   # Job 2: Terraform Apply (only on main branch merge)
   apply:
