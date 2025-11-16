@@ -830,7 +830,7 @@ resource "azurerm_subscription_policy_assignment" "keyvault_encryption_audit" {
 
 # Disk Encryption for VMs
 resource "azurerm_subscription_policy_assignment" "disk_encryption_required" {
-  name                 = "iso27001-disk-encryption"
+  name                 = "iso27001-disk-encryption-cmk"
   subscription_id      = local.subscription_id
   policy_definition_id = azurerm_policy_definition.disk_cmk_required.id
   display_name         = "ISO 27001 - Managed disks must use encryption"
@@ -874,7 +874,7 @@ resource "azurerm_subscription_policy_assignment" "acr_encryption_required" {
 
 # Data Explorer (Kusto) must use disk encryption and CMK
 resource "azurerm_subscription_policy_assignment" "kusto_encryption_required" {
-  name                 = "iso27001-kusto-encryption"
+  name                 = "iso27001-kusto-encryption-disk"
   subscription_id      = local.subscription_id
   policy_definition_id = azurerm_policy_definition.kusto_disk_encryption.id
   display_name         = "ISO 27001 - Data Explorer must use disk encryption"
@@ -887,8 +887,8 @@ resource "azurerm_subscription_policy_assignment" "kusto_encryption_required" {
   depends_on = [azurerm_policy_definition.kusto_disk_encryption]
 }
 
-resource "azurerm_subscription_policy_assignment" "kusto_cmk_required" {
-  name                 = "iso27001-kusto-cmk"
+resource "azurerm_subscription_policy_assignment" "kusto_cmk_assignment" {
+  name                 = "iso27001-kusto-cmk-required"
   subscription_id      = local.subscription_id
   policy_definition_id = azurerm_policy_definition.kusto_cmk_required.id
   display_name         = "ISO 27001 - Data Explorer must use CMK"
@@ -915,8 +915,32 @@ resource "azurerm_policy_definition" "general_encryption_audit" {
   policy_rule = jsonencode({
     if = {
       not = {
-        field = "Microsoft.Resources/encryption"
-        equals = "Enabled"
+        anyOf = [
+          {
+            field = "type"
+            equals = "Microsoft.Storage/storageAccounts"
+          },
+          {
+            field = "Microsoft.Storage/storageAccounts/encryption.services.blob.enabled"
+            equals = "true"
+          },
+          {
+            field = "type"
+            equals = "Microsoft.Sql/servers"
+          },
+          {
+            field = "Microsoft.Sql/servers/transparentDataEncryption.status"
+            equals = "Enabled"
+          },
+          {
+            field = "type"
+            equals = "Microsoft.KeyVault/vaults"
+          },
+          {
+            field = "Microsoft.KeyVault/vaults/properties.enableSoftDelete"
+            equals = "true"
+          }
+        ]
       }
     }
     then = {
