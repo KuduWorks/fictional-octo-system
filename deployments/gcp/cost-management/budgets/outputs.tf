@@ -54,7 +54,7 @@ output "setup_instructions" {
     2. CLI: gcloud billing budgets list --billing-account=${var.billing_account_id}
     
     Budget Configuration:
-    - Monthly Budget: $${var.monthly_budget_amount}
+    - Monthly Budget: €${var.monthly_budget_amount}
     - Scope: All services across the entire project
     
     Alert Thresholds:
