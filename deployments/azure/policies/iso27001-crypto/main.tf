@@ -508,35 +508,12 @@ output "subscription_id" {
   value       = local.subscription_id
 }
 
-output "enforcement_mode" {
-  description = "The enforcement mode variable value (note: only applies to policies where 'enforce' is set using this variable)"
-  value       = var.enforcement_mode
-}
 
 output "policy_assignments" {
   description = "List of all policy assignments created"
   value = {
     storage_https                = azurerm_subscription_policy_assignment.storage_https_required.id
-    storage_cmk                  = azurerm_subscription_policy_assignment.storage_cmk_required.id
-    storage_disable_public       = azurerm_subscription_policy_assignment.storage_disable_public_access.id
-    sql_tde_cmk                  = azurerm_subscription_policy_assignment.sql_tde_cmk_required.id
-    keyvault_soft_delete         = azurerm_subscription_policy_assignment.keyvault_soft_delete.id
-    keyvault_purge_protection    = azurerm_subscription_policy_assignment.keyvault_purge_protection.id
-    disk_cmk                     = azurerm_subscription_policy_assignment.disk_cmk_assignment.id
-    kusto_disk_encryption        = azurerm_subscription_policy_assignment.kusto_disk_encryption_assignment.id
-    kusto_cmk                    = azurerm_subscription_policy_assignment.kusto_cmk_assignment.id
-    aks_azure_policy_addon       = azurerm_subscription_policy_assignment.aks_azure_policy_addon.id
-    aks_encryption_at_host       = azurerm_subscription_policy_assignment.aks_encryption_at_host_assignment.id
-    vm_encryption_audit          = azurerm_subscription_policy_assignment.vm_encryption_audit.id
-    app_service_tls_12           = azurerm_subscription_policy_assignment.app_service_tls_12.id
-    function_app_tls_12          = azurerm_subscription_policy_assignment.function_app_tls_12.id
-    cognitive_services_cmk       = azurerm_subscription_policy_assignment.cognitive_services_cmk.id
-  }
-}
-
-output "custom_policy_definitions" {
-  description = "List of custom policy definitions created"
-  value = {
+# (Block removed from here; will be inserted after line 962)
     disk_cmk_required        = azurerm_policy_definition.disk_cmk_required.id
     kusto_disk_encryption    = azurerm_policy_definition.kusto_disk_encryption.id
     kusto_cmk_required       = azurerm_policy_definition.kusto_cmk_required.id
