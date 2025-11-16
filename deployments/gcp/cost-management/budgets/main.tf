@@ -54,18 +54,14 @@ resource "google_billing_budget" "monthly_budget" {
   display_name    = "${var.environment}-monthly-budget"
 
   budget_filter {
-    projects = ["kudu-star-dev-01"]  # Use project ID, not "projects/..." format
-
-    # Monitor all services
-    services = []
-
-    # Monitor all credit types
+    # Monitor all services on a monthly cycle
+    calendar_period        = "MONTH"
     credit_types_treatment = "INCLUDE_ALL_CREDITS"
   }
 
   amount {
     specified_amount {
-      currency_code = "USD"
+      currency_code = "EUR"
       units         = tostring(var.monthly_budget_amount)
     }
   }
@@ -98,103 +94,12 @@ resource "google_billing_budget" "monthly_budget" {
   }
 
   # Email notifications
-  dynamic "all_updates_rule" {
-    for_each = length(var.budget_alert_emails) > 0 ? [1] : []
-    content {
-      monitoring_notification_channels = [
-        for email in var.budget_alert_emails :
-        google_monitoring_notification_channel.budget_email[email].id
-      ]
-      disable_default_iam_recipients = false
-    }
-  }
-
-  depends_on = [google_project_service.cloudbilling]
-}
-
-# Compute Engine specific budget
-resource "google_billing_budget" "compute_budget" {
-  count = var.billing_account_id != "" ? 1 : 0
-
-  billing_account = var.billing_account_id
-  display_name    = "${var.environment}-compute-budget"
-
-  budget_filter {
-    projects = ["kudu-star-dev-01"]  # Use project ID, not "projects/..." format
-
-    # Monitor only Compute Engine
-    services = ["services/6F81-5844-456A"] # Compute Engine service ID
-  }
-
-  amount {
-    specified_amount {
-      currency_code = "USD"
-      units         = tostring(var.monthly_budget_amount * 0.5) # 50% of total budget
-    }
-  }
-
-  threshold_rules {
-    threshold_percent = 0.8
-    spend_basis       = "CURRENT_SPEND"
-  }
-
-  threshold_rules {
-    threshold_percent = 1.0
-    spend_basis       = "CURRENT_SPEND"
-  }
-
-  dynamic "all_updates_rule" {
-    for_each = length(var.budget_alert_emails) > 0 ? [1] : []
-    content {
-      monitoring_notification_channels = [
-        for email in var.budget_alert_emails :
-        google_monitoring_notification_channel.budget_email[email].id
-      ]
-    }
-  }
-
-  depends_on = [google_project_service.cloudbilling]
-}
-
-# Storage budget
-resource "google_billing_budget" "storage_budget" {
-  count = var.billing_account_id != "" ? 1 : 0
-
-  billing_account = var.billing_account_id
-  display_name    = "${var.environment}-storage-budget"
-
-  budget_filter {
-    projects = ["kudu-star-dev-01"]  # Use project ID, not "projects/..." format
-
-    # Monitor Cloud Storage
-    services = ["services/95FF-2EF5-5EA1"] # Cloud Storage service ID
-  }
-
-  amount {
-    specified_amount {
-      currency_code = "USD"
-      units         = tostring(var.monthly_budget_amount * 0.2) # 20% of total budget
-    }
-  }
-
-  threshold_rules {
-    threshold_percent = 0.8
-    spend_basis       = "CURRENT_SPEND"
-  }
-
-  threshold_rules {
-    threshold_percent = 1.0
-    spend_basis       = "CURRENT_SPEND"
-  }
-
-  dynamic "all_updates_rule" {
-    for_each = length(var.budget_alert_emails) > 0 ? [1] : []
-    content {
-      monitoring_notification_channels = [
-        for email in var.budget_alert_emails :
-        google_monitoring_notification_channel.budget_email[email].id
-      ]
-    }
+  all_updates_rule {
+    monitoring_notification_channels = [
+      for email in var.budget_alert_emails :
+      google_monitoring_notification_channel.budget_email[email].id
+    ]
+    disable_default_iam_recipients = false
   }
 
   depends_on = [google_project_service.cloudbilling]

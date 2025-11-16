@@ -38,16 +38,7 @@ output "budget_summary" {
       name   = google_billing_budget.monthly_budget[0].display_name
       amount = var.monthly_budget_amount
       alerts = "50%, 75%, 90%, 100% (current), 100% (forecast)"
-    }
-    compute_budget = {
-      name   = google_billing_budget.compute_budget[0].display_name
-      amount = var.monthly_budget_amount * 0.5
-      alerts = "80%, 100%"
-    }
-    storage_budget = {
-      name   = google_billing_budget.storage_budget[0].display_name
-      amount = var.monthly_budget_amount * 0.2
-      alerts = "80%, 100%"
+      scope  = "All services across the entire project"
     }
   } : null
 }
@@ -58,25 +49,24 @@ output "setup_instructions" {
     
     Budget Setup Complete! 🎉
     
-    To view your budgets:
+    To view your budget:
     1. Web Console: https://console.cloud.google.com/billing/budgets
     2. CLI: gcloud billing budgets list --billing-account=${var.billing_account_id}
     
     Budget Configuration:
-    - Total Monthly Budget: $${var.monthly_budget_amount}
-    - Compute Budget: $${var.monthly_budget_amount * 0.5} (50%)
-    - Storage Budget: $${var.monthly_budget_amount * 0.2} (20%)
+    - Monthly Budget: $${var.monthly_budget_amount}
+    - Scope: All services across the entire project
     
     Alert Thresholds:
-    - Main Budget: 50%, 75%, 90%, 100% (actual + forecast)
-    - Service Budgets: 80%, 100%
+    - 50%, 75%, 90%, 100% (actual spend)
+    - 100% (forecasted spend)
     
     Email Notifications: ${length(var.budget_alert_emails)} recipient(s)
     ${length(var.budget_alert_emails) > 0 ? "- ${join("\n    - ", var.budget_alert_emails)}" : "⚠️  No email alerts configured!"}
     
-    To modify budgets:
+    To modify budget:
     - Update terraform.tfvars and run: terraform apply
-    - Adjust monthly_budget_amount to change spending limits
+    - Adjust monthly_budget_amount to change spending limit
     - Add more email addresses to budget_alert_emails
     
   EOT
