@@ -51,38 +51,7 @@ locals {
 #
 # ==================== STORAGE ACCOUNT POLICIES ====================
 #
-
-# Policy 1: Storage Accounts must use HTTPS (Secure Transfer)
-resource "azurerm_subscription_policy_assignment" "storage_https_required" {
-  name                 = "iso27001-storage-https"
-  policy_definition_id = local.storage_https_policy_id
-  subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Storage Accounts require secure transfer (HTTPS)"
-  description          = "Enforces HTTPS-only access to storage accounts for data in transit encryption"
-
-  metadata = jsonencode({
-    category   = "ISO 27001 - Cryptography"
-    control    = "A.10.1.1"
-    assignedBy = "Terraform"
-  })
-}
-
-# Policy 2: Storage Accounts should use customer-managed keys
-resource "azurerm_subscription_policy_assignment" "storage_cmk_required" {
-  name                 = "iso27001-storage-cmk"
-  policy_definition_id = local.storage_cmk_policy_id
-  subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Storage Accounts should use customer-managed keys"
-  description          = "Audit storage accounts that don't use customer-managed keys for encryption at rest"
-
-  metadata = jsonencode({
-    category   = "ISO 27001 - Cryptography"
-    control    = "A.10.1.1"
-    assignedBy = "Terraform"
-  })
-}
-
-# Policy 3: Storage Accounts should disable public blob access
+# Policy 1: Storage Accounts should disable public blob access
 resource "azurerm_subscription_policy_assignment" "storage_disable_public_access" {
   name                 = "iso27001-storage-no-public"
   policy_definition_id = local.storage_public_access_policy_id
@@ -97,10 +66,39 @@ resource "azurerm_subscription_policy_assignment" "storage_disable_public_access
   })
 }
 
+# Policy 2: Storage Accounts must use HTTPS (Secure Transfer)
+resource "azurerm_subscription_policy_assignment" "storage_https_required" {
+  name                 = "iso27001-storage-https"
+  policy_definition_id = local.storage_https_policy_id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Storage Accounts require secure transfer (HTTPS)"
+  description          = "Enforces HTTPS-only access to storage accounts for data in transit encryption"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+}
+
+# Policy 3: Storage Accounts should use customer-managed keys
+resource "azurerm_subscription_policy_assignment" "storage_cmk_required" {
+  name                 = "iso27001-storage-cmk"
+  policy_definition_id = local.storage_cmk_policy_id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Storage Accounts should use customer-managed keys"
+  description          = "Audit storage accounts that don't use customer-managed keys for encryption at rest"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+}
+
 #
 # ==================== SQL DATABASE POLICIES ====================
 #
-
 # Policy 4: SQL Databases should use customer-managed keys for TDE
 resource "azurerm_subscription_policy_assignment" "sql_tde_cmk_required" {
   name                 = "iso27001-sql-tde-cmk"
@@ -119,14 +117,13 @@ resource "azurerm_subscription_policy_assignment" "sql_tde_cmk_required" {
 #
 # ==================== KEY VAULT POLICIES ====================
 #
-
-# Policy 5: Key Vaults should have soft delete enabled
-resource "azurerm_subscription_policy_assignment" "keyvault_soft_delete" {
-  name                 = "iso27001-kv-soft-delete"
-  policy_definition_id = local.keyvault_soft_delete_policy_id
+# Policy 5: Key Vaults should have purge protection enabled
+resource "azurerm_subscription_policy_assignment" "keyvault_purge_protection" {
+  name                 = "iso27001-kv-purge-protect"
+  policy_definition_id = local.keyvault_purge_protection_policy_id
   subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Key Vaults should have soft delete enabled"
-  description          = "Protects against accidental deletion of encryption keys"
+  display_name         = "ISO 27001 - Key Vaults should have purge protection enabled"
+  description          = "Prevents permanent deletion of keys, secrets, and certificates"
 
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
@@ -135,13 +132,13 @@ resource "azurerm_subscription_policy_assignment" "keyvault_soft_delete" {
   })
 }
 
-# Policy 6: Key Vaults should have purge protection enabled
-resource "azurerm_subscription_policy_assignment" "keyvault_purge_protection" {
-  name                 = "iso27001-kv-purge-protect"
-  policy_definition_id = local.keyvault_purge_protection_policy_id
+# Policy 6: Key Vaults should have soft delete enabled
+resource "azurerm_subscription_policy_assignment" "keyvault_soft_delete" {
+  name                 = "iso27001-kv-soft-delete"
+  policy_definition_id = local.keyvault_soft_delete_policy_id
   subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Key Vaults should have purge protection enabled"
-  description          = "Prevents permanent deletion of keys, secrets, and certificates"
+  display_name         = "ISO 27001 - Key Vaults should have soft delete enabled"
+  description          = "Protects against accidental deletion of encryption keys"
 
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
