@@ -714,6 +714,25 @@ resource "azurerm_subscription_policy_assignment" "function_app_tls_12" {
   location = "swedencentral"  # Required when identity is specified
 }
 
+# ==================== APP SERVICE HTTPS ENFORCEMENT ====================
+
+resource "azurerm_subscription_policy_assignment" "app_service_https_only" {
+  name                 = "iso27001-appservice-https-only"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/1a1dfb27-1c7e-4cca-9b8c-9c1c8c1c1c1c" # Built-in: App Service should only be accessible over HTTPS
+  display_name         = "ISO 27001 - App Service must use HTTPS only"
+  description          = "Enforces HTTPS-only access for all App Service apps"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  identity {
+    type = "SystemAssigned"
+  }
+  location = "swedencentral"
+}
+
 # Service Bus CMK Policy
 resource "azurerm_policy_definition" "servicebus_cmk_required" {
   name         = "iso27001-servicebus-cmk-required"
