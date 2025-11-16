@@ -6,12 +6,12 @@ This module manages Google Cloud billing budgets and cost alerts to prevent surp
 
 ## Features
 
-- ✅ **Monthly Budget**: Overall project spending limit with multi-threshold alerts
-- ✅ **Compute Budget**: Dedicated monitoring for Compute Engine costs
-- ✅ **Storage Budget**: Track Cloud Storage expenses separately
+- ✅ **Single Monthly Budget**: Overall billing account spending limit with multi-threshold alerts
+- ✅ **All Services Monitoring**: Tracks all GCP services in one unified budget
 - ✅ **Email Alerts**: Notifications at 50%, 75%, 90%, 100% thresholds
 - ✅ **Forecast Alerts**: Predict when budget will be exceeded based on trends
-- ✅ **Multi-Service Tracking**: Separate budgets per service category
+- ✅ **EUR Currency**: Configured for European billing accounts
+- ✅ **Easy Management**: Single budget simplifies cost tracking
 
 ## Quick Start
 
@@ -41,7 +41,7 @@ nano terraform.tfvars
 Update `terraform.tfvars`:
 ```hcl
 billing_account_id = "012345-6789AB-CDEFGH"  # From step 1
-monthly_budget_amount = 50                    # USD per month
+monthly_budget_amount = 50                    # EUR per month
 budget_alert_emails = [
   "your.email@domain.com"
 ]
@@ -73,32 +73,26 @@ terraform apply
 ## What Gets Created
 
 | Budget | Amount | Alerts | Purpose |
-|--------|--------|--------|---------|
-| **Monthly Budget** | 100% of limit | 50%, 75%, 90%, 100%, Forecast | Overall project spending |
-| **Compute Budget** | 50% of limit | 80%, 100% | Compute Engine instances |
-| **Storage Budget** | 20% of limit | 80%, 100% | Cloud Storage costs |
+|--------|--------|--------|---------|------|
+| **Monthly Budget** | Your specified limit | 50%, 75%, 90%, 100%, Forecast | All services across entire billing account |
 
 ## Alert Thresholds Explained
 
-### Main Budget Alerts
+### Budget Alerts
 - **50%** - Early warning, time to review spending
 - **75%** - Check if projections are on track
 - **90%** - High alert, consider cost optimization
 - **100%** - Budget exceeded, immediate action needed
 - **100% Forecast** - Predicted to exceed budget this month
 
-### Service Budget Alerts
-- **80%** - Service approaching its allocation
-- **100%** - Service exceeded its budget allocation
+## Budget Configuration Example
 
-## Budget Calculation Example
-
-For a $100 monthly budget:
+For a €50 monthly budget:
 ```
-Total Budget:   $100/month
-├─ Compute:     $50 (50%) - VMs, GKE, etc.
-├─ Storage:     $20 (20%) - GCS buckets
-└─ Other:       $30 (30%) - Networking, APIs, etc.
+Total Budget:   €50/month
+├─ Applies to:  All GCP services
+├─ Scope:       Entire billing account
+└─ Alerts:      50%, 75%, 90%, 100%, 100% forecast
 ```
 
 ## Viewing Budgets
@@ -133,7 +127,7 @@ terraform output setup_instructions
 ### Change Monthly Limit
 ```hcl
 # In terraform.tfvars
-monthly_budget_amount = 200  # Increase to $200/month
+monthly_budget_amount = 200  # Increase to €200/month
 ```
 
 ### Add More Email Recipients
@@ -146,14 +140,14 @@ budget_alert_emails = [
 ]
 ```
 
-### Adjust Service Allocations
-Edit `main.tf` to change percentages:
+### Adjust Alert Thresholds
+Edit `main.tf` to customize alert percentages:
 ```terraform
-# Compute budget (currently 50%)
-units = tostring(var.monthly_budget_amount * 0.7)  # Change to 70%
-
-# Storage budget (currently 20%)
-units = tostring(var.monthly_budget_amount * 0.1)  # Change to 10%
+# Add or modify threshold rules
+threshold_rules {
+  threshold_percent = 0.6   # Alert at 60%
+  spend_basis       = "CURRENT_SPEND"
+}
 ```
 
 ## Cost Optimization Tips
