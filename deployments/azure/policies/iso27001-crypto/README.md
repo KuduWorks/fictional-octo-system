@@ -1,16 +1,20 @@
 # ISO 27001 Cryptography Policies
 
-Azure Policy configuration for ISO 27001 Control A.10.1.1 (Cryptographic Controls). Provides visibility into encryption usage while accepting both Customer-Managed Keys (CMK) and Platform-Managed Keys (PMK).
+Azure Policy configuration for ISO 27001 Control A.10.1.1 (Cryptographic Controls). Provides visibility and enforcement for encryption usage, covering both Customer-Managed Keys (CMK) and Platform-Managed Keys (PMK), and secure data in transit.
 
 ## 🎯 Key Principle
 
-**Both CMK and PMK are compliant.** These policies audit encryption usage without blocking deployments.
+**Both CMK and PMK are compliant.** These policies audit and enforce encryption usage for data at rest and in transit.
 
 ## 📊 What's Deployed
 
 ### Enforced Policies (Block non-compliant)
-- ✅ HTTPS/SSL required (Storage, MySQL, PostgreSQL)
+- ✅ HTTPS/SSL required (Storage, MySQL, PostgreSQL, Key Vault, Service Bus, Event Hub, API Management)
 - ✅ TLS 1.2+ required (App Service, Functions)
+- ✅ Disk encryption required (VMs, Managed Disks)
+- ✅ Backup vault encryption required
+- ✅ Container Registry encryption required
+- ✅ Data Explorer disk encryption required
 - ✅ Key Vault protection (soft delete, purge protection)
 
 ### Audit Policies (Report only)
@@ -18,8 +22,10 @@ Azure Policy configuration for ISO 27001 Control A.10.1.1 (Cryptographic Control
 - 📊 SQL TDE encryption type
 - 📊 Disk encryption method
 - 📊 Cosmos DB encryption type
+- 📊 Data Explorer CMK usage
+- 📊 General audit: Any resource not using encryption
 
-**Total: 12 policies** (6 enforced, 6 audit)
+**Total: 20+ policies** (12+ enforced, 8+ audit)
 
 ## 🚀 Quick Start
 
@@ -72,6 +78,23 @@ az webapp config set --name <name> --resource-group <rg> --min-tls-version 1.2
 az mysql server update --name <name> --resource-group <rg> --ssl-enforcement Enabled
 ```
 
+### Enable Disk Encryption
+```bash
+az vm encryption enable --name <name> --resource-group <rg>
+```
+
+### Enable Backup Vault Encryption
+```bash
+az backup vault update --name <name> --resource-group <rg> --encryption Enabled
+```
+
+### Enable HTTPS for Service Bus/Event Hub/API Management
+```bash
+az servicebus namespace update --name <name> --resource-group <rg> --https-only true
+az eventhubs namespace update --name <name> --resource-group <rg> --https-only true
+az apim update --name <name> --resource-group <rg> --enable-client-certificate true
+```
+
 ## 📚 Configuration
 
 ### Variables (`terraform.tfvars`)
@@ -98,11 +121,9 @@ resource "azurerm_storage_account" "example" {
 resource "azurerm_storage_account" "example" {
   name                     = "mystorageaccount"
   enable_https_traffic_only = true
-  
   identity {
     type = "SystemAssigned"
   }
-  
   customer_managed_key {
     key_vault_key_id = azurerm_key_vault_key.example.id
   }
@@ -114,15 +135,17 @@ resource "azurerm_storage_account" "example" {
 
 ### Compliant ✅
 - Resources with HTTPS/SSL enabled
-- Resources with TLS 1.2+
+- Resources with TLS 1.2+ (or 1.3 where supported)
 - Resources with encryption (CMK **or** PMK)
 - Key Vaults with soft delete and purge protection
+- Disk, backup, container registry, Data Explorer encryption enabled
 
 ### Non-Compliant ❌
 - HTTPS/SSL disabled
 - TLS version < 1.2
 - No encryption (rare - Azure encrypts by default)
 - Key Vault without protection
+- Disk, backup, registry, Data Explorer without encryption
 
 ## 📋 Policy List
 
@@ -140,6 +163,15 @@ resource "azurerm_storage_account" "example" {
 | 10 | PostgreSQL SSL | Custom | Audit | N/A | N/A |
 | 11 | App Service TLS 1.2+ | Built-in | Audit | N/A | N/A |
 | 12 | Function App TLS 1.2+ | Built-in | Audit | N/A | N/A |
+| 13 | Service Bus HTTPS | Built-in | Deny | N/A | N/A |
+| 14 | Event Hub HTTPS | Built-in | Deny | N/A | N/A |
+| 15 | API Management HTTPS | Built-in | Deny | N/A | N/A |
+| 16 | Disk Encryption Required | Custom | Deny | ✅ | ✅ |
+| 17 | Backup Vault Encryption | Built-in | Deny | N/A | N/A |
+| 18 | Container Registry Encryption | Custom | Deny | ✅ | ✅ |
+| 19 | Data Explorer Disk Encryption | Custom | Deny | ✅ | ✅ |
+| 20 | Data Explorer CMK Required | Custom | Audit | ✅ | ✅ |
+| 21 | General Encryption Audit | Custom | Audit | ✅ | ✅ |
 
 ## 🔄 Next Steps
 
