@@ -4,6 +4,12 @@ variable "gcp_region" {
   default     = "europe-north1"
 }
 
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+  default     = ""
+}
+
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string
