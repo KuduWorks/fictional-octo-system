@@ -716,7 +716,7 @@ resource "azurerm_subscription_policy_assignment" "function_app_tls_12" {
 resource "azurerm_subscription_policy_assignment" "app_service_https_only" {
   name                 = "iso27001-appservice-https-only"
   subscription_id      = local.subscription_id
-  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/1a1dfb27-1c7e-4cca-9b8c-9c1c8c1c1c1c" # Built-in: App Service should only be accessible over HTTPS
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/a4af4a39-4135-47fb-b175-47fbdf85311d" # Built-in: App Service should only be accessible over HTTPS
   display_name         = "ISO 27001 - App Service must use HTTPS only"
   description          = "Enforces HTTPS-only access for all App Service apps"
   metadata = jsonencode({
