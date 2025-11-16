@@ -73,7 +73,7 @@ terraform apply
 ## What Gets Created
 
 | Budget | Amount | Alerts | Purpose |
-|--------|--------|--------|---------|------|
+|--------|--------|--------|---------|
 | **Monthly Budget** | Your specified limit | 50%, 75%, 90%, 100%, Forecast | All services across entire billing account |
 
 ## Alert Thresholds Explained
