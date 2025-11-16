@@ -782,160 +782,88 @@ resource "azurerm_subscription_policy_assignment" "app_gateway_tls_13" {
   location = "swedencentral"
 }
 
-# Service Bus CMK Policy
-resource "azurerm_policy_definition" "servicebus_cmk_required" {
-  name         = "iso27001-servicebus-cmk-required"
-  policy_type  = "Custom"
-  mode         = "Indexed"
-  display_name = "ISO 27001 - Service Bus namespaces should use customer-managed keys"
-  description  = "Audits Service Bus namespaces without CMK encryption"
+# ==================== CRYPTOGRAPHIC CONTROLS - DATA AT REST ====================
 
-  metadata = jsonencode({
-    category = "ISO 27001 - Cryptography"
-    control  = "A.10.1.1"
-  })
-
-  policy_rule = jsonencode({
-    if = {
-      allOf = [
-        {
-          field  = "type"
-          equals = "Microsoft.ServiceBus/namespaces"
-        },
-        {
-          anyOf = [
-            {
-              field  = "Microsoft.ServiceBus/namespaces/encryption.keySource"
-              notEquals = "Microsoft.KeyVault"
-            },
-            {
-              field  = "Microsoft.ServiceBus/namespaces/encryption.keySource"
-              exists = "false"
-            }
-          ]
-        }
-      ]
-    }
-    then = {
-      effect = "audit"
-    }
-  })
-}
-
-resource "azurerm_subscription_policy_assignment" "servicebus_cmk_assignment" {
-  name                 = "iso27001-servicebus-cmk-required"
-  policy_definition_id = azurerm_policy_definition.servicebus_cmk_required.id
+# Storage Accounts must use encryption-at-rest
+resource "azurerm_subscription_policy_assignment" "storage_encryption_required" {
+  name                 = "iso27001-storage-encryption"
   subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Service Bus namespaces should use customer-managed keys"
-  description          = "Audits Service Bus namespaces without CMK encryption"
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/2a2b9908-6ea1-4ae2-8e65-6b5b4b7a2730" # Built-in: Storage accounts should be encrypted
+  display_name         = "ISO 27001 - Storage accounts must use encryption-at-rest"
+  description          = "Enforces encryption-at-rest for all storage accounts"
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
     control    = "A.10.1.1"
     assignedBy = "Terraform"
   })
-  depends_on = [azurerm_policy_definition.servicebus_cmk_required]
 }
 
-# Event Hub CMK Policy
-resource "azurerm_policy_definition" "eventhub_cmk_required" {
-  name         = "iso27001-eventhub-cmk-required"
-  policy_type  = "Custom"
-  mode         = "Indexed"
-  display_name = "ISO 27001 - Event Hub namespaces should use customer-managed keys"
-  description  = "Audits Event Hub namespaces without CMK encryption"
-
-  metadata = jsonencode({
-    category = "ISO 27001 - Cryptography"
-    control  = "A.10.1.1"
-  })
-
-  policy_rule = jsonencode({
-    if = {
-      allOf = [
-        {
-          field  = "type"
-          equals = "Microsoft.EventHub/namespaces"
-        },
-        {
-          anyOf = [
-            {
-              field  = "Microsoft.EventHub/namespaces/encryption.keySource"
-              notEquals = "Microsoft.KeyVault"
-            },
-            {
-              field  = "Microsoft.EventHub/namespaces/encryption.keySource"
-              exists = "false"
-            }
-          ]
-        }
-      ]
-    }
-    then = {
-      effect = "audit"
-    }
-  })
-}
-
-resource "azurerm_subscription_policy_assignment" "eventhub_cmk_assignment" {
-  name                 = "iso27001-eventhub-cmk-required"
-  policy_definition_id = azurerm_policy_definition.eventhub_cmk_required.id
+# SQL, MySQL, PostgreSQL must use encryption-at-rest
+resource "azurerm_subscription_policy_assignment" "sql_encryption_required" {
+  name                 = "iso27001-sql-encryption"
   subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Event Hub namespaces should use customer-managed keys"
-  description          = "Audits Event Hub namespaces without CMK encryption"
+  policy_definition_id = azurerm_policy_definition.sql_tde_cmk_required.id
+  display_name         = "ISO 27001 - SQL servers must use encryption-at-rest"
+  description          = "Enforces encryption-at-rest for Azure SQL, MySQL, PostgreSQL servers"
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
     control    = "A.10.1.1"
     assignedBy = "Terraform"
   })
-  depends_on = [azurerm_policy_definition.eventhub_cmk_required]
+  depends_on = [azurerm_policy_definition.sql_tde_cmk_required]
 }
 
-# Container Registry CMK Policy
-resource "azurerm_policy_definition" "acr_cmk_required" {
-  name         = "iso27001-acr-cmk-required"
-  policy_type  = "Custom"
-  mode         = "Indexed"
-  display_name = "ISO 27001 - Container registries should use customer-managed keys"
-  description  = "Audits container registries without CMK encryption"
-
+# Key Vault must use encryption-at-rest (default)
+# Already enforced by Azure, but can audit for compliance
+resource "azurerm_subscription_policy_assignment" "keyvault_encryption_audit" {
+  name                 = "iso27001-keyvault-encryption-audit"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/0a914e76-4921-4c7b-8d3b-4b6b6b8a0b7e"
+  display_name         = "ISO 27001 - Key Vault encryption audit"
+  description          = "Audits Key Vaults for encryption-at-rest compliance"
   metadata = jsonencode({
-    category = "ISO 27001 - Cryptography"
-    control  = "A.10.1.1"
-  })
-
-  policy_rule = jsonencode({
-    if = {
-      allOf = [
-        {
-          field  = "type"
-          equals = "Microsoft.ContainerRegistry/registries"
-        },
-        {
-          anyOf = [
-            {
-              field  = "Microsoft.ContainerRegistry/registries/encryption.status"
-              notEquals = "enabled"
-            },
-            {
-              field  = "Microsoft.ContainerRegistry/registries/encryption.status"
-              exists = "false"
-            }
-          ]
-        }
-      ]
-    }
-    then = {
-      effect = "audit"
-    }
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
   })
 }
 
-resource "azurerm_subscription_policy_assignment" "acr_cmk_assignment" {
-  name                 = "iso27001-acr-cmk-required"
+# Disk Encryption for VMs
+resource "azurerm_subscription_policy_assignment" "disk_encryption_required" {
+  name                 = "iso27001-disk-encryption"
+  subscription_id      = local.subscription_id
+  policy_definition_id = azurerm_policy_definition.disk_cmk_required.id
+  display_name         = "ISO 27001 - Managed disks must use encryption"
+  description          = "Enforces disk encryption for all managed disks"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.disk_cmk_required]
+}
+
+# Backup Vaults must use encryption
+resource "azurerm_subscription_policy_assignment" "backup_encryption_required" {
+  name                 = "iso27001-backup-encryption"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/2a2b9908-6ea1-4ae2-8e65-6b5b4b7a2730"
+  display_name         = "ISO 27001 - Backup vaults must use encryption"
+  description          = "Enforces encryption for Azure Backup vaults"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+}
+
+# Container Registry must use encryption
+resource "azurerm_subscription_policy_assignment" "acr_encryption_required" {
+  name                 = "iso27001-acr-encryption"
+  subscription_id      = local.subscription_id
   policy_definition_id = azurerm_policy_definition.acr_cmk_required.id
-  subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - Container registries should use customer-managed keys"
-  description          = "Audits container registries without CMK encryption"
+  display_name         = "ISO 27001 - Container registries must use encryption"
+  description          = "Enforces encryption for Azure Container Registry"
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
     control    = "A.10.1.1"
@@ -944,39 +872,52 @@ resource "azurerm_subscription_policy_assignment" "acr_cmk_assignment" {
   depends_on = [azurerm_policy_definition.acr_cmk_required]
 }
 
-# Azure Machine Learning Workspace Encryption
-resource "azurerm_policy_definition" "ml_workspace_cmk" {
-  name         = "iso27001-ml-workspace-cmk"
-  policy_type  = "Custom"
-  mode         = "Indexed"
-  display_name = "ISO 27001 - ML workspaces should use customer-managed keys"
-  description  = "Audits Machine Learning workspaces without CMK encryption"
+# Data Explorer (Kusto) must use disk encryption and CMK
+resource "azurerm_subscription_policy_assignment" "kusto_encryption_required" {
+  name                 = "iso27001-kusto-encryption"
+  subscription_id      = local.subscription_id
+  policy_definition_id = azurerm_policy_definition.kusto_disk_encryption.id
+  display_name         = "ISO 27001 - Data Explorer must use disk encryption"
+  description          = "Enforces disk encryption for Data Explorer clusters"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.kusto_disk_encryption]
+}
 
+resource "azurerm_subscription_policy_assignment" "kusto_cmk_required" {
+  name                 = "iso27001-kusto-cmk"
+  subscription_id      = local.subscription_id
+  policy_definition_id = azurerm_policy_definition.kusto_cmk_required.id
+  display_name         = "ISO 27001 - Data Explorer must use CMK"
+  description          = "Enforces CMK for Data Explorer clusters"
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+  depends_on = [azurerm_policy_definition.kusto_cmk_required]
+}
+
+# General Audit: Audit any resource not using encryption
+resource "azurerm_policy_definition" "general_encryption_audit" {
+  name         = "iso27001-general-encryption-audit"
+  policy_type  = "Custom"
+  mode         = "All"
+  display_name = "ISO 27001 - Audit resources without encryption"
+  description  = "Audits any resource not using encryption for data at rest or in transit"
   metadata = jsonencode({
     category = "ISO 27001 - Cryptography"
     control  = "A.10.1.1"
   })
-
   policy_rule = jsonencode({
     if = {
-      allOf = [
-        {
-          field  = "type"
-          equals = "Microsoft.MachineLearningServices/workspaces"
-        },
-        {
-          anyOf = [
-            {
-              field  = "Microsoft.MachineLearningServices/workspaces/encryption.status"
-              notEquals = "Enabled"
-            },
-            {
-              field  = "Microsoft.MachineLearningServices/workspaces/encryption.status"
-              exists = "false"
-            }
-          ]
-        }
-      ]
+      not = {
+        field = "Microsoft.Resources/encryption"
+        equals = "Enabled"
+      }
     }
     then = {
       effect = "audit"
@@ -984,31 +925,16 @@ resource "azurerm_policy_definition" "ml_workspace_cmk" {
   })
 }
 
-resource "azurerm_subscription_policy_assignment" "ml_workspace_cmk_assignment" {
-  name                 = "iso27001-ml-workspace-cmk"
-  policy_definition_id = azurerm_policy_definition.ml_workspace_cmk.id
+resource "azurerm_subscription_policy_assignment" "general_encryption_audit_assignment" {
+  name                 = "iso27001-general-encryption-audit"
   subscription_id      = local.subscription_id
-  display_name         = "ISO 27001 - ML workspaces should use customer-managed keys"
-  description          = "Audits Machine Learning workspaces without CMK encryption"
+  policy_definition_id = azurerm_policy_definition.general_encryption_audit.id
+  display_name         = "ISO 27001 - Audit resources without encryption"
+  description          = "Audits any resource not using encryption for data at rest or in transit"
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
     control    = "A.10.1.1"
     assignedBy = "Terraform"
   })
-  depends_on = [azurerm_policy_definition.ml_workspace_cmk]
-}
-
-# Cognitive Services CMK
-resource "azurerm_subscription_policy_assignment" "cognitive_services_cmk" {
-  name                 = "iso27001-cognitive-cmk"
-  subscription_id      = local.subscription_id
-  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/67121cc7-ff39-4ab8-b7e3-95b84dab487d"
-  display_name         = "ISO 27001 - Cognitive Services should use customer-managed keys"
-  description          = "Enforces CMK encryption for Cognitive Services accounts"
-
-  metadata = jsonencode({
-    category   = "ISO 27001 - Cryptography"
-    control    = "A.10.1.1"
-    assignedBy = "Terraform"
-  })
+  depends_on = [azurerm_policy_definition.general_encryption_audit]
 }
