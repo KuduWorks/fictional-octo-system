@@ -14,7 +14,7 @@ output "monthly_budget_id" {
 }
 
 output "monthly_budget_amount" {
-  description = "Monthly budget amount in USD"
+  description = "Monthly budget amount in EUR"
   value       = var.monthly_budget_amount
 }
 

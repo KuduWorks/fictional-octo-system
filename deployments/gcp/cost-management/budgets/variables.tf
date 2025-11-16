@@ -23,7 +23,7 @@ variable "billing_account_id" {
 }
 
 variable "monthly_budget_amount" {
-  description = "Monthly budget amount in USD"
+  description = "Monthly budget amount in EUR"
   type        = number
   default     = 100
 }
