@@ -186,7 +186,7 @@ resource "azurerm_policy_definition" "disk_cmk_required" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -246,7 +246,7 @@ resource "azurerm_policy_definition" "kusto_disk_encryption" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -302,7 +302,7 @@ resource "azurerm_policy_definition" "kusto_cmk_required" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -389,7 +389,7 @@ resource "azurerm_policy_definition" "aks_encryption_at_host" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -556,7 +556,7 @@ resource "azurerm_policy_definition" "mysql_ssl_enforcement" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -587,7 +587,7 @@ resource "azurerm_policy_definition" "postgresql_ssl_enforcement" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -627,7 +627,7 @@ resource "azurerm_policy_definition" "cosmosdb_cmk_required" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -742,7 +742,7 @@ resource "azurerm_policy_definition" "servicebus_cmk_required" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -796,7 +796,7 @@ resource "azurerm_policy_definition" "eventhub_cmk_required" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -850,7 +850,7 @@ resource "azurerm_policy_definition" "acr_cmk_required" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }
@@ -904,7 +904,7 @@ resource "azurerm_policy_definition" "ml_workspace_cmk" {
       ]
     }
     then = {
-      effect = "audit"
+      effect = "deny"
     }
   })
 }

@@ -4,7 +4,7 @@ Azure Policy configuration for ISO 27001 Control A.10.1.1 (Cryptographic Control
 
 ## 🎯 Key Principle
 
-**Both CMK and PMK are compliant.** These policies audit encryption usage without blocking deployments.
+**Both CMK and PMK are compliant.** Most policies are enforced and will block non-compliant deployments, while some policies only audit encryption usage.
 
 ## 📊 What's Deployed
 
@@ -12,14 +12,16 @@ Azure Policy configuration for ISO 27001 Control A.10.1.1 (Cryptographic Control
 - ✅ HTTPS/SSL required (Storage, MySQL, PostgreSQL)
 - ✅ TLS 1.2+ required (App Service, Functions)
 - ✅ Key Vault protection (soft delete, purge protection)
+- ✅ Disk encryption (deny if not using CMK)
+- ✅ Cosmos DB encryption (deny if not using CMK)
+- ✅ Data Explorer encryption (deny if not using CMK)
+- ✅ Service Bus, Event Hub, Container Registry, ML Workspace, AKS encryption (deny if not using CMK)
 
 ### Audit Policies (Report only)
-- 📊 Storage encryption type (CMK vs PMK)
+- 📊 VM encryption method (audit only)
 - 📊 SQL TDE encryption type
-- 📊 Disk encryption method
-- 📊 Cosmos DB encryption type
 
-**Total: 12 policies** (6 enforced, 6 audit)
+**Total: 15+ policies** (most enforced, some audit)
 
 ## 🚀 Quick Start
 
@@ -115,7 +117,7 @@ resource "azurerm_storage_account" "example" {
 ### Compliant ✅
 - Resources with HTTPS/SSL enabled
 - Resources with TLS 1.2+
-- Resources with encryption (CMK **or** PMK)
+- Resources with encryption (CMK **or** PMK) where allowed
 - Key Vaults with soft delete and purge protection
 
 ### Non-Compliant ❌
@@ -123,23 +125,32 @@ resource "azurerm_storage_account" "example" {
 - TLS version < 1.2
 - No encryption (rare - Azure encrypts by default)
 - Key Vault without protection
+- Storage, SQL, Cosmos DB, Data Explorer, Service Bus, Event Hub, Container Registry, ML Workspace, AKS without CMK (where required)
 
 ## 📋 Policy List
 
 | # | Policy | Type | Effect | Accepts CMK | Accepts PMK |
 |---|--------|------|--------|-------------|-------------|
 | 1 | Storage HTTPS | Built-in | Deny | N/A | N/A |
-| 2 | Storage Encryption Audit | Custom | Audit | ✅ | ✅ |
-| 3 | SQL TDE Enabled | Built-in | Audit | ✅ | ✅ |
-| 4 | SQL TDE Type Audit | Custom | Audit | ✅ | ✅ |
+| 2 | Storage Encryption | Built-in | Deny | ✅ | ✅ |
+| 3 | Storage CMK Required | Built-in | Deny | ✅ | ✅ |
+| 4 | SQL TDE Enabled | Built-in | Audit | ✅ | ✅ |
 | 5 | Key Vault Soft Delete | Built-in | Audit | N/A | N/A |
 | 6 | Key Vault Purge Protection | Built-in | Audit | N/A | N/A |
-| 7 | Disk Encryption Audit | Custom | Audit | ✅ | ✅ |
-| 8 | Cosmos DB Encryption Audit | Custom | Audit | ✅ | ✅ |
-| 9 | MySQL SSL | Custom | Audit | N/A | N/A |
-| 10 | PostgreSQL SSL | Custom | Audit | N/A | N/A |
-| 11 | App Service TLS 1.2+ | Built-in | Audit | N/A | N/A |
-| 12 | Function App TLS 1.2+ | Built-in | Audit | N/A | N/A |
+| 7 | Disk Encryption (CMK) | Custom | Deny | ✅ | ✅ |
+| 8 | Cosmos DB Encryption (CMK) | Custom | Deny | ✅ | ✅ |
+| 9 | MySQL SSL | Custom | Deny | N/A | N/A |
+| 10 | PostgreSQL SSL | Custom | Deny | N/A | N/A |
+| 11 | App Service TLS 1.2+ | Built-in | Deny | N/A | N/A |
+| 12 | Function App TLS 1.2+ | Built-in | Deny | N/A | N/A |
+| 13 | Data Explorer Disk Encryption | Custom | Deny | ✅ | ✅ |
+| 14 | Data Explorer CMK Required | Custom | Deny | ✅ | ✅ |
+| 15 | Service Bus CMK Required | Custom | Deny | ✅ | ✅ |
+| 16 | Event Hub CMK Required | Custom | Deny | ✅ | ✅ |
+| 17 | Container Registry CMK Required | Custom | Deny | ✅ | ✅ |
+| 18 | ML Workspace CMK Required | Custom | Deny | ✅ | ✅ |
+| 19 | AKS Encryption at Host | Custom | Deny |  |  |
+| 20 | VM Encryption Audit | Custom | AuditIfNotExists |  |  |
 
 ## 🔄 Next Steps
 
