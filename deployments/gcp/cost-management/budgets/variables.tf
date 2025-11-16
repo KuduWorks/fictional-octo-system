@@ -4,6 +4,12 @@ variable "gcp_region" {
   default     = "europe-north1"
 }
 
+variable "project_id" {
+  description = "GCP project ID"
+  type        = string
+  default     = ""
+}
+
 variable "environment" {
   description = "Environment name (e.g., dev, staging, prod)"
   type        = string
@@ -17,7 +23,7 @@ variable "billing_account_id" {
 }
 
 variable "monthly_budget_amount" {
-  description = "Monthly budget amount in USD"
+  description = "Monthly budget amount in EUR"
   type        = number
   default     = 100
 }

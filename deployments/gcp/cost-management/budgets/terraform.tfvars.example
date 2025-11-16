@@ -1,0 +1,18 @@
+# GCP Budget Configuration
+
+# Project Configuration
+project_id = "kudu-star-dev-01"
+gcp_region = "europe-north1"
+environment = "dev"
+
+# Billing Account ID (REQUIRED - get this from: gcloud billing accounts list)
+billing_account_id = ""  # Add your billing account ID here
+
+# Budget Settings
+monthly_budget_amount = 50  # EUR per month
+
+# Email addresses for budget alerts
+budget_alert_emails = [
+  # "your.email@domain.com",
+  # "team@domain.com"
+]
