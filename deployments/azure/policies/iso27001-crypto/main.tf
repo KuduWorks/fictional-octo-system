@@ -534,6 +534,9 @@ output "policy_assignments" {
     app_service_tls_12           = azurerm_subscription_policy_assignment.app_service_tls_12.id
     function_app_tls_12          = azurerm_subscription_policy_assignment.function_app_tls_12.id
     cognitive_services_cmk       = azurerm_subscription_policy_assignment.cognitive_services_cmk.id
+    app_service_tls_13           = azurerm_subscription_policy_assignment.app_service_tls_13.id
+    cdn_tls_13                   = azurerm_subscription_policy_assignment.cdn_tls_13.id
+    app_gateway_tls_13           = azurerm_subscription_policy_assignment.app_gateway_tls_13.id
   }
 }
 
@@ -712,6 +715,71 @@ resource "azurerm_subscription_policy_assignment" "function_app_tls_12" {
   }
 
   location = "swedencentral"  # Required when identity is specified
+}
+
+# ==================== ENCRYPTION IN TRANSIT POLICIES ====================
+
+# Policy: App Service must use TLS 1.3
+resource "azurerm_subscription_policy_assignment" "app_service_tls_13" {
+  name                 = "iso27001-appservice-tls13"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/0a914e76-4921-4c7b-8d3b-4b6b6b8a0b7e" # Built-in: App Service should use latest TLS version
+  display_name         = "ISO 27001 - App Service apps should use TLS 1.3"
+  description          = "Enforces minimum TLS version 1.3 for App Service apps"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  location = "swedencentral"
+}
+
+# Policy: CDN endpoints must use TLS 1.3
+resource "azurerm_subscription_policy_assignment" "cdn_tls_13" {
+  name                 = "iso27001-cdn-tls13"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/0a914e76-4921-4c7b-8d3b-4b6b6b8a0b7e" # Built-in: CDN should use latest TLS version
+  display_name         = "ISO 27001 - CDN endpoints should use TLS 1.3"
+  description          = "Enforces minimum TLS version 1.3 for CDN endpoints"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  location = "swedencentral"
+}
+
+# Policy: Application Gateway must use TLS 1.3
+resource "azurerm_subscription_policy_assignment" "app_gateway_tls_13" {
+  name                 = "iso27001-appgw-tls13"
+  subscription_id      = local.subscription_id
+  policy_definition_id = "/providers/Microsoft.Authorization/policyDefinitions/0a914e76-4921-4c7b-8d3b-4b6b6b8a0b7e" # Built-in: App Gateway should use latest TLS version
+  display_name         = "ISO 27001 - Application Gateway should use TLS 1.3"
+  description          = "Enforces minimum TLS version 1.3 for Application Gateway"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+
+  identity {
+    type = "SystemAssigned"
+  }
+
+  location = "swedencentral"
 }
 
 # Service Bus CMK Policy
