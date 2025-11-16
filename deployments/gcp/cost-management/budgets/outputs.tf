@@ -38,7 +38,7 @@ output "budget_summary" {
       name   = google_billing_budget.monthly_budget[0].display_name
       amount = var.monthly_budget_amount
       alerts = "50%, 75%, 90%, 100% (current), 100% (forecast)"
-      scope  = "All services across the entire project"
+      scope  = "All services across the entire billing account"
     }
   } : null
 }
@@ -55,7 +55,7 @@ output "setup_instructions" {
     
     Budget Configuration:
     - Monthly Budget: €${var.monthly_budget_amount}
-    - Scope: All services across the entire project
+    - Scope: All services across the entire billing account
     
     Alert Thresholds:
     - 50%, 75%, 90%, 100% (actual spend)
