@@ -1,0 +1,3 @@
+# Example variables for FinOps Lambda deployment
+alert_email = "your-verified-email@example.com"
+anomaly_threshold = "1.2"
