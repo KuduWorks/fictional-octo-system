@@ -56,7 +56,7 @@ This deployment showcases an AWS Lambda function (Python) that analyzes AWS Cost
    schedule_expression = "cron(0 7 * * ? *)"
    ```
 
-- **5am UTC every Sunday at 23:59:**
+- **23:59 UTC (11:59 PM) every Sunday:**
    ```hcl
    schedule_expression = "cron(59 23 ? * SUN *)"
    ```

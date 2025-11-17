@@ -5,6 +5,6 @@ variable "alert_email" {
 
 variable "anomaly_threshold" {
   description = "Threshold multiplier for anomaly detection (e.g., 1.2 for 20% increase)."
-  type        = string
-  default     = "1.2"
+  type        = number
+  default     = 1.2
 }

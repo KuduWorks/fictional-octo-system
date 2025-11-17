@@ -18,11 +18,7 @@ terraform.tfvars
 *.log
 *.tmp
 # Terraform files
-*.tfstate
 *.tfstate.*
-*.tfstate.backup
-.terraform/
-terraform.tfvars
 !terraform.tfvars.example
 override.tf
 override.tf.json
@@ -56,3 +52,4 @@ Thumbs.db
 
 # Logs
 *.log
+
