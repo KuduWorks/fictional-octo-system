@@ -35,21 +35,12 @@ def detect_anomaly(cost_data):
             print(f"Skipping day due to missing or invalid data: {e}")
     if len(costs) < 2:
         return False, 0
-    # Use mean of previous 6 days (or all previous days if less than 7 total)
-    window = 6
-    prev_costs = costs[-(window+1):-1] if len(costs) > window else costs[:-1]
-    if not prev_costs:
-        return False, costs[-1]
-    avg_prev = sum(prev_costs) / len(prev_costs)
-    if costs[-1] > avg_prev * THRESHOLD:
-    mean_prev = sum(costs[:-1]) / len(costs[:-1]) if len(costs) > 1 else 0
+    # Use mean of previous days for anomaly detection
     if mean_prev > 0 and costs[-1] > mean_prev * THRESHOLD:
         return True, costs[-1]
     return False, costs[-1]
 
 
-# Function to send email alert
-def send_email_alert(cost):
     subject = 'AWS Cost Anomaly Detected'
     body = f"Alert: Cost anomaly detected. Latest daily cost: ${cost:.2f}"
     ses_client.send_email(
