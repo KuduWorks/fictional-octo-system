@@ -32,7 +32,7 @@ This directory contains Terraform configurations for AWS infrastructure that mir
 - **networking/** - How computers talk to each other
   - `vpc-baseline/` - Your own private internet (almost)
 
-- **finops-lambda/** - Serverless cost optimization and reporting functions
+- **finops-lambda/** - Serverless cost optimization and reporting functions (because spreadsheets are for mortals)
 
 ## Prerequisites
 
