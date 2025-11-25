@@ -253,7 +253,7 @@ resource "azurerm_linux_function_app" "main" {
 
   site_config {
     application_insights_key = azurerm_application_insights.main.instrumentation_key
-- Virtual Network: `vnet-finops-prod-eus`
+  }
 }
 
 data "azurerm_client_config" "current" {}
@@ -262,10 +262,10 @@ variable "region" {
   description = "Azure region"
   type        = string
   default     = "eastus"
-- Storage Account: `stfinopsprodeus01`
-- Log Analytics: `log-finops-prod-eus`
-- Application Insights: `appi-finops-prod-eus`
-- Function App: `func-finops-prod-eus-01`
+}
+
+# Outputs
+output "resource_names" {
   description = "All generated resource names"
   value = {
     resource_group      = azurerm_resource_group.main.name
@@ -301,10 +301,10 @@ output "tags" {
 - Key Vault: `kv-finops-prod-eus-01`
 - SQL Server: `sql-finops-prod-eus-01`
 - SQL Database: `sqldb-finops-prod`
-- Storage Account: `stfinopsprodeus001`
-- Log Analytics: `log-monitoring-prod-eus`
-- Application Insights: `appi-monitoring-prod-eus`
-- Function App: `func-processor-prod-eus-01`
+- Storage Account: `stfinopsprodeus01`
+- Log Analytics: `log-finops-prod-eus`
+- Application Insights: `appi-finops-prod-eus`
+- Function App: `func-finops-prod-eus-01`
 
 ## Notes
 

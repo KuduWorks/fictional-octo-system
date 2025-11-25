@@ -158,4 +158,4 @@ This module automatically enforces Azure naming rules:
 - All names are deterministic - same inputs always produce same outputs
 - Storage account names are automatically sanitized (hyphens removed, lowercase)
 - Key Vault names are truncated to 24 characters if needed
-- Common tags include: Environment, Region, Workload, ManagedBy, CreatedDate
+- Common tags include: Environment, Region, Workload, ManagedBy (plus any additional_tags)
