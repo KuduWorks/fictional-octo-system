@@ -123,11 +123,13 @@ locals {
   app_insights_name = "${local.resource_abbreviations["application_insights"]}-${local.base_name}"
 
   # Common tags
-  common_tags = {
-    Environment = var.environment
-    Region      = var.region
-    Workload    = var.workload
-    ManagedBy   = "Terraform"
-    CreatedDate = timestamp()
-  }
+  common_tags = merge(
+    {
+      Environment = var.environment
+      Region      = var.region
+      Workload    = var.workload
+      ManagedBy   = "Terraform"
+    },
+    var.additional_tags
+  )
 }

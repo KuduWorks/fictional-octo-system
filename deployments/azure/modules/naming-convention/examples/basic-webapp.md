@@ -133,7 +133,7 @@ output "all_tags" {
 ## Expected Resource Names
 
 - Resource Group: `rg-webapp-dev-weu`
-- Virtual Network: `vnet-webapp-dev-weu-01`
-- Storage Account: `stwebappdevweu001`
+- Virtual Network: `vnet-webapp-dev-weu`
+- Storage Account: `stwebappdevweu01`
 - App Service: `app-webapp-dev-weu-01`
-- Application Insights: `appi-monitoring-dev-weu`
+- Application Insights: `appi-webapp-dev-weu`

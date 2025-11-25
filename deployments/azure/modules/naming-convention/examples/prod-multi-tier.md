@@ -20,6 +20,10 @@ terraform {
       source  = "hashicorp/azurerm"
       version = "~> 3.0"
     }
+    random = {
+      source  = "hashicorp/random"
+      version = "~> 3.0"
+    }
   }
 }
 
@@ -142,17 +146,52 @@ resource "azurerm_key_vault" "main" {
   soft_delete_retention_days = 7
   purge_protection_enabled   = true
   tags                       = module.naming.common_tags
+
+  access_policy {
+    tenant_id = data.azurerm_client_config.current.tenant_id
+    object_id = data.azurerm_client_config.current.object_id
+
+    secret_permissions = [
+      "Get",
+      "List",
+      "Set",
+      "Delete",
+      "Recover",
+      "Backup",
+      "Restore"
+    ]
+  }
 }
 
-# SQL Server
+# Generate random password for SQL Server
+resource "random_password" "sql_admin" {
+  length  = 24
+  special = true
+}
+
+# Store SQL password in Key Vault
+resource "azurerm_key_vault_secret" "sql_admin_password" {
+  name         = "sql-admin-password"
+  value        = random_password.sql_admin.result
+  key_vault_id = azurerm_key_vault.main.id
+  
+  depends_on = [azurerm_key_vault.main]
+}
+
+# SQL Server with AAD authentication (recommended for production)
 resource "azurerm_mssql_server" "main" {
   name                         = module.naming.sql_server_name
   resource_group_name          = azurerm_resource_group.main.name
   location                     = azurerm_resource_group.main.location
   version                      = "12.0"
   administrator_login          = "sqladmin"
-  administrator_login_password = "ChangeMe123!"
+  administrator_login_password = random_password.sql_admin.result
   tags                         = module.naming.common_tags
+
+  azuread_administrator {
+    login_username = "AzureAD Admin"
+    object_id      = data.azurerm_client_config.current.object_id
+  }
 }
 
 # SQL Database
@@ -214,7 +253,7 @@ resource "azurerm_linux_function_app" "main" {
 
   site_config {
     application_insights_key = azurerm_application_insights.main.instrumentation_key
-  }
+- Virtual Network: `vnet-finops-prod-eus`
 }
 
 data "azurerm_client_config" "current" {}
@@ -223,10 +262,10 @@ variable "region" {
   description = "Azure region"
   type        = string
   default     = "eastus"
-}
-
-# Outputs
-output "resource_names" {
+- Storage Account: `stfinopsprodeus01`
+- Log Analytics: `log-finops-prod-eus`
+- Application Insights: `appi-finops-prod-eus`
+- Function App: `func-finops-prod-eus-01`
   description = "All generated resource names"
   value = {
     resource_group      = azurerm_resource_group.main.name
@@ -273,3 +312,8 @@ output "tags" {
 - Uses separate naming module instances for subnet naming with different purposes
 - Includes monitoring and observability resources (Log Analytics, Application Insights)
 - Shows how to extend base names (e.g., `${module.naming.network_security_group_name}-web`)
+- **Security best practices:**
+  - SQL password generated randomly and stored in Key Vault
+  - AAD authentication configured for SQL Server
+  - Key Vault access policy configured for current user
+  - No hardcoded credentials in code

@@ -159,12 +159,12 @@ output "secondary_resources" {
 - Resource Group: `rg-api-prod-eus`
 - Virtual Machine 01: `vm-api-prod-eus-01`
 - Virtual Machine 02: `vm-api-prod-eus-02`
-- Storage Account: `stapiprodeus001`
+- Storage Account: `stapiprodeus01`
 
 ### Secondary Region (West Europe)
 - Resource Group: `rg-api-prod-weu`
 - Virtual Machine: `vm-api-prod-weu-01`
-- Storage Account: `stapiprodweu001`
+- Storage Account: `stapiprodweu01`
 
 ## Use Cases
 
