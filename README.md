@@ -34,7 +34,9 @@ fictional-octo-system/
 │   │   ├── app-registration/    # Azure AD app registration automation
 │   │   ├── key-vault/           # Azure Key Vault with RBAC
 │   │   ├── vm-automation/       # Automated VM deployment with Bastion
-│   │   └── policies/            # Azure Policy templates (ISO 27001)
+│   │   ├── policies/            # Azure Policy templates (ISO 27001)
+│   │   └── modules/
+│   │       └── naming-convention/  # Reusable naming convention module
 │   ├── aws/                     # 🟠 AWS Infrastructure
 │   │   ├── terraform-state-bootstrap/  # S3 + DynamoDB for state management
 │   │   ├── budgets/             # AWS Budgets and cost management
@@ -82,6 +84,7 @@ fictional-octo-system/
 - **Secure VM Deployment**: Private VMs with Azure Bastion access *(no public IPs here, we're not savages)*
 - **Automated Scheduling**: VM start/stop automation (7 AM/7 PM Finnish time) *(saving money while you sleep)*
 - **Azure AD Integration**: App registration automation with secret rotation *(passwords that change themselves, living the dream)*
+- **Naming Convention Module**: Reusable Terraform module for consistent Azure resource naming *(no more debates about whether it's "rg-prod-app-01" or "prod-app-rg-01")*
 - Azure Virtual Network (VNet) deployment with NAT Gateway
 - Remote state management in Azure Storage (`tfstate20251013`)
 - Infrastructure as Code using Terraform with wrapper scripts
@@ -227,6 +230,48 @@ terraform init
 terraform apply
 ```
 
+#### For Azure Naming Convention Module
+
+```bash
+# Use the naming convention module in any Azure Terraform deployment
+cd your-azure-project/
+
+# Reference the module in your main.tf
+cat << 'EOF' > main.tf
+module "naming" {
+  source = "../../deployments/azure/modules/naming-convention"
+  
+  workload    = "myapp"
+  environment = "prod"
+  region      = "eastus"
+  instance    = "01"
+  
+  additional_tags = {
+    CostCenter = "Engineering"
+    Owner      = "YourTeam"
+  }
+}
+
+resource "azurerm_resource_group" "example" {
+  name     = module.naming.resource_group_name  # rg-myapp-prod-eus
+  location = "eastus"
+  tags     = module.naming.common_tags
+}
+
+resource "azurerm_storage_account" "example" {
+  name                     = module.naming.storage_account_name  # stmyappprodeus01
+  resource_group_name      = azurerm_resource_group.example.name
+  location                 = azurerm_resource_group.example.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  tags                     = module.naming.common_tags
+}
+EOF
+
+terraform init
+terraform plan
+```
+
 #### For GCP Bootstrap and Workload Identity
 
 > *"The Google way of saying 'trust us with your infrastructure'"* ☁️
@@ -264,6 +309,7 @@ terraform output github_secrets_config
 - [VM Automation Guide](deployments/azure/vm-automation/README.md)
 - [Azure AD App Registration](deployments/azure/app-registration/README.md)
 - [Azure Key Vault with RBAC](deployments/azure/key-vault/README.md)
+- [Azure Naming Convention Module](deployments/azure/modules/naming-convention/README.md) *(Consistent naming across all Azure resources)*
 - [Terraform State Access](terraform/TERRAFORM_STATE_ACCESS.md)
 
 **AWS Deployments:**
@@ -392,6 +438,12 @@ Contributions are welcome! Please read our [Security Policy](SECURITY.md) before
 
 - Use Azure Bastion for secure VM access (no public IPs)  
   *(exposing port 22 to the internet is how you make friends with hackers)*
+
+- **Use the naming convention module** for all Azure resources  
+  *(consistent names = happy teams, no more "was it rg-prod or prod-rg?")*
+
+- **Increment instance numbers** for multiple resources of the same type  
+  *(stmyappprodeus01, stmyappprodeus02 - sequential and sensible)*
 
 ### AWS-Specific
 
