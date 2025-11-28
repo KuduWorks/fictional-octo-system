@@ -37,15 +37,19 @@ policies/
 ### 2. ISO 27001 Cryptography Compliance (`iso27001-crypto/`) ✅ Active
 - **Purpose**: ISO 27001 A.10.1.1 Cryptographic Controls compliance
 - **Deployment**: Terraform
-- **Policies**: 12 policies (7 built-in, 5 custom)
-  - **Storage Accounts** (3): HTTPS required, CMK encryption, disable public access
+- **Policies**: 26 policies (11 built-in, 15 custom)
+  - **Storage Accounts** (4): HTTPS required, TLS 1.2+, no public access, CMK encryption
+  - **Application Gateway** (2): HTTPS only, TLS 1.3 minimum
+  - **App Services** (3): HTTPS only, TLS 1.2+ minimum
   - **SQL Databases** (1): TDE with customer-managed keys
   - **Key Vault** (2): Soft delete, purge protection
   - **Managed Disks** (1): Customer-managed key encryption required
   - **Data Explorer/Kusto** (2): Disk encryption, CMK required
   - **Azure Kubernetes Service** (2): Policy add-on, encryption at host
   - **Virtual Machines** (1): EncryptionAtHost OR Azure Disk Encryption
-- **Status**: Ready to deploy
+  - **Database Services** (2): MySQL/PostgreSQL SSL enforcement
+  - **Other Services** (6): Cosmos DB, Service Bus, Event Hub, Container Registry, ML Workspace, Cognitive Services CMK
+- **Status**: Deployed and enforced
 - **Compliance Standard**: ISO 27001:2013 A.10.1.1
 
 ### 3. VM Encryption (`vm-encryption/`) ⚠️ DEPRECATED

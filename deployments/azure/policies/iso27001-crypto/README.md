@@ -9,19 +9,22 @@ Azure Policy configuration for ISO 27001 Control A.10.1.1 (Cryptographic Control
 ## 📊 What's Deployed
 
 ### Enforced Policies (Block non-compliant)
-- ✅ HTTPS/SSL required (Storage, MySQL, PostgreSQL)
-- ✅ TLS 1.2+ required (App Service, Functions)
-- ✅ Key Vault protection (soft delete, purge protection)
-- ✅ Disk encryption (deny if not using CMK)
-- ✅ Cosmos DB encryption (deny if not using CMK)
-- ✅ Data Explorer encryption (deny if not using CMK)
-- ✅ Service Bus, Event Hub, Container Registry, ML Workspace, AKS encryption (deny if not using CMK)
+- ✅ **HTTPS/SSL required** (Storage, MySQL, PostgreSQL, App Services, Application Gateway)
+- ✅ **TLS 1.2+ required** (Storage Accounts, App Service, Functions)
+- ✅ **TLS 1.3 required** (Application Gateway)
+- ✅ **No anonymous blob access** (Storage Accounts)
+- ✅ **Key Vault protection** (soft delete, purge protection)
+- ✅ **Disk encryption** (deny if not using CMK)
+- ✅ **Cosmos DB encryption** (deny if not using CMK)
+- ✅ **Data Explorer encryption** (deny if not using CMK)
+- ✅ **Service Bus, Event Hub, Container Registry, ML Workspace, AKS encryption** (deny if not using CMK)
+- ✅ **Cognitive Services encryption** (CMK required)
 
 ### Audit Policies (Report only)
 - 📊 VM encryption method (audit only)
 - 📊 SQL TDE encryption type
 
-**Total: 15+ policies** (most enforced, some audit)
+**Total: 20+ policies** (most enforced, some audit)
 
 ## 🚀 Quick Start
 
@@ -67,6 +70,20 @@ az storage account update --name <name> --resource-group <rg> --https-only true
 ### Update App Service TLS
 ```bash
 az webapp config set --name <name> --resource-group <rg> --min-tls-version 1.2
+az webapp update --name <name> --resource-group <rg> --https-only true
+```
+
+### Configure Application Gateway TLS 1.3
+```bash
+az network application-gateway ssl-policy set \
+  --gateway-name <name> --resource-group <rg> \
+  --policy-type Predefined \
+  --policy-name AppGwSslPolicy20220101S
+```
+
+### Update Storage Account TLS
+```bash
+az storage account update --name <name> --resource-group <rg> --min-tls-version TLS1_2
 ```
 
 ### Enable MySQL SSL
@@ -132,25 +149,31 @@ resource "azurerm_storage_account" "example" {
 | # | Policy | Type | Effect | Accepts CMK | Accepts PMK |
 |---|--------|------|--------|-------------|-------------|
 | 1 | Storage HTTPS | Built-in | Deny | N/A | N/A |
-| 2 | Storage Encryption | Built-in | Deny | ✅ | ✅ |
-| 3 | Storage CMK Required | Built-in | Deny | ✅ | ✅ |
-| 4 | SQL TDE Enabled | Built-in | Audit | ✅ | ✅ |
-| 5 | Key Vault Soft Delete | Built-in | Audit | N/A | N/A |
-| 6 | Key Vault Purge Protection | Built-in | Audit | N/A | N/A |
-| 7 | Disk Encryption (CMK) | Custom | Deny | ✅ | ✅ |
-| 8 | Cosmos DB Encryption (CMK) | Custom | Deny | ✅ | ✅ |
-| 9 | MySQL SSL | Custom | Deny | N/A | N/A |
-| 10 | PostgreSQL SSL | Custom | Deny | N/A | N/A |
-| 11 | App Service TLS 1.2+ | Built-in | Deny | N/A | N/A |
-| 12 | Function App TLS 1.2+ | Built-in | Deny | N/A | N/A |
-| 13 | Data Explorer Disk Encryption | Custom | Deny | ✅ | ✅ |
-| 14 | Data Explorer CMK Required | Custom | Deny | ✅ | ✅ |
-| 15 | Service Bus CMK Required | Custom | Deny | ✅ | ✅ |
-| 16 | Event Hub CMK Required | Custom | Deny | ✅ | ✅ |
-| 17 | Container Registry CMK Required | Custom | Deny | ✅ | ✅ |
-| 18 | ML Workspace CMK Required | Custom | Deny | ✅ | ✅ |
-| 19 | AKS Encryption at Host | Custom | Deny |  |  |
-| 20 | VM Encryption Audit | Custom | AuditIfNotExists |  |  |
+| 2 | Storage No Public Access | Built-in | Deny | N/A | N/A |
+| 3 | Storage TLS 1.2+ | Custom | Deny | N/A | N/A |
+| 4 | Storage CMK Required | Built-in | Audit | ✅ | ✅ |
+| 5 | SQL TDE CMK | Built-in | Audit | ✅ | ✅ |
+| 6 | Key Vault Soft Delete | Built-in | Audit | N/A | N/A |
+| 7 | Key Vault Purge Protection | Built-in | Audit | N/A | N/A |
+| 8 | Application Gateway TLS 1.3 | Custom | Deny | N/A | N/A |
+| 9 | Application Gateway HTTPS | Custom | Deny | N/A | N/A |
+| 10 | Disk Encryption (CMK) | Custom | Deny | ✅ | ❌ |
+| 11 | Kusto Disk Encryption | Custom | Deny | ✅ | ✅ |
+| 12 | Kusto CMK Required | Custom | Deny | ✅ | ❌ |
+| 13 | AKS Policy Add-on | Built-in | Enforce | N/A | N/A |
+| 14 | AKS Encryption at Host | Custom | Deny | ✅ | ❌ |
+| 15 | VM Encryption Audit | Custom | AuditIfNotExists | ✅ | ✅ |
+| 16 | MySQL SSL | Custom | Deny | N/A | N/A |
+| 17 | PostgreSQL SSL | Custom | Deny | N/A | N/A |
+| 18 | Cosmos DB CMK | Custom | Deny | ✅ | ❌ |
+| 19 | App Service TLS 1.2+ | Built-in | Deny | N/A | N/A |
+| 20 | Function App TLS 1.2+ | Built-in | Deny | N/A | N/A |
+| 21 | App Service HTTPS Only | Built-in | Deny | N/A | N/A |
+| 22 | Service Bus CMK | Custom | Deny | ✅ | ❌ |
+| 23 | Event Hub CMK | Custom | Deny | ✅ | ❌ |
+| 24 | Container Registry CMK | Custom | Deny | ✅ | ❌ |
+| 25 | ML Workspace CMK | Custom | Deny | ✅ | ❌ |
+| 26 | Cognitive Services CMK | Built-in | Audit | ✅ | ✅ |
 
 ## 🔄 Next Steps
 
