@@ -62,16 +62,18 @@ try {
 # Test 1: Azure Function App without HTTPS (Should FAIL)
 Write-Host "`n❌ Testing Function App without HTTPS enforcement (should fail)..." -ForegroundColor Red
 
+# Initialize variables outside try block for proper scope
+$appServicePlanName = "test-plan-$(Get-Random -Minimum 1000 -Maximum 9999)"
+$storageAccountName = "teststorage$(Get-Random -Minimum 10000 -Maximum 99999)"
+
 try {
     # Create App Service Plan for Function App (Consumption plan)
-    $appServicePlanName = "test-plan-$(Get-Random -Minimum 1000 -Maximum 9999)"
     Write-Host "Creating App Service Plan: $appServicePlanName" -ForegroundColor Yellow
     
     $plan = New-AzAppServicePlan -ResourceGroupName $ResourceGroupName -Name $appServicePlanName -Location $Location -Tier "Dynamic" -WorkerSize "Small"
     Write-Host "✅ App Service Plan created" -ForegroundColor Green
 
     # Create storage account for Function App (required)
-    $storageAccountName = "teststorage$(Get-Random -Minimum 10000 -Maximum 99999)"
     Write-Host "Creating storage account: $storageAccountName" -ForegroundColor Yellow
     
     $storageAccount = New-AzStorageAccount -ResourceGroupName $ResourceGroupName -Name $storageAccountName -Location $Location -SkuName "Standard_LRS" -EnableHttpsTrafficOnly $true -MinimumTlsVersion "TLS1_2" -AllowBlobPublicAccess $false
@@ -185,10 +187,65 @@ try {
         # Create configurations for HTTPS
         $gipconfig2 = New-AzApplicationGatewayIPConfiguration -Name "gatewayIP02" -Subnet $vnet.Subnets[0]
         $fipconfig2 = New-AzApplicationGatewayFrontendIPConfig -Name "frontendIP02" -PublicIPAddress $publicIp
-        $fpconfig2 = New-AzApplicationGatewayFrontendPort -Name "frontendPort02" -Port 443
+        # Create SSL certificate for HTTPS listener
+        # NOTE: Replace the below with a valid PFX file path and password for real deployments
+        $pfxFilePath = "testcert.pfx"
+        $pfxPassword = "TestPassword123!"
+        $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $pfxFilePath -Password $pfxPassword
         
         # Create HTTPS listener (should be compliant)
-        $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2
+        $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2 -SslCertificate $sslCert
+        $pool2 = New-AzApplicationGatewayBackendAddressPool -Name "pool02"  
+        $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
+        $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+        $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+        
+        Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
+        $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location -BackendAddressPools $pool2 -BackendHttpSettingsCollection $poolSetting2 -FrontendIpConfigurations $fipconfig2 -GatewayIpConfigurations $gipconfig2 -FrontendPorts $fpconfig2 -HttpListeners $listener2 -RequestRoutingRules $rule2 -Sku $sku2 -SslCertificates $sslCert
+        $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
+        $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+        $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+        
+        Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
+        $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location -BackendAddressPools $pool2 -BackendHttpSettingsCollection $poolSetting2 -FrontendIpConfigurations $fipconfig2 -GatewayIpConfigurations $gipconfig2 -FrontendPorts $fpconfig2 -HttpListeners $listener2 -RequestRoutingRules $rule2 -Sku $sku2 -SslCertificates $sslCert
+        $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
+        $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+        $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+        
+        Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
+        $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location -BackendAddressPools $pool2 -BackendHttpSettingsCollection $poolSetting2 -FrontendIpConfigurations $fipconfig2 -GatewayIpConfigurations $gipconfig2 -FrontendPorts $fpconfig2 -HttpListeners $listener2 -RequestRoutingRules $rule2 -Sku $sku2 -SslCertificates $sslCert
+        $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
+        $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+        $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+        
+        Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
+        $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location -BackendAddressPools $pool2 -BackendHttpSettingsCollection $poolSetting2 -FrontendIpConfigurations $fipconfig2 -GatewayIpConfigurations $gipconfig2 -FrontendPorts $fpconfig2 -HttpListeners $listener2 -RequestRoutingRules $rule2 -Sku $sku2 -SslCertificates $sslCert
+        $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
+        $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+        $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+        
+        Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
+        $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location -BackendAddressPools $pool2 -BackendHttpSettingsCollection $poolSetting2 -FrontendIpConfigurations $fipconfig2 -GatewayIpConfigurations $gipconfig2 -FrontendPorts $fpconfig2 -HttpListeners $listener2 -RequestRoutingRules $rule2 -Sku $sku2 -SslCertificates $sslCert
+        # Create HTTPS listener (should be compliant)
+        $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2 -SslCertificate $sslCert
+        # Create HTTPS listener (should be compliant)
+    Write-Host "❌ Failed to set up Application Gateway prerequisites: $($_.Exception.Message)" -ForegroundColor Red
+} finally {
+    # Clean up Application Gateway prerequisites if they were created
+    if ($vnet) {
+        Remove-AzVirtualNetwork -Name $vnetName -ResourceGroupName $ResourceGroupName -Force -ErrorAction SilentlyContinue
+    }
+    if ($publicIp) {
+        Remove-AzPublicIpAddress -Name $publicIpName -ResourceGroupName $ResourceGroupName -Force -ErrorAction SilentlyContinue
+    }
+} finally {
+    # Clean up Application Gateway prerequisites if they were created
+    if ($vnet) {
+        Remove-AzVirtualNetwork -Name $vnetName -ResourceGroupName $ResourceGroupName -Force -ErrorAction SilentlyContinue
+    }
+    if ($publicIp) {
+        Remove-AzPublicIpAddress -Name $publicIpName -ResourceGroupName $ResourceGroupName -Force -ErrorAction SilentlyContinue
+    }
         $pool2 = New-AzApplicationGatewayBackendAddressPool -Name "pool02"  
         $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
         $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
