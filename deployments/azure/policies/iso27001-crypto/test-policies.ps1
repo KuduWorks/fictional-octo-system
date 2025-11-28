@@ -81,7 +81,7 @@ az network public-ip create `
     --allocation-method Static `
     --sku Standard
 
-# Test 4: Application Gateway with TLS 1.2 (Should FAIL - policy requires TLS 1.2+)
+# Test 4: Application Gateway with TLS 1.0 (Should FAIL - policy requires TLS 1.2+)
 Write-Host "`n❌ Testing Application Gateway with TLS 1.0 (should fail)..." -ForegroundColor Red
 $appGwName1 = "testappgw$(Get-Random -Minimum 1000 -Maximum 9999)"
 az network application-gateway create `
