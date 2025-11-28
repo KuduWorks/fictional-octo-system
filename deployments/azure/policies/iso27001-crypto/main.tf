@@ -683,7 +683,7 @@ output "policy_assignments" {
   description = "List of all policy assignments created"
   value = {
     storage_https                = azurerm_subscription_policy_assignment.storage_https_required.id
-    storage_tls_12               = azurerm_policy_definition.storage_tls_12_required.id
+    storage_tls_12               = azurerm_subscription_policy_assignment.storage_tls_12_assignment.id
     appgw_tls_13_required        = azurerm_policy_definition.appgw_tls_13_required.id
     appgw_https_required         = azurerm_policy_definition.appgw_https_required.id
     disk_cmk_required        = azurerm_policy_definition.disk_cmk_required.id
