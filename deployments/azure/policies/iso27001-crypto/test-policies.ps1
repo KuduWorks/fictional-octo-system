@@ -33,7 +33,7 @@ try {
         --name $storageTestName2 `
         --resource-group $ResourceGroupName `
         --min-tls-version TLS1_0 `
-        --sku Standard_LRS 2>$null and use $ErrorActionPreference = 'Stop' # Redirecting stderr to null to catch errors
+        --sku Standard_LRS 2>$null # Redirecting stderr to null to catch errors
     Write-Host "⚠️  Policy failed - Storage account created with TLS 1.0!" -ForegroundColor Red
 } catch {
     Write-Host "✅ Policy working - Storage account TLS 1.0 blocked" -ForegroundColor Green
