@@ -13,31 +13,31 @@ az group create --name $ResourceGroupName --location $Location
 # Test 1: Storage Account HTTPS Policy (Should FAIL)
 Write-Host "`n❌ Testing Storage Account without HTTPS (should fail)..." -ForegroundColor Red
 $storageTestName = "test$(Get-Random -Minimum 10000 -Maximum 99999)" # Storage account names must be globally unique but also not exceed 24 characters
-try {
-    az storage account create `
-        --name $storageTestName `
-        --resource-group $ResourceGroupName `
-        --https-traffic-only false `
-        --sku Standard_LRS 2>$ErrorActionPreference = 'Stop
-        '
+az storage account create `
+    --name $storageTestName `
+    --resource-group $ResourceGroupName `
+    --https-traffic-only false `
+    --sku Standard_LRS 2>$null
+
+if ($LASTEXITCODE -eq 0) {
     Write-Host "⚠️  Policy failed - Storage account created without HTTPS!" -ForegroundColor Red
-} catch {
+} else {
     Write-Host "✅ Policy working - Storage account creation blocked" -ForegroundColor Green
 }
 
 # Test 2: Storage Account TLS 1.0 Policy (Should FAIL)
 Write-Host "`n❌ Testing Storage Account with TLS 1.0 (should fail)..." -ForegroundColor Red
 $storageTestName2 = "test$(Get-Random -Minimum 10000 -Maximum 99999)" # Storage account names must be globally unique but also not exceed 24 characters
-try {
-    az storage account create `
-        --name $storageTestName2 `
-        --resource-group $ResourceGroupName `
-        --min-tls-version TLS1_0 `
-        --sku Standard_LRS 2>$null # Redirecting stderr to null to catch errors
+az storage account create `
+    --name $storageTestName2 `
+    --resource-group $ResourceGroupName `
+    --min-tls-version TLS1_0 `
+    --sku Standard_LRS 2>$null
+
+if ($LASTEXITCODE -eq 0) {
     Write-Host "⚠️  Policy failed - Storage account created with TLS 1.0!" -ForegroundColor Red
-} catch {
+} else {
     Write-Host "✅ Policy working - Storage account TLS 1.0 blocked" -ForegroundColor Green
-}
 
 # Test 3: Compliant Storage Account (Should PASS)
 Write-Host "`n✅ Testing compliant Storage Account (should pass)..." -ForegroundColor Green
