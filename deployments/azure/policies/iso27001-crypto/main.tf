@@ -684,8 +684,8 @@ output "policy_assignments" {
   value = {
     storage_https                = azurerm_subscription_policy_assignment.storage_https_required.id
     storage_tls_12               = azurerm_subscription_policy_assignment.storage_tls_12_assignment.id
-    appgw_tls_13_required        = azurerm_policy_definition.appgw_tls_13_required.id
-    appgw_https_required         = azurerm_policy_definition.appgw_https_required.id
+    appgw_tls_13_required        = azurerm_subscription_policy_assignment.appgw_tls_13_assignment.id
+    appgw_https_required         = azurerm_subscription_policy_assignment.appgw_https_assignment.id
     disk_cmk_required        = azurerm_policy_definition.disk_cmk_required.id
     kusto_disk_encryption    = azurerm_policy_definition.kusto_disk_encryption.id
     kusto_cmk_required       = azurerm_policy_definition.kusto_cmk_required.id
