@@ -81,7 +81,63 @@ resource "azurerm_subscription_policy_assignment" "storage_https_required" {
   })
 }
 
-# Policy 3: Storage Accounts should use customer-managed keys
+# Policy 3: Storage Accounts should require TLS 1.2 or higher
+resource "azurerm_policy_definition" "storage_tls_12_required" {
+  name         = "iso27001-storage-tls12-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Storage Accounts should require TLS 1.2+"
+  description  = "Enforces minimum TLS 1.2 for storage account connections"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.Storage/storageAccounts"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.Storage/storageAccounts/minimumTlsVersion"
+              notIn = ["TLS1_2", "TLS1_3"]
+            },
+            {
+              field  = "Microsoft.Storage/storageAccounts/minimumTlsVersion"
+              exists = "false"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "deny"
+    }
+  })
+}
+
+resource "azurerm_subscription_policy_assignment" "storage_tls_12_assignment" {
+  name                 = "iso27001-storage-tls12"
+  policy_definition_id = azurerm_policy_definition.storage_tls_12_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Storage Accounts must use TLS 1.2+"
+  description          = "Ensures storage accounts enforce minimum TLS 1.2"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+
+  depends_on = [azurerm_policy_definition.storage_tls_12_required]
+}
+
+# Policy 4: Storage Accounts should use customer-managed keys
 resource "azurerm_subscription_policy_assignment" "storage_cmk_required" {
   name                 = "iso27001-storage-cmk"
   policy_definition_id = local.storage_cmk_policy_id
@@ -99,7 +155,7 @@ resource "azurerm_subscription_policy_assignment" "storage_cmk_required" {
 #
 # ==================== SQL DATABASE POLICIES ====================
 #
-# Policy 4: SQL Databases should use customer-managed keys for TDE
+# Policy 5: SQL Databases should use customer-managed keys for TDE
 resource "azurerm_subscription_policy_assignment" "sql_tde_cmk_required" {
   name                 = "iso27001-sql-tde-cmk"
   policy_definition_id = local.sql_tde_cmk_policy_id
@@ -117,7 +173,7 @@ resource "azurerm_subscription_policy_assignment" "sql_tde_cmk_required" {
 #
 # ==================== KEY VAULT POLICIES ====================
 #
-# Policy 5: Key Vaults should have purge protection enabled
+# Policy 6: Key Vaults should have purge protection enabled
 resource "azurerm_subscription_policy_assignment" "keyvault_purge_protection" {
   name                 = "iso27001-kv-purge-protect"
   policy_definition_id = local.keyvault_purge_protection_policy_id
@@ -132,7 +188,7 @@ resource "azurerm_subscription_policy_assignment" "keyvault_purge_protection" {
   })
 }
 
-# Policy 6: Key Vaults should have soft delete enabled
+# Policy 7: Key Vaults should have soft delete enabled
 resource "azurerm_subscription_policy_assignment" "keyvault_soft_delete" {
   name                 = "iso27001-kv-soft-delete"
   policy_definition_id = local.keyvault_soft_delete_policy_id
@@ -148,10 +204,124 @@ resource "azurerm_subscription_policy_assignment" "keyvault_soft_delete" {
 }
 
 #
+# ==================== APPLICATION GATEWAY TLS POLICIES ====================
+#
+
+# Custom Policy 8: Azure Application Gateway should use TLS 1.3
+resource "azurerm_policy_definition" "appgw_tls_13_required" {
+  name         = "iso27001-appgw-tls13-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Application Gateway should use TLS 1.3"
+  description  = "Enforces TLS 1.3 for Application Gateway SSL policies"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.Network/applicationGateways"
+        },
+        {
+          anyOf = [
+            {
+              field  = "Microsoft.Network/applicationGateways/sslPolicy.minProtocolVersion"
+              notEquals = "TLSv1_3"
+            },
+            {
+              field  = "Microsoft.Network/applicationGateways/sslPolicy.minProtocolVersion"
+              exists = "false"
+            }
+          ]
+        }
+      ]
+    }
+    then = {
+      effect = "deny"
+    }
+  })
+}
+
+resource "azurerm_subscription_policy_assignment" "appgw_tls_13_assignment" {
+  name                 = "iso27001-appgw-tls13"
+  policy_definition_id = azurerm_policy_definition.appgw_tls_13_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Application Gateway must use TLS 1.3"
+  description          = "Ensures Application Gateways enforce TLS 1.3"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+
+  depends_on = [azurerm_policy_definition.appgw_tls_13_required]
+}
+
+# Custom Policy 9: Application Gateway should enforce HTTPS
+resource "azurerm_policy_definition" "appgw_https_required" {
+  name         = "iso27001-appgw-https-required"
+  policy_type  = "Custom"
+  mode         = "Indexed"
+  display_name = "ISO 27001 - Application Gateway should enforce HTTPS"
+  description  = "Ensures Application Gateway listeners use HTTPS protocol"
+
+  metadata = jsonencode({
+    category = "ISO 27001 - Cryptography"
+    control  = "A.10.1.1"
+  })
+
+  policy_rule = jsonencode({
+    if = {
+      allOf = [
+        {
+          field  = "type"
+          equals = "Microsoft.Network/applicationGateways"
+        },
+        {
+          count = {
+            field = "Microsoft.Network/applicationGateways/httpListeners[*]"
+            where = {
+              field = "Microsoft.Network/applicationGateways/httpListeners[*].protocol"
+              equals = "Http"
+            }
+          }
+          greater = 0
+        }
+      ]
+    }
+    then = {
+      effect = "deny"
+    }
+  })
+}
+
+resource "azurerm_subscription_policy_assignment" "appgw_https_assignment" {
+  name                 = "iso27001-appgw-https"
+  policy_definition_id = azurerm_policy_definition.appgw_https_required.id
+  subscription_id      = local.subscription_id
+  display_name         = "ISO 27001 - Application Gateway must enforce HTTPS"
+  description          = "Ensures Application Gateway listeners use HTTPS only"
+
+  metadata = jsonencode({
+    category   = "ISO 27001 - Cryptography"
+    control    = "A.10.1.1"
+    assignedBy = "Terraform"
+  })
+
+  depends_on = [azurerm_policy_definition.appgw_https_required]
+}
+
+#
 # ==================== DISK ENCRYPTION POLICIES ====================
 #
 
-# Custom Policy 7: Managed Disks should use customer-managed keys
+# Custom Policy 10: Managed Disks should use customer-managed keys
 resource "azurerm_policy_definition" "disk_cmk_required" {
   name         = "iso27001-disk-cmk-required"
   policy_type  = "Custom"
@@ -513,7 +683,9 @@ output "policy_assignments" {
   description = "List of all policy assignments created"
   value = {
     storage_https                = azurerm_subscription_policy_assignment.storage_https_required.id
-# (Block removed from here; will be inserted after line 962)
+    storage_tls_12               = azurerm_policy_definition.storage_tls_12_required.id
+    appgw_tls_13_required        = azurerm_policy_definition.appgw_tls_13_required.id
+    appgw_https_required         = azurerm_policy_definition.appgw_https_required.id
     disk_cmk_required        = azurerm_policy_definition.disk_cmk_required.id
     kusto_disk_encryption    = azurerm_policy_definition.kusto_disk_encryption.id
     kusto_cmk_required       = azurerm_policy_definition.kusto_cmk_required.id
