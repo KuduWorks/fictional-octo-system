@@ -109,9 +109,10 @@ for bucket_info in "${buckets_to_delete[@]}"; do
     bucket=$(echo "$bucket_info" | cut -d':' -f1)
     region=$(echo "$bucket_info" | cut -d':' -f2)
     
-    # Validate bucket name before deletion - only delete test-related buckets
-    if [[ ! "$bucket" =~ ^scp-test- ]] && [[ ! "$bucket" == *test* ]]; then
-        echo -e "${RED}  ⚠️  Skipping $bucket - doesn't match test pattern${NC}"
+    # Validate bucket name before deletion - only delete buckets containing 'test' in their name
+    # This is a safety check to prevent accidental deletion of production buckets
+    if [[ ! "$bucket" == *test* ]]; then
+        echo -e "${RED}  ⚠️  Skipping $bucket - doesn't contain 'test' in name${NC}"
         continue
     fi
     
@@ -127,7 +128,8 @@ for bucket_info in "${buckets_to_delete[@]}"; do
         --max-items 1000 \
         --region "$region" 2>/dev/null || echo "")
 
-    if [ ! -z "$versions" ] && [ "$versions" != '{"Objects":null}' ]; then
+    # Check if versions result contains actual objects (not null or empty)
+    if [ -n "$versions" ] && [[ "$versions" != *'"Objects":null'* ]] && [[ "$versions" != *'"Objects":[]'* ]]; then
         aws s3api delete-objects \
             --bucket "$bucket" \
             --delete "$versions" \
