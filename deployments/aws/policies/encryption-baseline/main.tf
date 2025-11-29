@@ -290,10 +290,10 @@ resource "aws_config_config_rule" "s3_account_level_public_access_blocks" {
   }
 
   input_parameters = jsonencode({
-    BlockPublicAcls       = true
-    BlockPublicPolicy     = true
-    IgnorePublicAcls      = true
-    RestrictPublicBuckets = true
+    BlockPublicAcls       = "true"
+    BlockPublicPolicy     = "true"
+    IgnorePublicAcls      = "true"
+    RestrictPublicBuckets = "true"
   })
 
   depends_on = [aws_config_configuration_recorder.main]
