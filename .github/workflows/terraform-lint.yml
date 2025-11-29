@@ -1,4 +1,6 @@
 name: Terraform Lint (Multi-Cloud)
+permissions:
+  contents: read
 
 on:
   pull_request:
