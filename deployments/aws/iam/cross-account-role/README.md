@@ -4,8 +4,8 @@ This Terraform configuration creates an IAM role in the member account that can 
 
 ## What This Creates
 
-- **IAM Role**: `CrossAccountTestRole` in member account (758027491266)
-- **Trust Policy**: Allows management account (494367313227) to assume the role
+- **IAM Role**: `CrossAccountTestRole` in member account (`<YOUR-MEMBER-ACCOUNT-ID>`)
+- **Trust Policy**: Allows management account (`<YOUR-MANAGEMENT-ACCOUNT-ID>`) to assume the role
 - **Permissions**: AdministratorAccess for full testing capabilities
 - **Security**: Requires ExternalId for additional protection
 
@@ -14,8 +14,8 @@ This Terraform configuration creates an IAM role in the member account that can 
 ⚠️ **IMPORTANT**: AWS automatically creates `OrganizationAccountAccessRole` in new member accounts. This Terraform configuration will **use** that existing role to deploy the `CrossAccountTestRole`.
 
 Before deploying:
-1. Member account must exist (✅ 758027491266 created)
-2. SCPs must be attached to member account (✅ Done)
+1. Member account must exist
+2. SCPs must be attached to member account
 3. Wait 5-15 minutes for SCP propagation
 
 ## Deployment
@@ -40,7 +40,7 @@ After deployment, use the outputted commands to assume the role and test:
 ```bash
 # 1. Get credentials by assuming the role
 aws sts assume-role \
-  --role-arn arn:aws:iam::758027491266:role/CrossAccountTestRole \
+  --role-arn arn:aws:iam::<YOUR-MEMBER-ACCOUNT-ID>:role/CrossAccountTestRole \
   --role-session-name test-session \
   --external-id <YOUR-SECURE-EXTERNAL-ID> \
   > /tmp/assume-role-output.json
@@ -52,7 +52,7 @@ export AWS_SESSION_TOKEN=$(cat /tmp/assume-role-output.json | jq -r .Credentials
 
 # 3. Verify you're in the member account
 aws sts get-caller-identity
-# Should show: "Account": "758027491266"
+# Should show: "Account": "<YOUR-MEMBER-ACCOUNT-ID>"
 
 # 4. Test region restriction (should FAIL with AccessDenied)
 aws s3api create-bucket \
@@ -118,7 +118,7 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
   # Or using OpenSSL
   openssl rand -hex 16
   ```
-- **Management Account Bypass**: Remember management account (494367313227) bypasses SCPs
+- **Management Account Bypass**: Remember the management account (`<YOUR-MANAGEMENT-ACCOUNT-ID>`) bypasses SCPs
 - **Member Account Enforcement**: SCPs only apply to member accounts
 - **Session Duration**: Assumed role credentials expire after 1 hour by default
 
@@ -136,7 +136,7 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 
 ### SCPs not blocking operations
 - Wait 5-15 minutes for SCP propagation
-- Verify SCPs are attached: `aws organizations list-policies-for-target --target-id 758027491266 --filter SERVICE_CONTROL_POLICY`
+- Verify SCPs are attached: `aws organizations list-policies-for-target --target-id <YOUR-MEMBER-ACCOUNT-ID> --filter SERVICE_CONTROL_POLICY`
 - Confirm you're testing from member account (not management account)
 
 ## Cleanup
