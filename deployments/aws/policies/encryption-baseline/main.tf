@@ -224,6 +224,7 @@ resource "aws_config_configuration_recorder" "main" {
     all_supported = false
     resource_types = [
       "AWS::S3::Bucket",
+      "AWS::S3::AccountPublicAccessBlock",
       "AWS::EC2::Volume",
       "AWS::RDS::DBInstance",
       "AWS::DynamoDB::Table",
@@ -246,4 +247,194 @@ resource "aws_config_configuration_recorder_status" "main" {
   is_enabled = true
 
   depends_on = [aws_config_delivery_channel.main]
+}
+
+# ============================================================================
+# S3 PUBLIC ACCESS CONFIG RULES
+# ============================================================================
+
+# AWS Config Rule: S3 Public Read Prohibited
+resource "aws_config_config_rule" "s3_bucket_public_read_prohibited" {
+  name        = "s3-bucket-public-read-prohibited"
+  description = "Checks that S3 buckets do not allow public read access (ISO 27001 A.9.1.1)"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "S3_BUCKET_PUBLIC_READ_PROHIBITED"
+  }
+
+  depends_on = [aws_config_configuration_recorder.main]
+}
+
+# AWS Config Rule: S3 Public Write Prohibited
+resource "aws_config_config_rule" "s3_bucket_public_write_prohibited" {
+  name        = "s3-bucket-public-write-prohibited"
+  description = "Checks that S3 buckets do not allow public write access (ISO 27001 A.9.1.1)"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "S3_BUCKET_PUBLIC_WRITE_PROHIBITED"
+  }
+
+  depends_on = [aws_config_configuration_recorder.main]
+}
+
+# AWS Config Rule: S3 Account Level Public Access Blocks
+resource "aws_config_config_rule" "s3_account_level_public_access_blocks" {
+  name        = "s3-account-level-public-access-blocks-periodic"
+  description = "Checks whether the required public access block settings are configured at the account level (ISO 27001 A.9.1.1)"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "S3_ACCOUNT_LEVEL_PUBLIC_ACCESS_BLOCKS_PERIODIC"
+  }
+
+  input_parameters = jsonencode({
+    BlockPublicAcls       = true
+    BlockPublicPolicy     = true
+    IgnorePublicAcls      = true
+    RestrictPublicBuckets = true
+  })
+
+  depends_on = [aws_config_configuration_recorder.main]
+}
+
+# ============================================================================
+# ACCOUNT-LEVEL S3 PUBLIC ACCESS BLOCK
+# ============================================================================
+
+# Block public access at the account level
+resource "aws_s3_account_public_access_block" "account_level_block" {
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+# ============================================================================
+# SERVICE CONTROL POLICIES (PREVENTIVE CONTROLS)
+# ============================================================================
+
+# Data source to get organization information
+data "aws_organizations_organization" "current" {
+  count = var.enable_scps ? 1 : 0
+}
+
+# SCP: Deny S3 Public Access Actions
+resource "aws_organizations_policy" "deny_s3_public_access" {
+  count = var.enable_scps ? 1 : 0
+
+  name        = "DenyS3PublicAccess"
+  description = "Prevents S3 buckets from being made public - ISO 27001 A.9.1.1 compliance"
+  type        = "SERVICE_CONTROL_POLICY"
+
+  content = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "DenyRemovingPublicAccessBlock"
+        Effect = "Deny"
+        Action = [
+          "s3:DeleteBucketPublicAccessBlock",
+          "s3:DeleteAccountPublicAccessBlock"
+        ]
+        Resource = "*"
+      },
+      {
+        Sid    = "DenyWeakeningPublicAccessBlock"
+        Effect = "Deny"
+        Action = [
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutAccountPublicAccessBlock"
+        ]
+        Resource = "*"
+        Condition = {
+          "Bool" = {
+            "s3:PublicAccessBlockConfiguration.BlockPublicAcls"       = "false"
+          }
+        }
+      },
+      {
+        Sid    = "DenyWeakeningPublicAccessBlockPolicy"
+        Effect = "Deny"
+        Action = [
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutAccountPublicAccessBlock"
+        ]
+        Resource = "*"
+        Condition = {
+          "Bool" = {
+            "s3:PublicAccessBlockConfiguration.BlockPublicPolicy" = "false"
+          }
+        }
+      },
+      {
+        Sid    = "DenyWeakeningPublicAccessBlockIgnore"
+        Effect = "Deny"
+        Action = [
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutAccountPublicAccessBlock"
+        ]
+        Resource = "*"
+        Condition = {
+          "Bool" = {
+            "s3:PublicAccessBlockConfiguration.IgnorePublicAcls" = "false"
+          }
+        }
+      },
+      {
+        Sid    = "DenyWeakeningPublicAccessBlockRestrict"
+        Effect = "Deny"
+        Action = [
+          "s3:PutBucketPublicAccessBlock",
+          "s3:PutAccountPublicAccessBlock"
+        ]
+        Resource = "*"
+        Condition = {
+          "Bool" = {
+            "s3:PublicAccessBlockConfiguration.RestrictPublicBuckets" = "false"
+          }
+        }
+      },
+      {
+        Sid    = "DenyS3PublicACLs"
+        Effect = "Deny"
+        Action = [
+          "s3:PutBucketAcl",
+          "s3:PutObjectAcl"
+        ]
+        Resource = "*"
+        Condition = {
+          StringLike = {
+            "s3:x-amz-acl" = [
+              "public-read",
+              "public-read-write",
+              "authenticated-read"
+            ]
+          }
+        }
+      },
+      {
+        Sid    = "DenyS3PublicBucketPolicy"
+        Effect = "Deny"
+        Action = [
+          "s3:PutBucketPolicy"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "s3:x-amz-grant-read" = "*"
+          }
+        }
+      }
+    ]
+  })
+}
+
+# Attach SCP to organization root
+resource "aws_organizations_policy_attachment" "deny_s3_public_access_attachment" {
+  count = var.enable_scps ? 1 : 0
+
+  policy_id = aws_organizations_policy.deny_s3_public_access[0].id
+  target_id = data.aws_organizations_organization.current[0].roots[0].id
 }

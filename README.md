@@ -40,7 +40,7 @@ fictional-octo-system/
 │   ├── aws/                     # 🟠 AWS Infrastructure
 │   │   ├── terraform-state-bootstrap/  # S3 + DynamoDB for state management
 │   │   ├── budgets/             # AWS Budgets and cost management
-│   │   ├── policies/            # AWS Config rules for compliance
+│   │   ├── policies/            # ✅ Active SCPs + AWS Config rules
 │   │   ├── iam/                 # IAM roles and OIDC providers
 │   │   ├── kms/                 # KMS key management
 │   │   ├── secrets/             # Secrets Manager configuration
@@ -112,6 +112,7 @@ fictional-octo-system/
 
 **AWS:**
 - AWS Config for compliance monitoring *(the robot that checks your homework)*
+- Service Control Policies (SCPs) for preventive enforcement *(✅ Active: blocks non-compliant actions)*
 - AWS Budgets for cost tracking and alerts *(emails when you're about to exceed your limit)*
 - CloudWatch for logs and metrics *(like Log Analytics, but with more confusing pricing)*
 - SNS for alerting *(because your phone needs more notifications at 3 AM)*
@@ -126,8 +127,12 @@ fictional-octo-system/
 
 ### Infrastructure Management (AWS)
 - **Terraform State Backend**: S3 bucket with DynamoDB locking in eu-north-1 *(because Stockholm > Virginia for Finnish users)*
+- **Service Control Policies (SCPs)**: ✅ **ACTIVE** - Preventive enforcement at organization level
+  - Region restriction to Stockholm (eu-north-1) *(no accidental us-east-1 deployments)*
+  - S3 public access blocking *(all S3 buckets private by default)*
+  - Account-level public access blocks *(defense in depth)*
+- **AWS Config Rules**: Automated compliance monitoring (9 rules active) *(detection layer for visibility)*
 - **AWS Budgets & Cost Management**: Automated spending limits with email alerts *(know before you owe)*
-- **AWS Config Rules**: Automated compliance checking (encryption, HTTPS, KMS) *(robots enforcing security policies)*
 - **IAM OIDC Integration**: Passwordless GitHub Actions authentication *(no more AWS access keys!)*
 - **Secrets Manager**: AWS equivalent to Key Vault *(planned)*
 - **Systems Manager**: EC2 automation and patch management *(planned)*
@@ -316,7 +321,8 @@ terraform output github_secrets_config
 - [AWS Infrastructure Overview](deployments/aws/README.md) *(Start here for AWS setup)*
 - [Terraform State Bootstrap](deployments/aws/terraform-state-bootstrap/README.md) *(Do this first)*
 - [AWS Budget & Cost Management](deployments/aws/budgets/cost-management/QUICKSTART.md) *(Set spending limits before you deploy)*
-- [Encryption Baseline Policies](deployments/aws/policies/encryption-baseline/README.md)
+- [Region Control SCPs](deployments/aws/policies/region-control/README.md) *(✅ Active: Stockholm-only enforcement)*
+- [Encryption Baseline SCPs](deployments/aws/policies/encryption-baseline/README.md) *(✅ Active: S3 public access blocking)*
 
 **GCP Deployments:**
 - [GCP Infrastructure Overview](deployments/gcp/README.md) *(Start here for GCP setup)*
@@ -343,8 +349,13 @@ terraform output github_secrets_config
 - **Automated VM Lifecycle**: Daily start/stop schedules (7 AM/7 PM Finnish time) *(your VMs keep better hours than you do)*
 
 **AWS-Specific:**
+- **Service Control Policies**: ✅ **ACTIVE** - Organization-level preventive controls
+  - RegionRestriction SCP blocks non-Stockholm deployments *(no more "oops, wrong region")*
+  - DenyS3PublicAccess SCP prevents public buckets *(hard block, no exceptions)*
+  - Global services exempted (IAM, Route53, CloudFront) *(because some services don't have regions)*
+- **Account-Level S3 Blocks**: All four public access settings enforced *(belts and suspenders approach)*
 - **IAM OIDC Provider**: GitHub Actions authentication without access keys *(no more AWS_ACCESS_KEY_ID in your environment)*
-- **AWS Config Rules**: Automated compliance checking for encryption and security *(robots enforcing your security policies)*
+- **AWS Config Rules**: Automated compliance monitoring (9 rules) *(detection layer for continuous visibility)*
 - **KMS Integration**: Customer-managed encryption keys for all services *(your data, your keys)*
 
 **GCP-Specific:**
@@ -355,6 +366,7 @@ terraform output github_secrets_config
 
 **Compliance & Monitoring:**
 - **ISO 27001 Patterns**: Security policies and controls across all clouds *(checking boxes AND securing data)*
+- **Preventive Controls**: ✅ AWS SCPs actively blocking non-compliant actions *(prevention > detection)*
 - **Comprehensive Logging**: Centralized logging and monitoring across platforms *(Big Brother, but for infrastructure)*
 - **Encryption Everywhere**: Data encrypted at rest and in transit across all platforms *(encrypt all the things!)*
 - **Audit Trails**: Complete audit logs for all infrastructure changes *(because compliance teams love paperwork)*
@@ -380,7 +392,7 @@ terraform output github_secrets_config
 | **Secrets Management** | Key Vault | Secrets Manager | Secret Manager |
 | **Cost Control** | Cost Management | Budgets + Billing Alarms | Billing Budgets |
 | **Monitoring** | Azure Monitor | CloudWatch | Cloud Monitoring |
-| **Compliance** | Azure Policy | AWS Config | Organization Policies |
+| **Compliance** | Azure Policy | ✅ SCPs + AWS Config | Organization Policies |
 | **Free Tier** | 12 months + always free | 12 months + always free | Always free (most generous) |
 | **CLI Quality** | Decent (`az`) | Functional (`aws`) | Excellent (`gcloud`) |
 | **Documentation** | Good | Comprehensive | Outstanding |
@@ -450,11 +462,20 @@ Contributions are welcome! Please read our [Security Policy](SECURITY.md) before
 - **Always deploy state backend first** (terraform-state-bootstrap)  
   *(you need somewhere to store your state before creating other resources)*
 
-- Use `eu-north-1` (Stockholm) region for consistency  
-  *(unless you have a good reason, stick with the plan)*
+- **Deploy policies in order**: region-control → encryption-baseline  
+  *(establish geographic boundaries before enforcing security controls)*
 
-- Leverage AWS Config for compliance automation  
-  *(let robots enforce your security policies)*
+- **Wait for SCP propagation**: Allow 5-15 minutes after deploying SCPs  
+  *(AWS needs time to distribute policies globally)*
+
+- Use `eu-north-1` (Stockholm) region for consistency  
+  *(SCPs enforce this, but good to know anyway)*
+
+- **SCPs are organization-level**: Requires AWS Organizations with SCPs enabled  
+  *(if you don't have an organization, start there)*
+
+- Leverage AWS Config for compliance **monitoring** (SCPs handle **prevention**)  
+  *(defense in depth: block + detect)*
 
 - Use IAM roles with OIDC instead of long-lived credentials  
   *(passwordless is the way, grasshopper)*

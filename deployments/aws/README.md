@@ -12,9 +12,9 @@ This directory contains Terraform configurations for AWS infrastructure that mir
   - `cost-management/` - Track spending before the CFO does!
   
 - **policies/** - The "thou shalt not" section 📜
-  - `encryption-baseline/` - Encrypt ALL the things! (mirrors Azure ISO 27001 crypto)
-  - `region-control/` - "Sorry, you can't deploy here" rules
-  - `resource-tagging/` - Tag it or regret it later
+  - `encryption-baseline/` - ✅ ACTIVE SCPs: S3 public access blocking + encryption enforcement (mirrors Azure ISO 27001 crypto)
+  - `region-control/` - ✅ ACTIVE SCPs: Stockholm-only deployment enforcement (mirrors Azure region restrictions)
+  - `resource-tagging/` - 📋 Planned: Tag it or regret it later
   
 - **iam/** - Identity and Access Management (or "who can break what")
   - `github-oidc/` - No more secrets in GitHub! (Math-based auth FTW)
@@ -62,12 +62,22 @@ terraform apply   # "YOLO! Creating resources..." 🎲
 | Azure Service | AWS Equivalent | Translation Notes |
 |--------------|----------------|-------------------|
 | Cost Management + Budgets | AWS Budgets | Azure: Built-in. AWS: Also built-in. Both send scary emails! 💸 |
-| Azure Policy | AWS Config Rules + SCPs | Azure: One service. AWS: Two services walk into a bar... |
+| Azure Policy | AWS Config Rules + SCPs | Azure: One policy. AWS: SCPs prevent + Config detects. ✅ BOTH ACTIVE |
 | App Registration | IAM Roles + OIDC Provider | AWS: "Why use secrets when you can use math?" 🔐 |
 | Key Vault | KMS + Secrets Manager | AWS split this into two services (naturally) |
 | VM Automation | Systems Manager Automation | Both automate VMs. AWS version has more syllables. |
 | Management Groups | AWS Organizations | Same concept, different name. Classic cloud move. |
 | Resource Groups | Tags + Resource Groups | Azure groups things logically. AWS says "¿por qué no los dos?" |
+
+## Active Enforcement
+
+**🛡️ Service Control Policies (SCPs) Now Active:**
+- ✅ **S3 Public Access Blocking** - No public buckets allowed (hard block at API level)
+- ✅ **Region Restriction** - Stockholm (eu-north-1) only for resource creation
+- ✅ **Account-Level Protection** - Public access blocks enforced at account level
+- 📊 **AWS Config Monitoring** - Continuous compliance detection (9 rules active)
+
+**⏳ Deployment Note**: SCPs take 5-15 minutes to propagate globally after initial deployment.
 
 ## Multi-Cloud Strategy
 

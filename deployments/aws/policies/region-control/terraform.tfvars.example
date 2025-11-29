@@ -1,0 +1,9 @@
+# AWS Configuration
+aws_region = "eu-north-1"
+
+# Environment
+environment = "prod"
+
+# Allowed Regions
+# Only Stockholm region allowed for compliance
+allowed_regions = ["eu-north-1"]
