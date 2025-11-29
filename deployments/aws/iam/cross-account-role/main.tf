@@ -64,7 +64,8 @@ resource "aws_iam_role_policy_attachment" "admin_access" {
 # This role allows the management account to assume into the member account
 # for full admin capabilities
 resource "aws_iam_role" "cross_account_admin" {
-  name = "CrossAccountAdminRole"
+  name        = "CrossAccountAdminRole"
+  description = "Role for admin access from trusted account"
   
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
