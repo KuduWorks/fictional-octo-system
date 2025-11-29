@@ -46,3 +46,56 @@ See `variables.tf` for configuration options:
 - `enable_scps` - Whether to create Service Control Policies (requires Organizations)
 - `config_recorder_name` - Name of the AWS Config recorder
 - `remediation_enabled` - Enable automatic remediation for non-compliant resources
+
+## Testing Your Config Rules
+
+Use the `test-config-rules.sh` script to validate that your Config rules are working correctly.
+
+### Test Script Usage
+
+```bash
+# Basic usage
+./test-config-rules.sh
+
+# Specify region (if different from AWS CLI default)
+AWS_REGION=eu-north-1 ./test-config-rules.sh
+```
+
+### What the Test Does
+
+1. **Creates test resources** in both compliant and non-compliant configurations
+2. **Waits for Config evaluation** (60 seconds for rules to evaluate)
+3. **Checks compliance status** for each Config rule
+4. **Generates a report** showing which rules are working
+5. **Automatically cleans up** all test resources
+
+### Important Notes
+
+- **Automatic cleanup**: Script automatically deletes all test resources when finished
+- **Region compatibility**: Ensure you're running in a region allowed by your policies  
+- **Cost implications**: Test resources may incur minimal charges during test period
+- **RDS instances**: Take several minutes to create/delete - be patient
+
+### Test Results Interpretation
+
+- **WORKING**: Rule correctly identifies non-compliant resources ✅
+- **PARTIAL**: Rule found only compliant resources (may still be working) ⚠️
+- **ERROR**: Rule not found or not evaluating ❌
+
+### Prerequisites for Testing
+
+- AWS CLI configured with appropriate credentials
+- AWS Config enabled in your target region
+- Permissions to create/delete test resources (S3, EBS, RDS, DynamoDB, CloudTrail, KMS)
+
+### Region Compatibility
+
+If you have region restrictions (e.g., Stockholm region only):
+
+```bash
+# Set your AWS CLI default region (recommended)
+aws configure set region eu-north-1
+
+# Or specify region when running
+AWS_REGION=eu-north-1 ./test-config-rules.sh
+```
