@@ -1,0 +1,166 @@
+name: Terraform Lint (Multi-Cloud)
+
+on:
+  pull_request:
+    paths:
+      - 'deployments/**/*.tf'
+      - 'terraform/**/*.tf'
+      - '**/*.tfvars.example'
+      - '.tflint.hcl'
+      - '.github/workflows/terraform-lint.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployments/**/*.tf'
+      - 'terraform/**/*.tf'
+
+jobs:
+  tflint:
+    name: TFLint - ${{ matrix.cloud }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cloud: [azure, aws, gcp]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Initialize TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run TFLint on ${{ matrix.cloud }} deployments
+        run: |
+          echo "🔍 Linting ${{ matrix.cloud }} Terraform configurations..."
+          
+          # Check if directory exists
+          if [ ! -d "deployments/${{ matrix.cloud }}" ]; then
+            echo "⚠️  Directory deployments/${{ matrix.cloud }} not found, skipping..."
+            exit 0
+          fi
+          
+          # Find all directories with .tf files for this cloud provider
+          find deployments/${{ matrix.cloud }} -name "*.tf" \
+            -not -path "*/\.terraform/*" \
+            -not -path "*/.terraform.lock.hcl" | \
+          xargs -I {} dirname {} | sort -u | \
+          while read dir; do
+            echo "📂 Linting: $dir"
+            (cd "$dir" && tflint --config="$GITHUB_WORKSPACE/.tflint.hcl") || exit 1
+          done
+          
+          echo "✅ ${{ matrix.cloud }} linting complete!"
+
+  tflint-root:
+    name: TFLint - Root Terraform
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup TFLint
+        uses: terraform-linters/setup-tflint@v4
+        with:
+          tflint_version: latest
+
+      - name: Initialize TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Run TFLint on root terraform directory
+        run: |
+          if [ -d "terraform" ]; then
+            echo "🔍 Linting root terraform configurations..."
+            find terraform -name "*.tf" \
+              -not -path "*/\.terraform/*" | \
+            xargs -I {} dirname {} | sort -u | \
+            while read dir; do
+              echo "📂 Linting: $dir"
+              (cd "$dir" && tflint --config="$GITHUB_WORKSPACE/.tflint.hcl") || exit 1
+            done
+            echo "✅ Root terraform linting complete!"
+          else
+            echo "⚠️  No root terraform directory found"
+          fi
+
+  terraform-fmt:
+    name: Terraform Format Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.6"
+
+      - name: Check Terraform formatting
+        run: |
+          echo "🎨 Checking Terraform formatting..."
+          
+          # Check all directories with .tf files
+          terraform fmt -check -recursive deployments/ || {
+            echo "❌ Formatting issues found in deployments/"
+            echo "Run 'terraform fmt -recursive deployments/' to fix"
+            exit 1
+          }
+          
+          if [ -d "terraform" ]; then
+            terraform fmt -check -recursive terraform/ || {
+              echo "❌ Formatting issues found in terraform/"
+              echo "Run 'terraform fmt -recursive terraform/' to fix"
+              exit 1
+            }
+          fi
+          
+          echo "✅ All files properly formatted!"
+
+  terraform-validate:
+    name: Terraform Validate - ${{ matrix.cloud }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        cloud: [azure, aws, gcp]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.6"
+
+      - name: Validate ${{ matrix.cloud }} configurations
+        run: |
+          echo "🔍 Validating ${{ matrix.cloud }} Terraform configurations..."
+          
+          # Check if directory exists
+          if [ ! -d "deployments/${{ matrix.cloud }}" ]; then
+            echo "⚠️  Directory deployments/${{ matrix.cloud }} not found, skipping..."
+            exit 0
+          fi
+          
+          find deployments/${{ matrix.cloud }} -name "*.tf" \
+            -not -path "*/\.terraform/*" | \
+          xargs -I {} dirname {} | sort -u | \
+          while read dir; do
+            echo "📂 Validating: $dir"
+            (cd "$dir" && terraform init -backend=false && terraform validate) || exit 1
+          done
+          
+          echo "✅ ${{ matrix.cloud }} validation complete!"

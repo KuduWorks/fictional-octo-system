@@ -10,7 +10,7 @@ terraform {
 
 provider "aws" {
   region = var.aws_region
-  
+
   # This will assume a role in the member account
   assume_role {
     role_arn = "arn:aws:iam::${var.member_account_id}:role/OrganizationAccountAccessRole"
@@ -66,7 +66,7 @@ resource "aws_iam_role_policy_attachment" "admin_access" {
 resource "aws_iam_role" "cross_account_admin" {
   name        = "CrossAccountAdminRole"
   description = "Role for admin access from trusted account"
-  
+
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
     Statement = [
