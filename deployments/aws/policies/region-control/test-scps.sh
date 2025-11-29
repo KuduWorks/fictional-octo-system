@@ -3,7 +3,8 @@
 # AWS Service Control Policy Test Script
 # Tests both region restrictions and S3 public access blocking
 
-set -e
+# Note: We don't use set -e because we want cleanup to run even if tests fail
+# and we handle errors explicitly in the test logic
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -58,7 +59,7 @@ echo "Expected: ✅ ALLOWED"
 
 test_bucket_approved="$TEST_PREFIX-approved-region"
 
-if aws s3 mb "s3://$test_bucket_approved" --region "$APPROVED_REGION" 2>&1; then
+if aws s3 mb "s3://$test_bucket_approved" --region "$APPROVED_REGION" > /dev/null 2>&1; then
     echo -e "${GREEN}✅ PASS: Bucket created successfully in Stockholm${NC}"
     test_results["region_allow"]="PASS"
 else
@@ -123,7 +124,7 @@ echo "Expected: ✅ ALLOWED"
 
 test_bucket_private="$TEST_PREFIX-private-bucket"
 
-if aws s3 mb "s3://$test_bucket_private" --region "$APPROVED_REGION" 2>&1; then
+if aws s3 mb "s3://$test_bucket_private" --region "$APPROVED_REGION" > /dev/null 2>&1; then
     # Add public access block (should succeed)
     if aws s3api put-public-access-block \
         --bucket "$test_bucket_private" \

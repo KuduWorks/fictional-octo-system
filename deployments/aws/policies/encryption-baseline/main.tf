@@ -349,49 +349,10 @@ resource "aws_organizations_policy" "deny_s3_public_access" {
         ]
         Resource = "*"
         Condition = {
-          "Bool" = {
+          BoolIfExists = {
             "s3:PublicAccessBlockConfiguration.BlockPublicAcls"       = "false"
-          }
-        }
-      },
-      {
-        Sid    = "DenyWeakeningPublicAccessBlockPolicy"
-        Effect = "Deny"
-        Action = [
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutAccountPublicAccessBlock"
-        ]
-        Resource = "*"
-        Condition = {
-          "Bool" = {
-            "s3:PublicAccessBlockConfiguration.BlockPublicPolicy" = "false"
-          }
-        }
-      },
-      {
-        Sid    = "DenyWeakeningPublicAccessBlockIgnore"
-        Effect = "Deny"
-        Action = [
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutAccountPublicAccessBlock"
-        ]
-        Resource = "*"
-        Condition = {
-          "Bool" = {
-            "s3:PublicAccessBlockConfiguration.IgnorePublicAcls" = "false"
-          }
-        }
-      },
-      {
-        Sid    = "DenyWeakeningPublicAccessBlockRestrict"
-        Effect = "Deny"
-        Action = [
-          "s3:PutBucketPublicAccessBlock",
-          "s3:PutAccountPublicAccessBlock"
-        ]
-        Resource = "*"
-        Condition = {
-          "Bool" = {
+            "s3:PublicAccessBlockConfiguration.BlockPublicPolicy"     = "false"
+            "s3:PublicAccessBlockConfiguration.IgnorePublicAcls"      = "false"
             "s3:PublicAccessBlockConfiguration.RestrictPublicBuckets" = "false"
           }
         }

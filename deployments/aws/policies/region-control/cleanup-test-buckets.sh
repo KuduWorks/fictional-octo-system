@@ -3,7 +3,8 @@
 # Cleanup Script for Non-Compliant S3 Buckets
 # Removes S3 buckets created in non-approved regions (Ohio) and public buckets
 
-set -e
+# Note: We don't use set -e because we need cleanup operations to continue
+# even if individual operations fail
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
@@ -24,33 +25,29 @@ echo ""
 ALL_REGIONS=$(aws ec2 describe-regions --query 'Regions[].RegionName' --output text)
 APPROVED_REGION="eu-north-1"
 
+declare -a buckets_to_delete=()
+
+# List all buckets once (S3 buckets are globally namespaced)
 echo -e "${YELLOW}Scanning all AWS regions for non-compliant buckets...${NC}"
 echo ""
 
-declare -a buckets_to_delete=()
+all_buckets=$(aws s3api list-buckets --query "Buckets[].Name" --output text 2>/dev/null || echo "")
 
-# Check each region
-for region in $ALL_REGIONS; do
-    if [ "$region" != "$APPROVED_REGION" ]; then
-        echo -e "${BLUE}Checking region: $region${NC}"
+# Filter for test buckets and check their regions
+for bucket in $all_buckets; do
+    if [[ "$bucket" == *test* ]]; then
+        # Get bucket location
+        bucket_region=$(aws s3api get-bucket-location --bucket "$bucket" --query 'LocationConstraint' --output text 2>/dev/null || echo "us-east-1")
         
-        # List buckets in this region
-        buckets=$(aws s3api list-buckets --query "Buckets[?contains(Name, 'test')].Name" --output text 2>/dev/null || echo "")
+        # Handle us-east-1 special case (returns "None" for LocationConstraint)
+        if [ "$bucket_region" == "None" ] || [ "$bucket_region" == "" ]; then
+            bucket_region="us-east-1"
+        fi
         
-        for bucket in $buckets; do
-            # Get bucket location
-            bucket_region=$(aws s3api get-bucket-location --bucket "$bucket" --query 'LocationConstraint' --output text 2>/dev/null || echo "us-east-1")
-            
-            # Handle us-east-1 special case (returns "None" for LocationConstraint)
-            if [ "$bucket_region" == "None" ] || [ "$bucket_region" == "" ]; then
-                bucket_region="us-east-1"
-            fi
-            
-            if [ "$bucket_region" == "$region" ] && [ "$bucket_region" != "$APPROVED_REGION" ]; then
-                echo -e "${RED}  ❌ Found non-compliant bucket: $bucket in $bucket_region${NC}"
-                buckets_to_delete+=("$bucket:$bucket_region")
-            fi
-        done
+        if [ "$bucket_region" != "$APPROVED_REGION" ]; then
+            echo -e "${RED}  ❌ Found non-compliant bucket: $bucket in $bucket_region${NC}"
+            buckets_to_delete+=("$bucket:$bucket_region")
+        fi
     fi
 done
 
@@ -112,20 +109,30 @@ for bucket_info in "${buckets_to_delete[@]}"; do
     bucket=$(echo "$bucket_info" | cut -d':' -f1)
     region=$(echo "$bucket_info" | cut -d':' -f2)
     
+    # Validate bucket name before deletion - only delete test-related buckets
+    if [[ ! "$bucket" =~ ^scp-test- ]] && [[ ! "$bucket" == *test* ]]; then
+        echo -e "${RED}  ⚠️  Skipping $bucket - doesn't match test pattern${NC}"
+        continue
+    fi
+    
     echo -e "${YELLOW}Deleting bucket: $bucket${NC}"
     
     # Delete all objects first
     aws s3 rm "s3://$bucket" --recursive --region "$region" 2>/dev/null || true
     
     # Delete all versions if versioning is enabled
-    aws s3api delete-objects \
+    versions=$(aws s3api list-object-versions \
         --bucket "$bucket" \
-        --delete "$(aws s3api list-object-versions \
+        --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
+        --max-items 1000 \
+        --region "$region" 2>/dev/null || echo "")
+
+    if [ ! -z "$versions" ] && [ "$versions" != '{"Objects":null}' ]; then
+        aws s3api delete-objects \
             --bucket "$bucket" \
-            --query='{Objects: Versions[].{Key:Key,VersionId:VersionId}}' \
-            --max-items 1000 \
-            --region "$region" 2>/dev/null)" \
-        --region "$region" 2>/dev/null || true
+            --delete "$versions" \
+            --region "$region" 2>/dev/null || true
+    fi
     
     # Delete the bucket
     aws s3api delete-bucket --bucket "$bucket" --region "$region" 2>/dev/null || {
