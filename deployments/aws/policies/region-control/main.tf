@@ -104,7 +104,7 @@ resource "aws_organizations_policy" "region_restriction" {
         ]
         Resource = "*"
         Condition = {
-          StringEquals = {
+          StringEqualsIfExists = {
             "s3:LocationConstraint" = ""
           }
         }
