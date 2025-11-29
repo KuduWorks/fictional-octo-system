@@ -42,7 +42,7 @@ After deployment, use the outputted commands to assume the role and test:
 aws sts assume-role \
   --role-arn arn:aws:iam::758027491266:role/CrossAccountTestRole \
   --role-session-name test-session \
-  --external-id scp-test-2025 \
+  --external-id <YOUR-SECURE-EXTERNAL-ID> \
   > /tmp/assume-role-output.json
 
 # 2. Extract and export credentials
@@ -110,7 +110,14 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 
 ## Security Notes
 
-- **ExternalId**: Adds protection against confused deputy problem
+- **ExternalId**: Adds protection against confused deputy problem. **You must generate your own unique, secret external ID value.** Never use publicly documented examples or shared values. Generate one using:
+  ```bash
+  # Using uuidgen
+  uuidgen
+  
+  # Or using OpenSSL
+  openssl rand -hex 16
+  ```
 - **Management Account Bypass**: Remember management account (494367313227) bypasses SCPs
 - **Member Account Enforcement**: SCPs only apply to member accounts
 - **Session Duration**: Assumed role credentials expire after 1 hour by default
@@ -123,7 +130,7 @@ unset AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_SESSION_TOKEN
 - Check your IAM permissions in management account
 
 ### "AccessDenied" when assuming CrossAccountTestRole
-- Verify ExternalId matches (default: scp-test-2025)
+- Verify ExternalId matches your configured value
 - Check trust policy allows management account
 - Ensure role exists in member account
 
