@@ -97,24 +97,46 @@ resource "aws_iam_role_policy_attachment" "cross_account_admin" {
 # OUTPUTS
 # ============================================================================
 
-output "role_arn" {
-  description = "ARN of the cross-account role to assume"
+output "test_role_arn" {
+  description = "ARN of the cross-account test role to assume (for SCP testing)"
   value       = aws_iam_role.cross_account_test.arn
 }
 
-output "assume_role_command" {
-  description = "Command to assume the cross-account role"
-  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name CrossAccountSession"
+output "admin_role_arn" {
+  description = "ARN of the cross-account admin role to assume (for full admin capabilities)"
+  value       = aws_iam_role.cross_account_admin.arn
+}
+
+output "test_assume_role_command" {
+  description = "Command to assume the cross-account test role (for SCP testing)"
+  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_test.arn} --role-session-name CrossAccountTestSession"
+  sensitive   = true
+}
+
+output "admin_assume_role_command" {
+  description = "Command to assume the cross-account admin role (for full admin capabilities)"
+  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name CrossAccountAdminSession"
   sensitive   = true
 }
 
 output "test_instructions" {
-  description = "Instructions for testing the cross-account role"
+  description = "Instructions for testing the cross-account test role (for SCP testing)"
   value       = <<-EOT
-    To test the cross-account role:
-    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name TestSession
+    To test the cross-account test role:
+    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_test.arn} --role-session-name TestSession
     2. Export the credentials from the response
     3. Test access to the target account
+  EOT
+  sensitive   = true
+}
+
+output "admin_instructions" {
+  description = "Instructions for assuming the cross-account admin role (for full admin capabilities)"
+  value       = <<-EOT
+    To assume the cross-account admin role:
+    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name AdminSession
+    2. Export the credentials from the response
+    3. Test admin access to the target account
   EOT
   sensitive   = true
 }

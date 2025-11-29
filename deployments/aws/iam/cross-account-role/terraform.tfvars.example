@@ -4,6 +4,7 @@
 
 management_account_id = "YOUR-MANAGEMENT-ACCOUNT-ID"
 member_account_id     = "YOUR-MEMBER-ACCOUNT-ID"
+trusted_account_id    = "YOUR-TRUSTED-ACCOUNT-ID"   # The AWS account ID that will be trusted by this role
 aws_region            = "eu-north-1"
 external_id           = "YOUR-SECURE-EXTERNAL-ID"  # Use a strong, unique value
 environment           = "test"
