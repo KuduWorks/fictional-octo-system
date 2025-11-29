@@ -86,12 +86,45 @@ effect = "Deny"                       # Hard enforcement
 **Azure**: Built-in remediation effects
 **AWS**: Requires Lambda functions for remediation
 
+## ⚠️ Critical: Management Account Does NOT Enforce SCPs
+
+**AWS Design Limitation**: SCPs never apply to the management account (master account). This is by design to prevent accidental lockout.
+
+### Impact
+- Management account (494367313227): **Bypasses all SCPs** ❌
+- Member accounts (e.g., 758027491266): **SCPs enforced** ✅
+
+### Testing Strategy
+
+**Wrong Way** ❌:
+```bash
+# Testing from management account - SCPs won't work!
+aws s3api create-bucket --bucket test --region us-east-2
+# SUCCESS (false negative - policy not enforced)
+```
+
+**Right Way** ✅:
+```bash
+# 1. Assume role in member account
+aws sts assume-role --role-arn arn:aws:iam::758027491266:role/CrossAccountTestRole \
+  --role-session-name test --external-id scp-test-2025
+
+# 2. Export credentials (see cross-account-role README)
+
+# 3. Test - SCPs now enforced!
+aws s3api create-bucket --bucket test --region us-east-2
+# AccessDenied (correct - policy working!)
+```
+
+See: [cross-account-role setup](../iam/cross-account-role/README.md)
+
 ## Deployment Order
 
 1. **First**: Deploy `region-control/` to establish geographic boundaries
 2. **Second**: Deploy `encryption-baseline/` to enforce security controls
-3. **Verify**: Wait 5-15 minutes for SCP propagation
-4. **Test**: Run included test scripts to verify enforcement
+3. **Third**: Set up [cross-account-role](../iam/cross-account-role/) for proper testing
+4. **Verify**: Wait 5-15 minutes for SCP propagation
+5. **Test**: Assume role in member account and run test scripts
 
 ## Getting Started
 

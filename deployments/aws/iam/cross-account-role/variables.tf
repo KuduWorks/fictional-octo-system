@@ -1,0 +1,42 @@
+variable "aws_region" {
+  description = "AWS region for the member account"
+  type        = string
+  default     = "eu-north-1"
+}
+
+variable "management_account_id" {
+  description = "AWS Account ID of the management account"
+  type        = string
+  # Set in terraform.tfvars (not committed to git)
+}
+
+variable "member_account_id" {
+  description = "AWS Account ID of the member account"
+  type        = string
+  # Set in terraform.tfvars (not committed to git)
+}
+
+variable "trusted_account_id" {
+  description = "AWS Account ID that is allowed to assume this role"
+  type        = string
+}
+
+variable "external_id" {
+  description = "External ID for additional security when assuming the role"
+  type        = string
+  default     = ""
+  sensitive   = true
+  # Set in terraform.tfvars (not committed to git)
+}
+
+variable "environment" {
+  description = "Environment name"
+  type        = string
+  default     = "test"
+}
+
+variable "tags" {
+  description = "Tags to apply to resources"
+  type        = map(string)
+  default     = {}
+}

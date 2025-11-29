@@ -1,0 +1,9 @@
+# Cross-Account Role Configuration Example
+# Copy this file to terraform.tfvars and fill in your actual values
+# terraform.tfvars is ignored by git for security
+
+management_account_id = "YOUR-MANAGEMENT-ACCOUNT-ID"
+member_account_id     = "YOUR-MEMBER-ACCOUNT-ID"
+aws_region            = "eu-north-1"
+external_id           = "YOUR-SECURE-EXTERNAL-ID"  # Use a strong, unique value
+environment           = "test"

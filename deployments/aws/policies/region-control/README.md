@@ -2,6 +2,30 @@
 
 This module restricts AWS resource creation to approved regions using Service Control Policies (SCPs). It mirrors the Azure region control policy functionality.
 
+## ⚠️ Critical: Management Account Limitation
+
+**SCPs do NOT apply to the management account (master account).** This is an AWS limitation by design.
+
+### The Problem
+```bash
+# From management account (494367313227) - SCPs are BYPASSED ❌
+aws s3api create-bucket --bucket test --region us-east-2
+# ✅ SUCCESS (even though policy should block it)
+
+# From member account (758027491266) - SCPs are ENFORCED ✅
+aws s3api create-bucket --bucket test --region us-east-2
+# ❌ AccessDenied: Service control policy restricts this action
+```
+
+### Solution: Test from Member Account
+
+1. **Create member account** (example: 758027491266)
+2. **Attach SCPs** to member account
+3. **Assume cross-account role** to test in member account context
+4. **Validate enforcement** - SCPs now work correctly
+
+Detailed setup: [deployments/aws/iam/cross-account-role/](../../iam/cross-account-role/README.md)
+
 ## What This Creates
 
 ### Service Control Policy (SCP)
