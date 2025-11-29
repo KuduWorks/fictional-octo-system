@@ -79,6 +79,15 @@ terraform apply   # "YOLO! Creating resources..." 🎲
 
 **⏳ Deployment Note**: SCPs take 5-15 minutes to propagate globally after initial deployment.
 
+### ⚠️ Important: Management Account Limitation
+
+**SCPs do NOT apply to the management account.** This is an AWS design limitation to prevent accidental lockout.
+
+- **Management Account** (494367313227): Bypasses all SCPs
+- **Member Accounts** (e.g., 758027491266): SCPs fully enforced
+
+**For Testing**: Use [cross-account-role](iam/cross-account-role/) to properly test SCPs from a member account.
+
 ## Multi-Cloud Strategy
 
 *"Why put all your eggs in one basket when you can distribute them across multiple baskets in different regions with redundant storage and automatic failover?"*
