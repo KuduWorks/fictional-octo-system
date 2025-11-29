@@ -4,18 +4,49 @@ This module mirrors the Azure ISO 27001 cryptography policies using AWS Config r
 
 ## What This Creates
 
-### AWS Config Rules
+### AWS Config Rules (Detection Layer)
 - **s3-bucket-server-side-encryption-enabled** - Ensures S3 buckets have encryption enabled
+- **s3-bucket-ssl-requests-only** - Ensures S3 requires HTTPS
+- **s3-bucket-public-read-prohibited** - Detects S3 buckets allowing public read access
+- **s3-bucket-public-write-prohibited** - Detects S3 buckets allowing public write access
+- **s3-account-level-public-access-blocks-periodic** - Verifies account-level public access blocks
 - **encrypted-volumes** - Ensures EBS volumes are encrypted
 - **rds-storage-encrypted** - Ensures RDS instances use encryption
-- **s3-bucket-ssl-requests-only** - Ensures S3 requires HTTPS
 - **dynamodb-table-encrypted-kms** - Ensures DynamoDB uses KMS encryption
 - **cloudtrail-encryption-enabled** - Ensures CloudTrail logs are encrypted
 
-### Optional SCPs (if using AWS Organizations)
-- Deny creation of unencrypted S3 buckets
-- Deny creation of unencrypted EBS volumes
-- Require KMS CMK (not AWS-managed keys)
+### Service Control Policies (Prevention Layer)
+When `enable_scps = true`, creates preventive controls:
+
+**DenyS3PublicAccess SCP** - Prevents S3 buckets from being made public:
+- ❌ Blocks deletion of public access blocks
+- ❌ Blocks weakening public access block settings
+- ❌ Denies public ACLs (public-read, public-read-write, authenticated-read)
+- ❌ Denies public bucket policies
+- ✅ Allows private buckets with proper access controls
+
+### Account-Level Protection
+- **S3 Account Public Access Block** - Enforces public access blocking at account level
+  - `BlockPublicAcls = true`
+  - `BlockPublicPolicy = true`
+  - `IgnorePublicAcls = true`
+  - `RestrictPublicBuckets = true`
+
+## How It Works
+
+This module implements **defense in depth** with multiple layers:
+
+1. **Account-Level Block** (Layer 1) - Prevents public access by default
+2. **Service Control Policies** (Layer 2) - Organization-level enforcement (when enabled)
+3. **AWS Config Rules** (Layer 3) - Continuous compliance monitoring
+
+### Detection vs Prevention
+
+| Control Type | When It Acts | Can Be Bypassed? |
+|-------------|-------------|------------------|
+| **SCP** (Prevention) | Before resource creation | No - Hard block |
+| **Account Block** | Before resource creation | No - Hard block |
+| **Config Rules** (Detection) | After resource creation | Yes - Detects violations |
 
 ## Azure Equivalents
 
@@ -37,15 +68,34 @@ terraform apply
 ## Prerequisites
 
 - AWS Config must be enabled in your account/region
-- For SCPs: AWS Organizations with appropriate permissions
+- For SCPs: AWS Organizations with Service Control Policies enabled
 - IAM permissions to create Config rules and roles
+- Management account access (for creating/attaching SCPs)
+
+### Enabling Service Control Policies
+
+If SCPs are not enabled in your organization:
+
+```bash
+# Get your organization root ID
+ROOT_ID=$(aws organizations list-roots --query 'Roots[0].Id' --output text)
+
+# Enable SCPs
+aws organizations enable-policy-type --root-id $ROOT_ID --policy-type SERVICE_CONTROL_POLICY
+```
 
 ## Variables
 
 See `variables.tf` for configuration options:
-- `enable_scps` - Whether to create Service Control Policies (requires Organizations)
+- `enable_scps` - Whether to create Service Control Policies (requires Organizations) - **Set to `true` for enforcement**
 - `config_recorder_name` - Name of the AWS Config recorder
 - `remediation_enabled` - Enable automatic remediation for non-compliant resources
+- `aws_region` - AWS region (default: `eu-north-1` Stockholm)
+- `environment` - Environment name (default: `prod`)
+
+## SCP Propagation
+
+⏳ **Important**: After deploying SCPs, allow **5-15 minutes** for policies to propagate to all AWS regions and endpoints. During this time, some operations may not be immediately blocked.
 
 ## Testing Your Config Rules
 
