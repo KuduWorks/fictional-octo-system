@@ -110,13 +110,13 @@ output "admin_role_arn" {
 
 output "test_assume_role_command" {
   description = "Command to assume the cross-account test role (for SCP testing)"
-  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_test.arn} --role-session-name CrossAccountTestSession"
+  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_test.arn} --role-session-name CrossAccountTestSession --external-id ${var.external_id}"
   sensitive   = true
 }
 
 output "admin_assume_role_command" {
   description = "Command to assume the cross-account admin role (for full admin capabilities)"
-  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name CrossAccountAdminSession"
+  value       = "aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name CrossAccountAdminSession --external-id ${var.external_id}"
   sensitive   = true
 }
 
@@ -124,7 +124,7 @@ output "test_instructions" {
   description = "Instructions for testing the cross-account test role (for SCP testing)"
   value       = <<-EOT
     To test the cross-account test role:
-    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_test.arn} --role-session-name TestSession
+    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_test.arn} --role-session-name TestSession --external-id ${var.external_id}
     2. Export the credentials from the response
     3. Test access to the target account
   EOT
@@ -135,7 +135,7 @@ output "admin_instructions" {
   description = "Instructions for assuming the cross-account admin role (for full admin capabilities)"
   value       = <<-EOT
     To assume the cross-account admin role:
-    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name AdminSession
+    1. Run: aws sts assume-role --role-arn ${aws_iam_role.cross_account_admin.arn} --role-session-name AdminSession --external-id ${var.external_id}
     2. Export the credentials from the response
     3. Test admin access to the target account
   EOT
