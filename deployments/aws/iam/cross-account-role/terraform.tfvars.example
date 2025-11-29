@@ -8,3 +8,4 @@ trusted_account_id    = "YOUR-TRUSTED-ACCOUNT-ID"   # The AWS account ID that wi
 aws_region            = "eu-north-1"
 external_id           = "YOUR-SECURE-EXTERNAL-ID"  # Use a strong, unique value
 environment           = "test"
+trusted_account_id    = "YOUR-TRUSTED-ACCOUNT-ID"  # The AWS Account ID to trust for cross-account access

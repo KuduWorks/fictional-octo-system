@@ -107,7 +107,7 @@ aws s3api create-bucket --bucket test --region us-east-2
 ```bash
 # 1. Assume role in member account
 aws sts assume-role --role-arn arn:aws:iam::758027491266:role/CrossAccountTestRole \
-  --role-session-name test --external-id scp-test-2025
+  --role-session-name test --external-id <YOUR-SECURE-EXTERNAL-ID>
 
 # 2. Export credentials (see cross-account-role README)
 
