@@ -1,0 +1,7 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update with your values
+
+member_account_id   = "<YOUR-MEMBER-ACCOUNT-ID>"  # 12-digit AWS member account ID
+aws_region          = "eu-north-1"
+environment         = "prod"
+log_retention_days  = 30
