@@ -110,15 +110,15 @@ terraform version  # Should show 1.0 or higher
 ### Account Structure
 
 ```
-AWS Organization (o-1q2jgi9k7c)
-├── Management Account (494367313227)
+AWS Organization (<YOUR-ORG-ID>)
+├── Management Account (<YOUR-MANAGEMENT-ACCOUNT-ID>)
 │   ├── IAM Identity Center (SSO)
 │   ├── Service Control Policies
 │   ├── CloudTrail S3 Bucket
 │   ├── Terraform State (S3 + DynamoDB)
 │   ├── Budget Monitoring
 │   └── SNS Topics (us-east-1)
-└── Member Account (758027491266)
+└── Member Account (<YOUR-MEMBER-ACCOUNT-ID>)
     ├── VPC (10.0.0.0/23)
     ├── Lambda Functions
     └── Application Workloads
@@ -158,8 +158,8 @@ AWS Organization (o-1q2jgi9k7c)
 | **Workload Budget** | $98.90 | Remaining for applications |
 
 **Budget Alerts:**
-- Organization: $100/month → postforyves@gmail.com (80%, 100% thresholds)
-- Member Account: $90/month → monitoring@kuduworks.net (50%, 80%, 100% thresholds)
+- Organization: $100/month → `<YOUR-ORG-ALERT-EMAIL>` (80%, 100% thresholds)
+- Member Account: $90/month → `<YOUR-MEMBER-ALERT-EMAIL>` (50%, 80%, 100% thresholds)
 
 ---
 
@@ -230,7 +230,7 @@ cat ../outputs/state-bootstrap.json
 **Verification:**
 ```bash
 # Verify S3 bucket exists
-aws s3 ls s3://fictional-octo-system-tfstate-<ACCOUNT-ID> --profile mgmt
+aws s3 ls s3://fictional-octo-system-tfstate-<YOUR-MANAGEMENT-ACCOUNT-ID> --profile mgmt
 
 # Verify DynamoDB table
 aws dynamodb describe-table --table-name terraform-state-locks --region eu-north-1 --profile mgmt
@@ -276,7 +276,7 @@ terraform output -json > ../outputs/org-protection.json
 
 **Expected Outputs:**
 - `policy_id`: p-xxxxxxxx
-- `policy_arn`: arn:aws:organizations::<ACCOUNT-ID>:policy/o-<ORG-ID>/service_control_policy/p-xxxxxxxx
+- `policy_arn`: arn:aws:organizations::<ACCOUNT-ID>:policy/<ORG-ID>/service_control_policy/p-xxxxxxxx
 - `organization_root_id`: r-xxxx
 
 **Verification:**
@@ -311,8 +311,8 @@ cp backend.tf.example backend.tf
 # Edit terraform.tfvars
 nano terraform.tfvars
 # Update:
-#   org_alert_email = "postforyves@gmail.com"
-#   member_alert_email = "monitoring@kuduworks.net"
+#   org_alert_email = "<YOUR-ORG-ALERT-EMAIL>"
+#   member_alert_email = "<YOUR-MEMBER-ALERT-EMAIL>"
 #   aws_region = "us-east-1"  # Required for AWS Budgets
 #   environment = "prod"
 
@@ -334,8 +334,8 @@ terraform output -json > ../outputs/sns-notifications.json
 **CRITICAL - Email Confirmation:**
 ```bash
 # Two emails will be sent for confirmation:
-# 1. postforyves@gmail.com (org budget alerts)
-# 2. monitoring@kuduworks.net (member budget alerts)
+# 1. <YOUR-ORG-ALERT-EMAIL> (org budget alerts)
+# 2. <YOUR-MEMBER-ALERT-EMAIL> (member budget alerts)
 
 # Click "Confirm subscription" links in both emails
 # Verify subscriptions confirmed:
@@ -394,11 +394,11 @@ terraform output -json > ../outputs/cloudtrail.json
 aws cloudtrail get-trail-status --name fictional-octo-system-org-trail-prod --region eu-north-1 --profile mgmt
 
 # Check S3 bucket for logs (may take 15 minutes)
-aws s3 ls s3://fictional-octo-system-cloudtrail-<ACCOUNT-ID>/AWSLogs/ --profile mgmt
+aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-MANAGEMENT-ACCOUNT-ID>/AWSLogs/ --profile mgmt
 
 # Test member account read access
 export AWS_PROFILE=member
-aws sts assume-role --role-arn arn:aws:iam::<MEMBER-ACCOUNT-ID>:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_*
+aws sts assume-role --role-arn arn:aws:iam::<YOUR-MEMBER-ACCOUNT-ID>:role/aws-reserved/sso.amazonaws.com/eu-north-1/AWSReservedSSO_AdministratorAccess_*
 # (Use temporary credentials to list logs)
 ```
 
@@ -545,8 +545,8 @@ aws sso-admin list-instances --region eu-north-1 --profile mgmt
 **User Details:**
 | Username | Email | Groups | Purpose |
 |----------|-------|--------|---------|
-| admin1 | postforyves@gmail.com | Admins | Emergency admin |
-| admin2 | laingui@protonmail.com | Admins | Emergency admin |
+| admin1 | <ADMIN1-EMAIL> | Admins | Emergency admin |
+| admin2 | <ADMIN2-EMAIL> | Admins | Emergency admin |
 | dev1 | <DEV1-EMAIL> | Developers | Standard developer |
 | dev2 | <DEV2-EMAIL> | Developers | Standard developer |
 
@@ -556,9 +556,9 @@ aws sso-admin list-instances --region eu-north-1 --profile mgmt
 IDENTITY_STORE_ID=$(aws sso-admin list-instances --region eu-north-1 --profile mgmt --query 'Instances[0].IdentityStoreId' --output text)
 
 # Create users
-aws identitystore create-user --identity-store-id $IDENTITY_STORE_ID --user-name admin1 --display-name "Admin User 1" --emails Value=postforyves@gmail.com,Primary=true --region eu-north-1 --profile mgmt
+aws identitystore create-user --identity-store-id $IDENTITY_STORE_ID --user-name admin1 --display-name "Admin User 1" --emails Value=<ADMIN1-EMAIL>,Primary=true --region eu-north-1 --profile mgmt
 
-aws identitystore create-user --identity-store-id $IDENTITY_STORE_ID --user-name admin2 --display-name "Admin User 2" --emails Value=laingui@protonmail.com,Primary=true --region eu-north-1 --profile mgmt
+aws identitystore create-user --identity-store-id $IDENTITY_STORE_ID --user-name admin2 --display-name "Admin User 2" --emails Value=<ADMIN2-EMAIL>,Primary=true --region eu-north-1 --profile mgmt
 
 # Repeat for dev1, dev2
 ```
@@ -694,10 +694,10 @@ aws cloudtrail get-trail-status --name fictional-octo-system-org-trail-prod --re
 **Verify logs:**
 ```bash
 # List recent logs
-aws s3 ls s3://fictional-octo-system-cloudtrail-<ACCOUNT-ID>/AWSLogs/<ACCOUNT-ID>/CloudTrail/eu-north-1/$(date +%Y/%m/%d)/ --profile mgmt
+aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-MANAGEMENT-ACCOUNT-ID>/AWSLogs/<YOUR-MANAGEMENT-ACCOUNT-ID>/CloudTrail/eu-north-1/$(date +%Y/%m/%d)/ --profile mgmt
 
 # Download sample log
-aws s3 cp s3://fictional-octo-system-cloudtrail-<ACCOUNT-ID>/AWSLogs/<ACCOUNT-ID>/CloudTrail/eu-north-1/$(date +%Y/%m/%d)/<LOG-FILE>.json.gz . --profile mgmt
+aws s3 cp s3://fictional-octo-system-cloudtrail-<YOUR-MANAGEMENT-ACCOUNT-ID>/AWSLogs/<YOUR-MANAGEMENT-ACCOUNT-ID>/CloudTrail/eu-north-1/$(date +%Y/%m/%d)/<LOG-FILE>.json.gz . --profile mgmt
 
 # Extract and view
 gunzip <LOG-FILE>.json.gz
@@ -725,7 +725,7 @@ aws sns get-subscription-attributes --subscription-arn <SUBSCRIPTION-ARN> --regi
 **Test S3 endpoint:**
 ```bash
 # From Lambda or EC2 in private subnet
-aws s3 ls s3://fictional-octo-system-tfstate-<ACCOUNT-ID> --region eu-north-1
+aws s3 ls s3://fictional-octo-system-tfstate-<YOUR-MANAGEMENT-ACCOUNT-ID> --region eu-north-1
 # Should route through VPC endpoint (no NAT gateway needed)
 ```
 
@@ -784,7 +784,7 @@ terraform plan
 # Should show: "No changes. Your infrastructure matches the configuration."
 
 # 4. Confirm state in S3
-aws s3 ls s3://fictional-octo-system-tfstate-<ACCOUNT-ID>/aws/policies/organization-protection/ --profile mgmt
+aws s3 ls s3://fictional-octo-system-tfstate-<YOUR-MANAGEMENT-ACCOUNT-ID>/aws/policies/organization-protection/ --profile mgmt
 
 # 5. Delete local state files
 rm terraform.tfstate terraform.tfstate.backup
@@ -823,7 +823,7 @@ terraform init -migrate-state
 
 # Verify
 terraform plan
-aws s3 ls s3://fictional-octo-system-tfstate-<ACCOUNT-ID>/aws/terraform-state-bootstrap/ --profile mgmt
+aws s3 ls s3://fictional-octo-system-tfstate-<YOUR-MANAGEMENT-ACCOUNT-ID>/aws/terraform-state-bootstrap/ --profile mgmt
 ```
 
 ### Troubleshooting Migration
@@ -831,7 +831,7 @@ aws s3 ls s3://fictional-octo-system-tfstate-<ACCOUNT-ID>/aws/terraform-state-bo
 **Error: Backend initialization failed**
 ```bash
 # Check bucket exists
-aws s3 ls s3://fictional-octo-system-tfstate-<ACCOUNT-ID> --profile mgmt
+aws s3 ls s3://fictional-octo-system-tfstate-<YOUR-MANAGEMENT-ACCOUNT-ID> --profile mgmt
 
 # Check DynamoDB table
 aws dynamodb describe-table --table-name terraform-state-locks --region eu-north-1 --profile mgmt
@@ -843,7 +843,7 @@ aws dynamodb describe-table --table-name terraform-state-locks --region eu-north
 aws dynamodb scan --table-name terraform-state-locks --region eu-north-1 --profile mgmt
 
 # Force release (use with caution)
-aws dynamodb delete-item --table-name terraform-state-locks --key '{"LockID":{"S":"fictional-octo-system-tfstate-<ACCOUNT-ID>/aws/module/terraform.tfstate-md5"}}' --region eu-north-1 --profile mgmt
+aws dynamodb delete-item --table-name terraform-state-locks --key '{"LockID":{"S":"fictional-octo-system-tfstate-<YOUR-MANAGEMENT-ACCOUNT-ID>/aws/module/terraform.tfstate-md5"}}' --region eu-north-1 --profile mgmt
 ```
 
 ---
@@ -895,7 +895,7 @@ https://policysim.aws.amazon.com/
 aws cloudtrail get-trail-status --name fictional-octo-system-org-trail-prod --region eu-north-1 --profile mgmt
 
 # Verify S3 bucket policy
-aws s3api get-bucket-policy --bucket fictional-octo-system-cloudtrail-<ACCOUNT-ID> --profile mgmt
+aws s3api get-bucket-policy --bucket fictional-octo-system-cloudtrail-<YOUR-MANAGEMENT-ACCOUNT-ID> --profile mgmt
 
 # Test CloudTrail write permissions
 aws cloudtrail put-event-selectors --trail-name fictional-octo-system-org-trail-prod --event-selectors '[{"ReadWriteType":"All","IncludeManagementEvents":true}]' --region eu-north-1 --profile mgmt
@@ -918,7 +918,7 @@ aws sns subscribe --topic-arn <TOPIC-ARN> --protocol email --notification-endpoi
 **Error: Budget not tracking spend**
 ```bash
 # Verify budget configuration
-aws budgets describe-budget --account-id <ACCOUNT-ID> --budget-name fictional-octo-system-org-budget-prod --region us-east-1 --profile mgmt
+aws budgets describe-budget --account-id <YOUR-MANAGEMENT-ACCOUNT-ID> --budget-name fictional-octo-system-org-budget-prod --region us-east-1 --profile mgmt
 
 # Check Cost Explorer data availability (24-hour delay)
 aws ce get-cost-and-usage --time-period Start=$(date -d '7 days ago' +%Y-%m-%d),End=$(date +%Y-%m-%d) --granularity DAILY --metrics BlendedCost --profile mgmt
@@ -979,7 +979,7 @@ cd deployments/aws/cloudtrail-organization/
 terraform destroy
 
 # Manually delete S3 bucket if needed
-aws s3 rb s3://fictional-octo-system-cloudtrail-<ACCOUNT-ID> --force
+aws s3 rb s3://fictional-octo-system-cloudtrail-<YOUR-MANAGEMENT-ACCOUNT-ID> --force
 ```
 
 #### 3. Budget Alert Spam
@@ -991,7 +991,7 @@ aws s3 rb s3://fictional-octo-system-cloudtrail-<ACCOUNT-ID> --force
 export AWS_PROFILE=mgmt
 
 # Delete budgets
-aws budgets delete-budget --account-id <ACCOUNT-ID> --budget-name fictional-octo-system-org-budget-prod --region us-east-1
+aws budgets delete-budget --account-id <YOUR-MANAGEMENT-ACCOUNT-ID> --budget-name fictional-octo-system-org-budget-prod --region us-east-1
 
 cd deployments/aws/budget-monitoring/
 terraform destroy
@@ -1160,6 +1160,6 @@ For issues or questions:
 
 **Emergency Contacts:**
 - AWS Support: https://console.aws.amazon.com/support/
-- Organization Admin: postforyves@gmail.com
-- Member Account Admin: laingui@protonmail.com
-- Monitoring Alerts: monitoring@kuduworks.net
+- Organization Admin: `<YOUR-ORG-ADMIN-EMAIL>`
+- Member Account Admin: `<YOUR-MEMBER-ADMIN-EMAIL>`
+- Monitoring Alerts: `<YOUR-MONITORING-EMAIL>`
