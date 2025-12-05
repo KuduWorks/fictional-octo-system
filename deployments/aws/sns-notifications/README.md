@@ -262,7 +262,7 @@ Please review spending in AWS Cost Explorer.
 Subject: AWS Budget Alert - 50% of budget used
 To: devops@example.com
 
-Member account 758027491266 has used 50% of monthly budget.
+Member account <YOUR-MEMBER-ACCOUNT-ID> has used 50% of monthly budget.
 
 Budget Name: Member Account Workload Budget
 Limit: $90.00

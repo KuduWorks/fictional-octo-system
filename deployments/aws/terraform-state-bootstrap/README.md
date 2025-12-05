@@ -94,7 +94,7 @@ terraform apply
 
 ## Example: Completed Setup
 
-Below is an example of what a completed setup looks like. **Note**: The account ID shown (`494367313227`) is an example - replace with your own AWS account ID.
+Below is an example of what a completed setup looks like. **Note**: The account ID shown (`123456789012`) is an example - replace with your own AWS account ID.
 
 ### Step 1: Create the State Storage ✅
 
@@ -122,7 +122,7 @@ After creating the bucket, the bootstrap module's state was migrated to S3:
 terraform init -migrate-state
 ```
 
-**Example Status**: Bootstrap state stored in `s3://fictional-octo-system-tfstate-494367313227/bootstrap/terraform.tfstate` (replace `494367313227` with your account ID)
+**Example Status**: Bootstrap state stored in `s3://fictional-octo-system-tfstate-123456789012/bootstrap/terraform.tfstate` (replace `123456789012` with your account ID)
 
 ### Step 3: Use in Other Modules
 
