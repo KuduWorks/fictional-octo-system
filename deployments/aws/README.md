@@ -83,8 +83,8 @@ terraform apply   # "YOLO! Creating resources..." 🎲
 
 **SCPs do NOT apply to the management account.** This is an AWS design limitation to prevent accidental lockout.
 
-- **Management Account** (494367313227): Bypasses all SCPs
-- **Member Accounts** (e.g., 758027491266): SCPs fully enforced
+- **Management Account** (<YOUR-MGMT-ACCOUNT-ID>): Bypasses all SCPs
+- **Member Accounts** (e.g., <YOUR-MEMBER-ACCOUNT-ID>): SCPs fully enforced
 
 **For Testing**: Use [cross-account-role](iam/cross-account-role/) to properly test SCPs from a member account.
 

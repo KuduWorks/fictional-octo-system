@@ -1,0 +1,20 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update with your values
+
+# Get these ARNs from sns-notifications module outputs
+org_sns_topic_arn    = "arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:org-budget-alerts"
+member_sns_topic_arn = "arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:member-budget-alerts"
+
+# Budget limits
+org_budget_limit    = "100"  # $100/month for entire organization
+member_budget_limit = "90"   # $90/month for member account workloads
+
+# Member account to track
+member_account_id = "<YOUR-MEMBER-ACCOUNT-ID>"  # 12-digit account ID
+
+# Region and environment
+aws_region = "us-east-1"  # Must be us-east-1 for AWS Budgets
+environment = "prod"
+
+# Optional: Set specific start date (defaults to current month)
+# budget_start_date = "2025-12-01"

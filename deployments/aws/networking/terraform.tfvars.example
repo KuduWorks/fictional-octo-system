@@ -1,0 +1,11 @@
+# Copy this file to terraform.tfvars and update with your values
+
+aws_region = "eu-north-1"
+environment = "prod"
+
+# VPC Configuration (10.0.0.0/23 = 512 IPs)
+vpc_cidr              = "10.0.0.0/23"
+public_subnet_a_cidr  = "10.0.0.0/25"    # 128 IPs in AZ-a
+public_subnet_b_cidr  = "10.0.0.128/25"  # 128 IPs in AZ-b
+private_subnet_a_cidr = "10.0.1.0/25"    # 128 IPs in AZ-a
+private_subnet_b_cidr = "10.0.1.128/25"  # 128 IPs in AZ-b

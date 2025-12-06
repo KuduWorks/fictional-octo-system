@@ -1,0 +1,6 @@
+# Example terraform.tfvars file
+# Copy this file to terraform.tfvars and update with your values
+
+management_account_id = "<YOUR-MANAGEMENT-ACCOUNT-ID>"  # 12-digit AWS account ID
+aws_region           = "eu-north-1"
+environment          = "prod"

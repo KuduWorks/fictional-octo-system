@@ -79,12 +79,12 @@ terraform apply
 ### Why This Matters
 - If you test from the management account, SCPs will NOT block operations
 - You must test from a **member account** to validate SCP enforcement
-- Management account: 494367313227 (bypasses all SCPs)
+- Management account: <YOUR-MGMT-ACCOUNT-ID> (bypasses all SCPs)
 - Member accounts: Subject to SCP enforcement
 
 ### Testing SCPs Properly
 
-1. **Create a member account** (or use existing: 758027491266)
+1. **Create a member account** (or use existing member account)
 2. **Attach SCPs** to the member account
 3. **Assume a role** in the member account from management account
 4. **Test operations** - SCPs will now be enforced

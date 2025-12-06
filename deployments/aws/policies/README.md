@@ -91,8 +91,8 @@ effect = "Deny"                       # Hard enforcement
 **AWS Design Limitation**: SCPs never apply to the management account (master account). This is by design to prevent accidental lockout.
 
 ### Impact
-- Management account (494367313227): **Bypasses all SCPs** ❌
-- Member accounts (e.g., 758027491266): **SCPs enforced** ✅
+- Management account (<YOUR-MGMT-ACCOUNT-ID>): **Bypasses all SCPs** ❌
+- Member accounts (e.g., <YOUR-MEMBER-ACCOUNT-ID>): **SCPs enforced** ✅
 
 ### Testing Strategy
 
@@ -106,7 +106,7 @@ aws s3api create-bucket --bucket test --region us-east-2
 **Right Way** ✅:
 ```bash
 # 1. Assume role in member account
-aws sts assume-role --role-arn arn:aws:iam::758027491266:role/CrossAccountTestRole \
+aws sts assume-role --role-arn arn:aws:iam::<YOUR-MEMBER-ACCOUNT-ID>:role/CrossAccountTestRole \
   --role-session-name test --external-id <YOUR-SECURE-EXTERNAL-ID>
 
 # 2. Export credentials (see cross-account-role README)
