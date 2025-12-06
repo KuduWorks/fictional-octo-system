@@ -186,7 +186,7 @@ resource "aws_cloudtrail" "organization" {
 
     data_resource {
       type = "AWS::Lambda::Function"
-      values = ["arn:aws:lambda"]
+      values = ["arn:aws:lambda:*:*:function/*"]
     }
   }
 

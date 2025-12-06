@@ -39,8 +39,13 @@ resource "aws_budgets_budget" "organization" {
   limit_amount      = var.org_budget_limit
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
-  time_period_start = var.budget_start_date
 
+  dynamic "time_period_start" {
+    for_each = var.budget_start_date != "" ? [var.budget_start_date] : []
+    content {
+      time_period_start = time_period_start.value
+    }
+  }
   # Organization-wide scope (no filters = all accounts)
 
   # 80% actual threshold
