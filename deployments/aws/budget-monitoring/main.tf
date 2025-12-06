@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -39,46 +39,35 @@ resource "aws_budgets_budget" "organization" {
   limit_amount      = var.org_budget_limit
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
+  time_period_start = var.budget_start_date != "" ? var.budget_start_date : null
 
-  dynamic "time_period_start" {
-    for_each = var.budget_start_date != "" ? [var.budget_start_date] : []
-    content {
-      time_period_start = time_period_start.value
-    }
-  }
   # Organization-wide scope (no filters = all accounts)
 
   # 80% actual threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 80
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 80
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "ACTUAL"
     subscriber_sns_topic_arns = [var.org_sns_topic_arn]
   }
 
   # 100% actual threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 100
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 100
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "ACTUAL"
     subscriber_sns_topic_arns = [var.org_sns_topic_arn]
   }
 
   # 100% forecasted threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 100
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "FORECASTED"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 100
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "FORECASTED"
     subscriber_sns_topic_arns = [var.org_sns_topic_arn]
-  }
-
-  lifecycle {
-    ignore_changes = [
-      time_period_start
-    ]
   }
 }
 
@@ -105,37 +94,37 @@ resource "aws_budgets_budget" "member_account" {
 
   # 50% actual threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 50
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 50
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "ACTUAL"
     subscriber_sns_topic_arns = [var.member_sns_topic_arn]
   }
 
   # 80% actual threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 80
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 80
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "ACTUAL"
     subscriber_sns_topic_arns = [var.member_sns_topic_arn]
   }
 
   # 100% actual threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 100
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 100
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "ACTUAL"
     subscriber_sns_topic_arns = [var.member_sns_topic_arn]
   }
 
   # 100% forecasted threshold
   notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 100
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "FORECASTED"
+    comparison_operator       = "GREATER_THAN"
+    threshold                 = 100
+    threshold_type            = "PERCENTAGE"
+    notification_type         = "FORECASTED"
     subscriber_sns_topic_arns = [var.member_sns_topic_arn]
   }
 
