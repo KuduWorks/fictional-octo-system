@@ -368,7 +368,7 @@ cp backend.tf.example backend.tf
 nano terraform.tfvars
 # Update:
 #   member_account_id = "<YOUR-MEMBER-ACCOUNT-ID>"
-#   organization_id = "<YOUR-ORG-ID>"
+
 #   aws_region = "eu-north-1"
 #   environment = "prod"
 #   retention_days = 30
