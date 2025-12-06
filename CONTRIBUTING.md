@@ -76,7 +76,7 @@ Before contributing, ensure you have:
    - Google Cloud CLI (`gcloud`)
 
 2. **Development Tools:**
-   - Terraform >= 1.3. 0
+   - Terraform >= 1.3.0
    - Git
    - Code editor (VS Code recommended)
    - `terraform-docs` (for documentation generation)
@@ -243,7 +243,7 @@ set -euo pipefail  # Exit on error, undefined vars, pipe failures
 
 # Use meaningful variable names
 readonly SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-readonly CONFIG_FILE="${SCRIPT_DIR}/config. conf"
+readonly CONFIG_FILE="${SCRIPT_DIR}/config.conf"
 
 # Add error handling
 error_exit() {
@@ -311,7 +311,7 @@ catch {
 
 ## Commit Message Guidelines
 
-We follow the [Conventional Commits](https://www.conventionalcommits. org/) specification:
+We follow the [Conventional Commits](https://www.conventionalcommits.org/) specification:
 
 ### Format
 

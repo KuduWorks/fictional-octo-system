@@ -86,11 +86,11 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail" {
     status = "Enabled"
 
     expiration {
-      days = 30
+      days = var.log_retention_days
     }
 
     noncurrent_version_expiration {
-      noncurrent_days = 30
+      noncurrent_days = var.log_retention_days
     }
   }
 }
