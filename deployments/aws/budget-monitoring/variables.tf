@@ -75,6 +75,6 @@ variable "budget_start_date" {
 
   validation {
     condition     = var.budget_start_date == "" || can(regex("^[0-9]{4}-(0[1-9]|1[0-2])-01$", var.budget_start_date))
-    error_message = "Budget start date must be in YYYY-MM-01 format (first day of month, with valid month 01-12)"
+    error_message = "Budget start date must be in YYYY-MM-01 format (first day of month)"
   }
 }
