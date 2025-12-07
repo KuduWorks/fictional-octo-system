@@ -85,6 +85,9 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail" {
     id     = "delete-old-logs"
     status = "Enabled"
 
+    # Apply to all objects in the bucket
+    filter {}
+
     expiration {
       days = var.log_retention_days
     }
@@ -176,17 +179,17 @@ resource "aws_cloudtrail" "organization" {
   enable_log_file_validation    = true
 
   event_selector {
-    read_write_type           = "All"
     include_management_events = true
+    read_write_type           = "All"
 
     data_resource {
-      type = "AWS::S3::Object"
-      values = ["arn:aws:s3:::*/"]
+      type   = "AWS::S3::Object"
+      values = []  # Empty array logs all S3 object-level events
     }
 
     data_resource {
-      type = "AWS::Lambda::Function"
-      values = ["arn:aws:lambda:*:*:function/*"]
+      type   = "AWS::Lambda::Function"
+      values = []  # Empty array logs all Lambda invocations
     }
   }
 

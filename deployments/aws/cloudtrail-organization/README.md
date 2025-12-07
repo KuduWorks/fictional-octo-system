@@ -1,62 +1,103 @@
 # AWS CloudTrail Organization Trail
 
-This module creates an AWS CloudTrail organization trail with S3 storage in the management account. The trail captures all API activity across all accounts in your organization, storing logs in an encrypted S3 bucket with 30-day retention to balance security incident investigation capability with cost optimization.
+Centralized audit logging for AWS Organization with 30-day retention, multi-account support, and administrator read access from member accounts.
 
-> **Note:** All AWS account IDs used in this documentation (e.g., `<YOUR-MANAGEMENT-ACCOUNT-ID>`, `<YOUR-MEMBER-ACCOUNT-ID>`) are placeholders. Replace them with your actual AWS account IDs when deploying.
+## Overview
 
-## What This Creates
+This module creates:
+- **S3 Bucket** in management account (eu-north-1) for CloudTrail logs
+- **Organization Trail** capturing API calls from all accounts
+- **30-day retention** lifecycle policy (cost-optimized)
+- **AES-256 encryption** for logs at rest
+- **Versioning enabled** for log recovery
+- **SSO Administrator read access** from member account
 
-### S3 Bucket for Log Storage
-- **Name**: `fictional-octo-system-cloudtrail-<ACCOUNT-ID>`
-- **Region**: eu-north-1 (matches primary region)
-- **Encryption**: AES-256 server-side encryption
-- **Versioning**: Enabled for recovery
-- **Public Access**: Completely blocked
-- **Lifecycle**: Automatic deletion after 30 days
-- **Cost**: ~$1/month for 4 users
+**Cost**: ~$0.50-1.00/month (depends on API call volume)
 
-### CloudTrail Organization Trail
-- **Multi-region**: Captures events from all AWS regions
-- **Multi-account**: Logs from all organization accounts
-- **Global services**: Includes IAM, CloudFront, Route53 events
-- **Log validation**: File integrity verification enabled
-- **Data events**: S3 object-level and Lambda function logging
+## Architecture
 
-### Access Control
-- **CloudTrail service**: Write access to S3 bucket
-- **Management account**: Full access via IAM
-- **Member account SSO admins**: Read-only access to logs for debugging
+```
+Management Account
+└── S3 Bucket (CloudTrail logs)
+    ├── AWSLogs/<ORG-ID>/ (organization logs)
+    ├── AWSLogs/<MGMT-ACCOUNT-ID>/ (management account logs)
+    └── Lifecycle: Delete after 30 days
+    
+Organization Trail
+├── Captures: All API calls (management events)
+├── Optional: S3 object-level events
+├── Optional: Lambda invocation events
+└── Writes to: Management account S3 bucket
 
-## Why This Matters
+Member Account
+└── SSO AdministratorAccess role
+    └── Read access to CloudTrail logs
+```
 
-CloudTrail provides:
-- **Security audit**: Who did what, when, and from where
-- **Compliance evidence**: Required for SOC 2, ISO 27001, PCI-DSS
-- **Incident investigation**: Trace unauthorized access attempts
-- **SCP validation**: See when SCPs block operations
-- **Troubleshooting**: Debug API errors and permission issues
+## Features
 
-Without CloudTrail, you have no visibility into account activity or security incidents.
-
-## Cost Breakdown
-
-For a 4-user startup with serverless workloads:
-
-| Component | Monthly Cost |
-|-----------|-------------|
-| CloudTrail trail (first trail free) | $0.00 |
-| S3 storage (~200MB/month for 4 users) | ~$0.005 |
-| S3 PUT requests (~10,000/month) | ~$0.05 |
-| S3 GET requests (occasional) | ~$0.004 |
-| **Total** | **~$0.06/month** |
-
-With 30-day retention, logs are deleted before accumulating significant storage costs. Actual cost may reach ~$1-2/month depending on API call volume.
+✅ **Organization-wide logging** - Captures activity from all current and future member accounts  
+✅ **Multi-region trail** - Logs events from all AWS regions  
+✅ **Log file validation** - Cryptographic verification of log integrity  
+✅ **Cost-optimized retention** - 30-day automatic deletion  
+✅ **Secure access** - Only SSO administrators from member account can read logs  
+✅ **Management events** - All AWS API calls logged by default  
+⚠️ **Data events disabled by default** - S3 object-level and Lambda invocation logging commented out (see below)
 
 ## Prerequisites
 
-1. **AWS Organizations** - Organization trail requires organization setup
-2. **Management Account Access** - Must deploy from management account
-3. **S3 Bucket Permissions** - CloudTrail service needs write access
+### 1. AWS Organizations Setup
+
+**Required:**
+- AWS Organization created
+- Management account access
+- At least one member account
+
+**Verification:**
+```bash
+aws organizations describe-organization
+```
+
+### 2. CloudTrail Service Access (CRITICAL)
+
+**Before first deployment**, you must enable CloudTrail trusted access in your organization:
+
+```bash
+# Enable CloudTrail service access
+aws organizations enable-aws-service-access \
+  --service-principal cloudtrail.amazonaws.com
+
+# Verify it's enabled
+aws organizations list-aws-service-access-for-organization | grep cloudtrail
+```
+
+**Without this step, Terraform will fail with:**
+```
+Error: creating CloudTrail Trail: organizations exception: AWSOrganizationsNotInUseException
+```
+
+**Alternative (AWS Console):**
+1. Sign in to management account
+2. Navigate to: **AWS Organizations** → **Services**
+3. Find **AWS CloudTrail** in the list
+4. Click **Enable trusted access**
+
+### 3. Terraform Backend
+
+Ensure `terraform-state-bootstrap` is deployed first:
+```bash
+cd ../terraform-state-bootstrap
+terraform apply
+```
+
+### 4. IAM Permissions
+
+**Management Account:**
+- `cloudtrail:CreateTrail`
+- `cloudtrail:UpdateTrail`
+- `s3:CreateBucket`
+- `s3:PutBucketPolicy`
+- `organizations:DescribeOrganization`
 
 ## Usage
 
@@ -69,289 +110,357 @@ cd deployments/aws/cloudtrail-organization
 cp terraform.tfvars.example terraform.tfvars
 
 # Edit with your member account ID
-# member_account_id: account that should have read access to logs
+nano terraform.tfvars
+# member_account_id = "<YOUR-MEMBER-ACCOUNT-ID>"
 ```
 
-### 2. Initialize Terraform
+### 2. Configure Backend (After State Bootstrap)
 
 ```bash
+# Copy backend example
+cp backend.tf.example backend.tf
+
+# Edit with your state bucket name
+nano backend.tf
+# bucket = "fictional-octo-system-tfstate-<YOUR-MGMT-ACCOUNT-ID>"
+```
+
+### 3. Deploy
+
+```bash
+# Initialize Terraform
 terraform init
-```
 
-### 3. Review Changes
-
-```bash
+# Review changes
 terraform plan
-```
 
-### 4. Deploy CloudTrail
-
-```bash
+# Deploy CloudTrail
 terraform apply
 ```
 
-### 5. Verify Deployment
+### 4. Verify Deployment
 
 ```bash
 # Check trail status
-aws cloudtrail get-trail-status --name organization-trail
+aws cloudtrail get-trail-status \
+  --name organization-trail \
+  --region eu-north-1
 
-# Should show: "IsLogging": true
+# Verify S3 bucket
+aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-MGMT-ACCOUNT-ID>/
 
-# List recent events (wait 5-10 minutes after deployment)
-aws cloudtrail lookup-events --max-results 10
-
-# Check S3 bucket exists
-aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-ACCOUNT-ID>/
+# Wait 15 minutes for first logs, then check
+aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-MGMT-ACCOUNT-ID>/AWSLogs/ --recursive
 ```
 
-### 6. Test Log Delivery
+## Configuration
+
+### Variables
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `member_account_id` | Member account ID for read access | - | Yes |
+| `organization_id` | AWS Organization ID | (auto-detected) | No |
+| `aws_region` | AWS region for resources | `eu-north-1` | No |
+| `environment` | Environment name | `prod` | No |
+| `log_retention_days` | Days to retain logs | `30` | No |
+
+### Example terraform.tfvars
+
+```hcl
+member_account_id  = "758027491266"
+aws_region         = "eu-north-1"
+environment        = "prod"
+log_retention_days = 30
+```
+
+## Data Events (Optional)
+
+By default, only **management events** (API calls) are logged. This keeps costs minimal (~$0.50-1/month).
+
+### Enabling S3 Object-Level Logging
+
+**Cost Impact**: Can add $1-5/month depending on S3 activity.
+
+Uncomment in `main.tf`:
+```hcl
+event_selector {
+  include_management_events = true
+  read_write_type           = "All"
+
+  data_resource {
+    type   = "AWS::S3::Object"
+    values = []  # All S3 objects across all buckets
+  }
+}
+```
+
+### Enabling Lambda Invocation Logging
+
+**Cost Impact**: Can add $0.50-2/month depending on Lambda usage.
+
+Uncomment in `main.tf`:
+```hcl
+event_selector {
+  include_management_events = true
+  read_write_type           = "All"
+
+  data_resource {
+    type   = "AWS::Lambda::Function"
+    values = []  # All Lambda functions
+  }
+}
+```
+
+**Note**: Empty arrays `[]` log all resources. To log specific buckets/functions, provide explicit ARNs:
+```hcl
+values = ["arn:aws:s3:::my-specific-bucket/"]
+```
+
+## Accessing Logs
+
+### From Management Account
 
 ```bash
-# Wait 15 minutes after deployment for first logs
+# List logs
+aws s3 ls s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/ --recursive
 
-# Check for log files in S3
-aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-ACCOUNT-ID>/AWSLogs/<YOUR-ORG-ID>/ --recursive
-
-# Download a recent log file
-aws s3 cp s3://fictional-octo-system-cloudtrail-<YOUR-ACCOUNT-ID>/AWSLogs/<YOUR-ORG-ID>/<ACCOUNT-ID>/CloudTrail/eu-north-1/2025/12/05/<LOG-FILE>.json.gz .
+# Download log file
+aws s3 cp s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/<ORG-ID>/CloudTrail/eu-north-1/2025/12/07/<LOG-FILE>.json.gz .
 
 # Extract and view
 gunzip <LOG-FILE>.json.gz
 cat <LOG-FILE>.json | jq .
 ```
 
-## Reading CloudTrail Logs from Member Account
-
-Administrator SSO roles in the member account can read logs:
+### From Member Account (SSO Administrator)
 
 ```bash
-# From member account with AdministratorAccess SSO role
+# Assume SSO Administrator role via Identity Center
+# Then list logs
+aws s3 ls s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/ --recursive
 
-# List log files
-aws s3 ls s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/<ORG-ID>/<MEMBER-ACCOUNT-ID>/CloudTrail/ --recursive
-
-# Download specific log
-aws s3 cp s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/<ORG-ID>/<MEMBER-ACCOUNT-ID>/CloudTrail/eu-north-1/2025/12/05/<LOG-FILE>.json.gz .
-
-# Read access is limited to administrator roles only
-# Other roles will receive AccessDenied
+# Read-only access - cannot delete or modify logs
 ```
 
-## Understanding CloudTrail Events
+## Cost Breakdown
 
-### Example Event Structure
+| Component | Monthly Cost | Notes |
+|-----------|--------------|-------|
+| **CloudTrail Trail** | $0.00 | First trail in region is free |
+| **S3 Storage** | ~$0.50 | ~20 GB logs/month for 4 users |
+| **S3 Requests** | ~$0.10 | PUT requests from CloudTrail |
+| **Data Events (optional)** | $1-5 | If S3/Lambda logging enabled |
+| **Total** | **~$0.60-6/month** | Without/with data events |
 
-```json
-{
-  "eventVersion": "1.08",
-  "userIdentity": {
-    "type": "IAMUser",
-    "principalId": "AIDAI...",
-    "arn": "arn:aws:iam::123456789012:user/alice",
-    "accountId": "123456789012",
-    "userName": "alice"
-  },
-  "eventTime": "2025-12-05T10:30:15Z",
-  "eventSource": "s3.amazonaws.com",
-  "eventName": "CreateBucket",
-  "awsRegion": "us-east-1",
-  "sourceIPAddress": "203.0.113.42",
-  "userAgent": "aws-cli/2.13.0",
-  "errorCode": "AccessDenied",
-  "errorMessage": "Service control policy restricts this action",
-  "requestParameters": {
-    "bucketName": "test-bucket"
-  },
-  "responseElements": null
-}
-```
+**30-day retention saves ~$20/year** compared to 1-year retention for same usage.
 
-### Key Fields
-- **eventName**: What action was attempted (e.g., CreateBucket, RunInstances)
-- **eventTime**: When it happened (UTC)
-- **userIdentity**: Who made the request
-- **sourceIPAddress**: Where the request came from
-- **errorCode**: If action failed, why (AccessDenied, InvalidParameterValue)
-- **awsRegion**: Which region was targeted
+## Security Considerations
 
-### Finding SCP Denials
+✅ **Immutable logs** - Only CloudTrail service can write, prevents tampering  
+✅ **Encrypted at rest** - AES-256 encryption on S3  
+✅ **Versioning enabled** - Protects against accidental deletion  
+✅ **Limited read access** - Only SSO administrators from member account  
+✅ **Log validation** - Cryptographic proof logs haven't been modified  
+✅ **Multi-region** - Captures events from all regions  
 
-```bash
-# Search for SCP-blocked operations
-aws cloudtrail lookup-events \
-  --lookup-attributes AttributeKey=EventName,AttributeValue=CreateBucket \
-  --max-results 50 \
-  --query 'Events[?contains(CloudTrailEvent, `AccessDenied`)]'
-
-# Filter by user
-aws cloudtrail lookup-events \
-  --lookup-attributes AttributeKey=Username,AttributeValue=alice \
-  --max-results 50
-```
-
-## Important Notes
-
-### 1. Log Delivery Delay
-CloudTrail logs are delivered to S3 within **5-15 minutes** of API activity. Real-time monitoring requires CloudWatch Logs integration (not included, adds cost).
-
-### 2. 30-Day Retention Trade-off
-- **✅ Pros**: Low cost (~$1/month), adequate for incident response
-- **❌ Cons**: Incidents discovered after 30 days lose audit trail
-- **Recommendation**: For compliance requiring 1+ year retention, increase `log_retention_days` to 365 or 2555 (7 years)
-
-### 3. Organization Trail Scope
-This trail logs activity from **all accounts** in your organization. You cannot exclude specific accounts from an organization trail.
-
-### 4. Data Events Cost
-The configuration logs S3 object-level events and Lambda invocations. This adds to log volume but provides comprehensive visibility. For high-traffic S3 buckets, consider filtering specific buckets:
-
-```hcl
-# In main.tf, modify data_resource to filter
-data_resource {
-  type = "AWS::S3::Object"
-  values = ["arn:aws:s3:::my-important-bucket/*"]  # Specific bucket only
-}
-```
-
-### 5. Management Account Logs
-Both organization logs (from all accounts) and management account logs are stored in the bucket under different paths:
-- Organization: `s3://.../AWSLogs/<ORG-ID>/<ACCOUNT-ID>/...`
-- Management: `s3://.../AWSLogs/<MGMT-ACCOUNT-ID>/...`
-
-## Compliance Mapping
-
-| Framework | Control | How CloudTrail Helps |
-|-----------|---------|---------------------|
-| **ISO 27001** | A.12.4.1 - Event logging | Records all AWS API activity |
-| **SOC 2** | CC7.2 - System monitoring | Provides audit trail for changes |
-| **PCI-DSS** | 10.2 - Audit logs | Tracks access to cardholder data environments |
-| **NIST 800-53** | AU-2 - Audit events | Captures security-relevant events |
-| **GDPR** | Article 30 - Records of processing | Documents data access and modifications |
-
-## Backend Configuration
-
-After deploying with local state, migrate to remote state:
-
-```bash
-# Copy backend example
-cp backend.tf.example backend.tf
-
-# Edit backend.tf with your state bucket name
-
-# Migrate state to S3
-terraform init -migrate-state
-```
+⚠️ **Management account administrators** have full access to logs (expected for governance)  
+⚠️ **30-day retention** means older logs are automatically deleted (balance cost vs. compliance)
 
 ## Troubleshooting
 
-### Trail Not Logging
-```bash
-# Check trail status
-aws cloudtrail get-trail-status --name organization-trail
+### Common Issues
 
-# If IsLogging: false, start it
-aws cloudtrail start-logging --name organization-trail
+#### 1. Error: "AWSOrganizationsNotInUseException"
+
+**Problem**: CloudTrail service access not enabled in organization.
+
+**Solution**:
+```bash
+# Enable CloudTrail trusted access
+aws organizations enable-aws-service-access \
+  --service-principal cloudtrail.amazonaws.com
+
+# Verify
+aws organizations list-aws-service-access-for-organization
 ```
 
-### No Log Files in S3
-- Wait 15 minutes after deployment
-- Verify trail is logging (see above)
-- Check CloudTrail service has write permissions to bucket
-- Review bucket policy allows CloudTrail service principal
+**Root Cause**: Organization trails require explicit service access permission. This is a one-time setup per organization.
 
-### "Insufficient permissions" When Accessing Logs from Member Account
-- Verify you're using AdministratorAccess SSO role
-- Check IAM role matches pattern: `AWSReservedSSO_AdministratorAccess_*`
-- Confirm member_account_id in terraform.tfvars is correct
+---
 
-### High S3 Costs
-- Check log volume: `aws s3 ls s3://your-bucket/AWSLogs/ --recursive --summarize`
-- If unexpectedly high, disable data events for S3 objects
-- Consider filtering to specific high-value buckets only
+#### 2. Error: "InvalidParameterValueException: Member must have value"
 
-### Cannot Read Log Files
-CloudTrail logs are gzip compressed JSON. Extract first:
-```bash
-gunzip <filename>.json.gz
-cat <filename>.json | jq .
+**Problem**: Data event selectors require either empty array `[]` or specific ARNs.
+
+**Solution**: Use empty arrays for wildcard logging:
+```hcl
+data_resource {
+  type   = "AWS::S3::Object"
+  values = []  # NOT values = ["arn:aws:s3:::*/*"]
+}
+
+data_resource {
+  type   = "AWS::Lambda::Function"
+  values = []  # NOT values = ["arn:aws:lambda:*:*:function/*"]
+}
 ```
 
-### Trail Deleted Accidentally
-Terraform can recreate:
+**Root Cause**: CloudTrail API doesn't accept wildcard patterns like `*/*` in ARNs. Use empty array for "all resources" or provide specific ARNs.
+
+---
+
+#### 3. Error: "AccessDenied" when creating trail
+
+**Problem**: Insufficient IAM permissions or bucket policy conflict.
+
+**Solution**:
 ```bash
+# Verify you're using management account credentials
+aws sts get-caller-identity
+
+# Check if you have CloudTrail permissions
+aws iam simulate-principal-policy \
+  --policy-source-arn $(aws sts get-caller-identity --query Arn --output text) \
+  --action-names cloudtrail:CreateTrail \
+  --resource-arns "*"
+```
+
+**Root Cause**: Organization trails must be created from management account with appropriate IAM permissions.
+
+---
+
+#### 4. No logs appearing in S3 bucket
+
+**Problem**: Trail created but no logs written (can take 15-30 minutes for first logs).
+
+**Solution**:
+```bash
+# Check trail is logging
+aws cloudtrail get-trail-status --name organization-trail --region eu-north-1
+
+# Verify IsLogging = true
+# If false, start logging:
+aws cloudtrail start-logging --name organization-trail --region eu-north-1
+
+# Generate test activity
+aws s3 ls  # Any AWS API call will be logged
+
+# Check again after 5-10 minutes
+aws s3 ls s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/ --recursive
+```
+
+**Root Cause**: CloudTrail batches logs and delivers them every 5-15 minutes. First delivery can take up to 30 minutes.
+
+---
+
+#### 5. Member account can't read logs
+
+**Problem**: SSO administrator from member account gets AccessDenied when listing logs.
+
+**Solution**:
+```bash
+# Verify bucket policy includes member account
+aws s3api get-bucket-policy \
+  --bucket fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID> \
+  --query Policy --output text | jq .
+
+# Check for AllowSSOAdminRead statement with your member_account_id
+
+# If missing, re-apply Terraform with correct member_account_id variable
+cd deployments/aws/cloudtrail-organization
+terraform apply -var="member_account_id=758027491266"
+```
+
+**Root Cause**: Bucket policy references incorrect member account ID or SSO role pattern doesn't match actual role ARN.
+
+---
+
+#### 6. Lifecycle rule not deleting old logs
+
+**Problem**: Logs older than 30 days still present in bucket.
+
+**Solution**:
+```bash
+# Verify lifecycle configuration
+aws s3api get-bucket-lifecycle-configuration \
+  --bucket fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>
+
+# Check expiration rule exists with 30 days
+# Note: S3 lifecycle runs once per day (midnight UTC), not immediately
+
+# Manually delete old logs if needed
+aws s3 rm s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/AWSLogs/ \
+  --recursive \
+  --exclude "*" \
+  --include "*/2025/10/*"  # Delete October 2025 logs
+```
+
+**Root Cause**: S3 lifecycle policies run daily and may take 24-48 hours to delete objects after they become eligible.
+
+---
+
+#### 7. High CloudTrail costs
+
+**Problem**: Monthly CloudTrail bill higher than expected (~$10+ instead of ~$1).
+
+**Solution**:
+```bash
+# Check if data events are enabled
+aws cloudtrail get-event-selectors --trail-name organization-trail --region eu-north-1
+
+# If you see S3 or Lambda data resources, disable them:
+# Edit main.tf and remove/comment data_resource blocks
 terraform apply
-# CloudTrail service will resume logging
-# Historical logs (if within 30 days) remain in S3
+
+# Or use AWS Console: CloudTrail → Trails → organization-trail → Event selectors
 ```
 
-## Querying Logs with CloudWatch Insights
+**Root Cause**: S3 object-level and Lambda invocation logging can generate millions of events/month. Disable if not needed for compliance.
 
-For advanced querying, integrate CloudTrail with CloudWatch Logs (additional cost):
+---
 
-```hcl
-# Add to main.tf
-resource "aws_cloudwatch_log_group" "cloudtrail" {
-  name              = "/aws/cloudtrail/organization"
-  retention_in_days = 30
-}
+### Validation Checklist
 
-resource "aws_cloudtrail" "organization" {
-  # ... existing config ...
-  cloud_watch_logs_group_arn = "${aws_cloudwatch_log_group.cloudtrail.arn}:*"
-  cloud_watch_logs_role_arn  = aws_iam_role.cloudtrail_cloudwatch.arn
-}
+After deployment, verify:
+
+- [ ] Trail status shows `IsLogging: true`
+- [ ] S3 bucket has logs in `AWSLogs/<ORG-ID>/` path (wait 15-30 min)
+- [ ] Member account SSO admin can list logs
+- [ ] Lifecycle rule configured (30 days)
+- [ ] Log file validation enabled
+- [ ] Multi-region trail enabled
+- [ ] No errors in CloudTrail console
+
+## Outputs
+
+| Output | Description |
+|--------|-------------|
+| `cloudtrail_bucket_name` | S3 bucket name for logs |
+| `cloudtrail_bucket_arn` | S3 bucket ARN |
+| `cloudtrail_arn` | Organization trail ARN |
+| `cloudtrail_name` | Trail name |
+
+## Rollback
+
+To remove CloudTrail infrastructure:
+
+```bash
+# Destroy Terraform resources
+terraform destroy
+
+# Manually empty S3 bucket first if needed (Terraform may fail with non-empty bucket)
+aws s3 rm s3://fictional-octo-system-cloudtrail-<MGMT-ACCOUNT-ID>/ --recursive
+
+# Then retry destroy
+terraform destroy
 ```
 
-**Cost impact**: ~$0.50/GB ingested + $0.03/GB stored. For 4 users, ~$5-10/month additional.
+**Warning**: Deleting the trail stops audit logging organization-wide. Ensure you have log exports or backups if needed for compliance.
 
-## Security Best Practices
+## References
 
-1. ✅ **Enable log file validation** (included - detects tampering)
-2. ✅ **Use organization trail** (captures all accounts)
-3. ✅ **Encrypt logs** (AES-256 included)
-4. ✅ **Block public access** (configured)
-5. ✅ **Limit access** (only CloudTrail service and admins)
-6. ✅ **Monitor trail changes** (CloudTrail logs its own modifications)
-7. ✅ **Regular review** (automate with CloudWatch Alarms or Lambda)
-
-## Advanced: Alerting on Specific Events
-
-Create CloudWatch Event rule for critical events:
-
-```hcl
-resource "aws_cloudwatch_event_rule" "root_login" {
-  name        = "detect-root-login"
-  description = "Alert on AWS root account login"
-
-  event_pattern = jsonencode({
-    detail-type = ["AWS API Call via CloudTrail"]
-    detail = {
-      userIdentity = {
-        type = ["Root"]
-      }
-      eventName = ["ConsoleLogin"]
-    }
-  })
-}
-
-resource "aws_cloudwatch_event_target" "sns" {
-  rule      = aws_cloudwatch_event_rule.root_login.name
-  target_id = "SendToSNS"
-  arn       = var.alert_sns_topic_arn
-}
-```
-
-## Related Modules
-
-- [organization-protection](../policies/organization-protection/) - Restrict organization modifications
-- [encryption-baseline](../policies/encryption-baseline/) - S3 encryption and public access SCPs
-- [budgets/cost-management](../budgets/cost-management/) - Monitor CloudTrail costs
-
-## Support
-
-For issues or questions:
-- Review [AWS CloudTrail documentation](https://docs.aws.amazon.com/cloudtrail/)
-- Check [CloudTrail troubleshooting guide](https://docs.aws.amazon.com/cloudtrail/latest/userguide/cloudtrail-troubleshooting.html)
-- Query logs: [Athena integration guide](https://docs.aws.amazon.com/athena/latest/ug/cloudtrail-logs.html)
-- Open an issue in the repository
+- [AWS CloudTrail Organization Trails](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/creating-trail-organization.html)
+- [CloudTrail Event Selectors](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/logging-data-events-with-cloudtrail.html)
+- [CloudTrail Log File Validation](https://docs.aws.amazon.com/awscloudtrail/latest/userguide/cloudtrail-log-file-validation-intro.html)
+- [S3 Lifecycle Policies](https://docs.aws.amazon.com/AmazonS3/latest/userguide/object-lifecycle-mgmt.html)
