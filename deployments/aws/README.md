@@ -8,8 +8,8 @@ This directory contains Terraform configurations for AWS infrastructure that mir
 
 *A well-organized chaos of Terraform modules:*
 
-- **budgets/** - Cost management and billing alerts 💰
-  - `cost-management/` - Track spending before the CFO does!
+- **budget-monitoring/** - Cost control and billing alerts 💰
+  - Two-tier budget tracking ($100 org, $90 member) with SNS email notifications
   
 - **policies/** - The "thou shalt not" section 📜
   - `encryption-baseline/` - ✅ ACTIVE SCPs: S3 public access blocking + encryption enforcement (mirrors Azure ISO 27001 crypto)
