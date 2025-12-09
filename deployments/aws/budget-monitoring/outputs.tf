@@ -10,12 +10,12 @@ output "org_budget_id" {
 
 output "member_budget_name" {
   description = "Name of the member account budget"
-  value       = aws_budgets_budget.member_account.name
+  value       = var.member_account_id != null ? aws_budgets_budget.member_account.name : null
 }
 
 output "member_budget_id" {
   description = "ID of the member account budget"
-  value       = aws_budgets_budget.member_account.id
+  value       = var.member_account_id != null ? aws_budgets_budget.member_account.id : null
 }
 
 output "org_budget_limit" {

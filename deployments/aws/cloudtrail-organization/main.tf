@@ -183,13 +183,13 @@ resource "aws_cloudtrail" "organization" {
     read_write_type           = "All"
 
     data_resource {
-      type   = "AWS::S3::Object"
-      values = []  # Empty array logs all S3 object-level events
+      type                   = "AWS::S3::Object"
+      values                 = []  # Empty array logs all S3 object-level events
     }
 
     data_resource {
-      type   = "AWS::Lambda::Function"
-      values = []  # Empty array logs all Lambda invocations
+      type                   = "AWS::Lambda::Function"
+      values                 = []  # Empty array logs all Lambda invocations
     }
   }
 
