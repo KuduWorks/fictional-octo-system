@@ -8,23 +8,23 @@ output "org_budget_id" {
   value       = aws_budgets_budget.organization.id
 }
 
-output "org_budget_limit" {
-  description = "Organization budget limit in USD"
-  value       = var.org_budget_limit
-}
-
 output "member_budget_name" {
   description = "Name of the member account budget"
-  value       = var.member_account_id != "" ? aws_budgets_budget.member_account[0].name : null
+  value       = aws_budgets_budget.member_account.name
 }
 
 output "member_budget_id" {
   description = "ID of the member account budget"
-  value       = var.member_account_id != "" ? aws_budgets_budget.member_account[0].id : null
+  value       = aws_budgets_budget.member_account.id
+}
+
+output "org_budget_limit" {
+  description = "Organization budget limit"
+  value       = var.org_budget_limit
 }
 
 output "member_budget_limit" {
-  description = "Member account budget limit in USD"
+  description = "Member account budget limit"
   value       = var.member_budget_limit
 }
 
