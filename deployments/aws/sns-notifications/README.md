@@ -237,7 +237,7 @@ Ensure you're viewing us-east-1 region in AWS Console. Topics in other regions w
 
 ## Related Modules
 
-- [budgets/cost-management](../budgets/cost-management/) - Uses these SNS topics for alerting
+- [budget-monitoring](../budget-monitoring/) - Uses these SNS topics for budget alerting
 - [finops-lambda](../finops-lambda/) - Alternative cost monitoring via Lambda
 
 ## Example Use Cases

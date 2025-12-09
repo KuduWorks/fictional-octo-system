@@ -346,7 +346,7 @@ resource "aws_cloudwatch_event_target" "sns" {
 
 - [organization-protection](../policies/organization-protection/) - Restrict organization modifications
 - [encryption-baseline](../policies/encryption-baseline/) - S3 encryption and public access SCPs
-- [budgets/cost-management](../budgets/cost-management/) - Monitor CloudTrail costs
+- [budget-monitoring](../budget-monitoring/) - Monitor CloudTrail costs
 
 ## Support
 
