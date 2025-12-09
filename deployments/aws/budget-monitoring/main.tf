@@ -34,22 +34,13 @@ locals {
 # ============================================================================
 
 resource "aws_budgets_budget" "organization" {
-  name              = "fictional-octo-system-org-budget-${var.environment}"
+  name              = "organization-budget-${var.environment}"
   budget_type       = "COST"
   limit_amount      = var.org_budget_limit
   limit_unit        = "USD"
   time_unit         = "MONTHLY"
   time_period_start = var.budget_start_date != null ? "${var.budget_start_date}_00:00" : null
 
-  notification {
-    comparison_operator        = "GREATER_THAN"
-    threshold                  = 80
-    threshold_type             = "PERCENTAGE"
-    notification_type          = "ACTUAL"
-    subscriber_email_addresses = var.alert_emails
-  }
-
-  # Add more notifications as needed
 
   # Organization-wide scope (no filters = all accounts)
 

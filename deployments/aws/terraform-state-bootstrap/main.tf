@@ -23,7 +23,7 @@ terraform {
   #
   # Example bucket name format: fictional-octo-system-tfstate-<YOUR-ACCOUNT-ID>
   backend "s3" {
-    bucket         = "fictional-octo-system-tfstate-494367313227"
+    bucket         = "fictional-octo-system-tfstate-<YOUR-ACCOUNT-ID>"
     key            = "bootstrap/terraform.tfstate"
     region         = "eu-north-1"
     encrypt        = true

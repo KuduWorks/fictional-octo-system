@@ -40,10 +40,11 @@ variable "member_budget_limit" {
 variable "member_account_id" {
   description = "AWS member account ID to track budget for"
   type        = string
+  default     = null
 
   validation {
-    condition     = can(regex("^[0-9]{12}$", var.member_account_id))
-    error_message = "Member account ID must be a 12-digit number"
+    condition     = var.member_account_id == null || can(regex("^[0-9]{12}$", var.member_account_id))
+    error_message = "Member account ID must be a 12-digit number if provided"
   }
 }
 
@@ -70,7 +71,7 @@ variable "member_sns_topic_arn" {
 variable "budget_start_date" {
   description = "Budget period start date in YYYY-MM-DD format. If null, starts from current month."
   type        = string
-  default     = null  # Changed from empty string to null
+  default     = null
 
   validation {
     condition     = var.budget_start_date == null || can(regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", var.budget_start_date))
