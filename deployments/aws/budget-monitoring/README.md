@@ -28,8 +28,8 @@ Management Account (us-east-1 - Budgets must be in this region)
     â””â”€â”€ 100% forecast â†’ member-budget-alerts SNS
 
 SNS Topics (us-east-1, created by sns-notifications module)
-â”œâ”€â”€ org-budget-alerts â†’ monitoring@kuduworks.net, postforyves@gmail.com
-â””â”€â”€ member-budget-alerts â†’ monitoring@kuduworks.net, postforyves@gmail.com
+â”œâ”€â”€ org-budget-alerts â†’ <YOUR-EMAIL-1>, <YOUR-EMAIL-2>
+â””â”€â”€ member-budget-alerts â†’ <YOUR-EMAIL-1>, <YOUR-EMAIL-2>
 ```
 
 ## Features
@@ -218,8 +218,8 @@ Tracks spending across **all accounts** in organization.
 | Threshold | Amount | Type | Action |
 |-----------|--------|------|--------|
 | 80% | $80 | Actual | âš ï¸ Early warning - review spending |
-| 100% | $100 | Actual | íº¨ Critical - immediate action required |
-| 100% | $100 (est.) | Forecast | í´® Predictive - adjust plans before month-end |
+| 100% | $100 | Actual | ï¿½ï¿½ï¿½ Critical - immediate action required |
+| 100% | $100 (est.) | Forecast | ï¿½ï¿½ï¿½ Predictive - adjust plans before month-end |
 
 #### Member Account Budget ($90/month)
 
@@ -229,8 +229,8 @@ Tracks spending **only for member account**.
 |-----------|--------|------|--------|
 | 50% | $45 | Actual | â„¹ï¸ Informational - mid-month checkpoint |
 | 80% | $72 | Actual | âš ï¸ Warning - review workload costs |
-| 100% | $90 | Actual | íº¨ Critical - stop non-essential resources |
-| 100% | $90 (est.) | Forecast | í´® Predictive - plan cost optimizations |
+| 100% | $90 | Actual | ï¿½ï¿½ï¿½ Critical - stop non-essential resources |
+| 100% | $90 (est.) | Forecast | ï¿½ï¿½ï¿½ Predictive - plan cost optimizations |
 
 **Why more thresholds for member account?**  
 The member account runs actual workloads (Lambda, containers, storage) and needs granular monitoring. The organization budget is higher-level governance.
@@ -400,4 +400,4 @@ For issues or questions:
 - [sns-notifications README](../sns-notifications/README.md) - SNS topic configuration
 - [terraform-state-bootstrap README](../terraform-state-bootstrap/README.md) - State management setup
 
-**Remember**: Set up budgets BEFORE deploying expensive infrastructure! í²°
+**Remember**: Set up budgets BEFORE deploying expensive infrastructure! ï¿½ï¿½ï¿½
