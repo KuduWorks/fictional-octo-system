@@ -78,13 +78,3 @@ variable "budget_start_date" {
     error_message = "Budget start date must be in YYYY-MM-DD format or null"
   }
 }
-
-variable "alert_emails" {
-  description = "List of email addresses to receive budget alerts"
-  type        = list(string)
-
-  validation {
-    condition     = length(var.alert_emails) > 0 && alltrue([for email in var.alert_emails : can(regex("^[^@]+@[^@]+\\.[^@]+$", email))])
-    error_message = "Must provide at least one valid email address"
-  }
-}

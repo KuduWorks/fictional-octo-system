@@ -168,7 +168,7 @@ aws s3 ls s3://fictional-octo-system-cloudtrail-<YOUR-MGMT-ACCOUNT-ID>/AWSLogs/ 
 ### Example terraform.tfvars
 
 ```hcl
-member_account_id  = "758027491266"
+member_account_id  = "<YOUR-MEMBER-ACCOUNT-ID>"
 aws_region         = "eu-north-1"
 environment        = "prod"
 log_retention_days = 30
@@ -369,7 +369,7 @@ aws s3api get-bucket-policy \
 
 # If missing, re-apply Terraform with correct member_account_id variable
 cd deployments/aws/cloudtrail-organization
-terraform apply -var="member_account_id=758027491266"
+terraform apply -var="member_account_id=<YOUR-MEMBER-ACCOUNT-ID>"
 ```
 
 **Root Cause**: Bucket policy references incorrect member account ID or SSO role pattern doesn't match actual role ARN.
