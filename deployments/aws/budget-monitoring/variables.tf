@@ -5,7 +5,7 @@ variable "aws_region" {
 
   validation {
     condition     = var.aws_region == "us-east-1"
-    error_message = "AWS Budgets must be deployed in us-east-1 region"
+    error_message = "AWS Budgets must be created in us-east-1 region"
   }
 }
 
@@ -38,18 +38,17 @@ variable "member_budget_limit" {
 }
 
 variable "member_account_id" {
-  description = "AWS Member Account ID to track separately (leave empty to skip member budget)"
+  description = "AWS member account ID to track budget for"
   type        = string
-  default     = ""
 
   validation {
-    condition     = var.member_account_id == "" || can(regex("^[0-9]{12}$", var.member_account_id))
-    error_message = "Member account ID must be empty or a 12-digit number"
+    condition     = can(regex("^[0-9]{12}$", var.member_account_id))
+    error_message = "Member account ID must be a 12-digit number"
   }
 }
 
 variable "org_sns_topic_arn" {
-  description = "ARN of SNS topic for organization budget alerts"
+  description = "SNS topic ARN for organization budget alerts"
   type        = string
 
   validation {
@@ -59,7 +58,7 @@ variable "org_sns_topic_arn" {
 }
 
 variable "member_sns_topic_arn" {
-  description = "ARN of SNS topic for member account budget alerts"
+  description = "SNS topic ARN for member account budget alerts"
   type        = string
 
   validation {
@@ -69,12 +68,22 @@ variable "member_sns_topic_arn" {
 }
 
 variable "budget_start_date" {
-  description = "Budget start date in YYYY-MM-DD format (defaults to current month)"
+  description = "Budget period start date in YYYY-MM-DD format. If null, starts from current month."
   type        = string
-  default     = ""
+  default     = null  # Changed from empty string to null
 
   validation {
-    condition     = var.budget_start_date == "" || can(regex("^[0-9]{4}-(0[1-9]|1[0-2])-01$", var.budget_start_date))
-    error_message = "Budget start date must be in YYYY-MM-01 format (first day of month)"
+    condition     = var.budget_start_date == null || can(regex("^[0-9]{4}-[0-9]{2}-[0-9]{2}$", var.budget_start_date))
+    error_message = "Budget start date must be in YYYY-MM-DD format or null"
+  }
+}
+
+variable "alert_emails" {
+  description = "List of email addresses to receive budget alerts"
+  type        = list(string)
+
+  validation {
+    condition     = length(var.alert_emails) > 0 && alltrue([for email in var.alert_emails : can(regex("^[^@]+@[^@]+\\.[^@]+$", email))])
+    error_message = "Must provide at least one valid email address"
   }
 }
