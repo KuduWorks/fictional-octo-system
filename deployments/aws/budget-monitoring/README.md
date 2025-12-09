@@ -59,8 +59,8 @@ terraform output member_sns_topic_arn
 
 **Expected output:**
 ```
-org_sns_topic_arn = "arn:aws:sns:us-east-1:<ACCOUNT-ID>:org-budget-alerts"
-member_sns_topic_arn = "arn:aws:sns:us-east-1:<ACCOUNT-ID>:member-budget-alerts"
+org_sns_topic_arn = "arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:org-budget-alerts"
+member_sns_topic_arn = "arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:member-budget-alerts"
 ```
 
 ### 2. Email Subscriptions Confirmed
@@ -127,8 +127,8 @@ Update `terraform.tfvars` with your SNS topic ARNs:
 
 ```hcl
 # Get these ARNs from sns-notifications module outputs
-org_sns_topic_arn    = "arn:aws:sns:us-east-1:<ACCOUNT-ID>:org-budget-alerts"
-member_sns_topic_arn = "arn:aws:sns:us-east-1:<ACCOUNT-ID>:member-budget-alerts"
+org_sns_topic_arn    = "arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:org-budget-alerts"
+member_sns_topic_arn = "arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:member-budget-alerts"
 
 # Budget limits
 org_budget_limit    = "100"  # $100/month for entire organization
@@ -207,7 +207,7 @@ aws budgets describe-budget \
 | `member_sns_topic_arn` | SNS topic ARN for member alerts | - | Yes |
 | `aws_region` | AWS region (must be us-east-1) | `"us-east-1"` | Yes |
 | `environment` | Environment name | `"prod"` | No |
-| `budget_start_date` | Budget period start (YYYY-MM-DD) | `null` | No |
+| `budget_start_date` | Budget period start (YYYY-MM-DD) | `""` | No |
 
 ### Budget Alert Thresholds
 
@@ -276,7 +276,7 @@ aws sns list-subscriptions --region us-east-1
 
 # 5. Verify subscriptions are confirmed
 aws sns list-subscriptions-by-topic \
-  --topic-arn arn:aws:sns:us-east-1:<ACCOUNT-ID>:org-budget-alerts \
+  --topic-arn arn:aws:sns:us-east-1:<YOUR-ACCOUNT-ID>:org-budget-alerts \
   --region us-east-1
 ```
 
@@ -400,4 +400,4 @@ For issues or questions:
 - [sns-notifications README](../sns-notifications/README.md) - SNS topic configuration
 - [terraform-state-bootstrap README](../terraform-state-bootstrap/README.md) - State management setup
 
-**Remember**: Set up budgets BEFORE deploying expensive infrastructure! ���
+**Remember**: Set up budgets BEFORE deploying expensive infrastructure! 💰
