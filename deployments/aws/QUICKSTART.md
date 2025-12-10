@@ -44,6 +44,9 @@ cp terraform.tfvars.example terraform.tfvars
 # Initialize Terraform
 terraform init
 
+# Check that your code is structurally correct
+terrafrom validate
+
 # Preview what will be created
 terraform plan
 
