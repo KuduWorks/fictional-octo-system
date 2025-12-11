@@ -20,7 +20,7 @@ Quick notes
 ```bash
 gcloud auth login
 gcloud auth application-default login
-gcloud config set project <your-project-id>
+gcloud config set project <YOUR-PROJECT-ID>
 ```
 2. Bootstrap state (run first):
 ```bash
