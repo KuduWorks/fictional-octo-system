@@ -1,26 +1,3 @@
-## Azure Deployments 💠
-
-This folder contains Azure Terraform modules and quick links. It's short on ceremony and long on links.
-
-Quick Links
-- `deployments/azure/app-registration/` — app registration examples and helper scripts
-- `deployments/azure/key-vault/` — Key Vault patterns
-- `deployments/azure/modules/` — shared module patterns
-
-Quick Start
-1. Login: `az login`
-2. Set subscription: `az account set -s YOUR_SUBSCRIPTION_ID`
-3. Bootstrap storage for state (see `terraform/` at repo root)
-
-Owner
-- Maintainer: Cloud Platform Team
-
-Notes
-- We favour Managed Identities and Key Vault-backed keys for encryption.
-- Want a VNet example? Check `deployments/azure/modules/naming-convention` and the `vnet` examples in the `terraform/` folder.
-
-If you want more jokes in README files, open a PR — I'm a big fan of puns. 😄
-
 ## Azure Deployments 🔵
 
 Short, practical Azure IaC for app registration, Key Vault, VM automation, policies, reporting, and reusable modules — concise, slightly witty, and actually useful.

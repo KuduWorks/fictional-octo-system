@@ -20,7 +20,7 @@ Quick notes
 ```bash
 gcloud auth login
 gcloud auth application-default login
-gcloud config set project YOUR-PROJECT-ID
+gcloud config set project <your-project-id>
 ```
 2. Bootstrap state (run first):
 ```bash
@@ -44,7 +44,7 @@ Use GCS for Terraform state. Example backend:
 ```hcl
 terraform {
   backend "gcs" {
-    bucket = "fictional-octo-system-tfstate-PROJECT-ID"
+    bucket = "fictional-octo-system-tfstate-<project-id>"
     prefix = "gcp/service/module/terraform.tfstate"
   }
 }
@@ -68,7 +68,7 @@ terraform {
 ```bash
 gcloud auth list
 gcloud config list
-gsutil ls gs://fictional-octo-system-tfstate-PROJECT-ID
+gsutil ls gs://fictional-octo-system-tfstate-<project-id>
 ```
 
 ---
