@@ -4,6 +4,22 @@
 
 A multi-cloud infrastructure deployment repository for managing Azure, AWS, and GCP resources, monitoring, and security configurations. *(Why choose one cloud when you can complicate your life with all three?)* ☁️☁️☁️
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Repository Structure](#repository-structure)
+- [Docs & Reference](#docs--reference)
+- [Features](#features)
+- [Getting Started](#getting-started)
+- [Security Features](#security-features)
+- [Monitoring Capabilities](#monitoring-capabilities)
+- [Multi-Cloud Comparison](#multi-cloud-comparison)
+- [Best Practices](#best-practices)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
+- [Acknowledgments](#acknowledgments)
+
 ## Overview
 
 This repository contains Infrastructure as Code (IaC) templates and configurations for deploying and managing **Azure**, **AWS**, and **Google Cloud Platform (GCP)** resources, with a focus on secure storage, monitoring, and virtual networking components. *(In other words: Everything you need to run tri-cloud infrastructure like a boss, with triple the complexity and triple the buzzwords)*
@@ -17,53 +33,47 @@ This repository contains Infrastructure as Code (IaC) templates and configuratio
 
 ## Repository Structure
 
-```
-fictional-octo-system/
-├── terraform/                    # Core Terraform configurations (Azure)
-│   ├── main.tf                  # Core infrastructure setup
-│   ├── variables.tf             # Variable definitions
-│   ├── monitoring.tf            # Azure Monitor configuration
-│   ├── backend.tf               # State storage configuration
-│   ├── tf.sh / tf.ps1           # Dynamic IP wrapper scripts
-│   ├── update-ip.sh / update-ip.ps1  # IP management utilities
-│   ├── QUICKSTART_DYNAMIC_IP.md # Quick start guide for dynamic IPs
-│   ├── TERRAFORM_STATE_ACCESS.md # Comprehensive state access guide
-│   └── README.md                # Terraform-specific documentation
-├── deployments/
-│   ├── azure/                   # 🔵 Azure Infrastructure
-│   │   ├── app-registration/    # Azure AD app registration automation
-│   │   ├── key-vault/           # Azure Key Vault with RBAC
-│   │   ├── vm-automation/       # Automated VM deployment with Bastion
-│   │   ├── policies/            # Azure Policy templates (ISO 27001)
-│   │   └── modules/
-│   │       └── naming-convention/  # Reusable naming convention module
-│   ├── aws/                     # 🟠 AWS Infrastructure
-│   │   ├── terraform-state-bootstrap/  # S3 + DynamoDB for state management
-│   │   ├── budgets/             # AWS Budgets and cost management
-│   │   ├── policies/            # ✅ Active SCPs + AWS Config rules
-│   │   ├── iam/                 # IAM roles and OIDC providers
-│   │   ├── kms/                 # KMS key management
-│   │   ├── secrets/             # Secrets Manager configuration
-│   │   ├── compute/             # EC2 Systems Manager automation
-│   │   ├── networking/          # VPC and networking components
-│   │   └── README.md            # AWS-specific documentation
-│   └── gcp/                     # 🔴 Google Cloud Platform Infrastructure
-│       ├── bootstrap/           # GCS bucket + Workload Identity for state
-│       ├── iam/                 # IAM roles and Workload Identity Federation
-│       ├── security/            # Organization policies and encryption
-│       ├── secrets/             # Google Secret Manager
-│       ├── cost-management/     # GCP budgets and billing alerts
-│       ├── compute/             # GCE and GKE configurations
-│       ├── networking/          # VPC and firewall rules
-│       ├── storage/             # Cloud Storage and Cloud SQL
-│       ├── monitoring/          # Cloud Logging and Monitoring
-│       └── README.md            # GCP-specific documentation
-├── .github/                     # GitHub Actions workflows and templates
-│   └── workflows/               # CI/CD pipeline definitions
-├── LICENSE                      # MIT License
-├── SECURITY.md                  # Security policy
-└── README.md                   # This file (you are here 📍)
-```
+- [terraform/](terraform/README.md) — Core Terraform configs (Azure) + scripts and storage docs *(organized chaos, but tidy)*
+  - [QUICKSTART_DYNAMIC_IP.md](terraform/QUICKSTART_DYNAMIC_IP.md) — Dynamic IP quick start
+  - [TERRAFORM_STATE_ACCESS.md](terraform/TERRAFORM_STATE_ACCESS.md) / [STORAGE_ACCESS.md](terraform/STORAGE_ACCESS.md) — State access playbooks
+- deployments/ — Cloud-specific payloads
+  - [azure/](deployments/azure/README.md) 🔵 — app registration, Key Vault, VM automation, policies, reporting, and the [naming-convention module](deployments/azure/modules/naming-convention/README.md)
+    - [policies](deployments/azure/policies/README.md): [cost-management](deployments/azure/policies/cost-management/), [iso27001-crypto](deployments/azure/policies/iso27001-crypto/), [region-control](deployments/azure/policies/region-control/), [security-baseline](deployments/azure/policies/security-baseline/), [vm-encryption](deployments/azure/policies/vm-encryption/)
+    - [reporting](deployments/azure/reporting/README.md) — export scripts for IAM
+  - [aws/](deployments/aws/README.md) 🟠 — state bootstrap, budget monitoring, CloudTrail org setup, IAM, KMS, networking, secrets, SNS
+    - [terraform-state-bootstrap](deployments/aws/terraform-state-bootstrap/README.md) — S3 + DynamoDB backend
+    - [budget-monitoring](deployments/aws/budget-monitoring/README.md) — keep spend honest
+    - [cloudtrail-organization](deployments/aws/cloudtrail-organization/README.md) — org-wide trails
+    - [compute](deployments/aws/compute/) — SSM automation
+    - [finops-lambda](deployments/aws/finops-lambda/) — cost-minded Lambdas
+    - [iam](deployments/aws/iam/) — roles and OIDC
+    - [kms](deployments/aws/kms/) — key management
+    - [networking](deployments/aws/networking/) — VPC bits
+    - [secrets](deployments/aws/secrets/) — Secrets Manager setup
+    - [sns-notifications](deployments/aws/sns-notifications/) — alerts that actually alert
+    - [policies](deployments/aws/policies/README.md): [region-control](deployments/aws/policies/region-control/), [encryption-baseline](deployments/aws/policies/encryption-baseline/), [organization-protection](deployments/aws/policies/organization-protection/)
+  - [gcp/](deployments/gcp/README.md) 🔴 — bootstrap, IAM, security, cost, monitoring, networking, storage, compute
+    - [QUICKSTART](deployments/gcp/QUICKSTART.md) — 5-minute setup
+    - [AUTHENTICATION_SETUP](deployments/gcp/AUTHENTICATION_SETUP.md) — auth prep
+    - [bootstrap/state-storage](deployments/gcp/bootstrap/state-storage/) — GCS state bucket
+    - [iam/workload-identity](deployments/gcp/iam/workload-identity/) — keyless GitHub Actions
+    - [security](deployments/gcp/security/) — org policies & encryption
+    - [cost-management](deployments/gcp/cost-management/) — budgets
+    - [monitoring](deployments/gcp/monitoring/) — logging/metrics
+    - [networking](deployments/gcp/networking/) — VPC + firewalls
+    - [storage](deployments/gcp/storage/) — GCS/SQL
+    - [compute](deployments/gcp/compute/) — GCE/GKE
+- [.github/workflows](.github/workflows/) — CI/CD pipelines *(robots doing the chores)*
+- [LICENSE](LICENSE) — MIT
+- [SECURITY.md](SECURITY.md) — Policies you should actually read
+- [README.md](README.md) — This file (you are here 📍)
+
+## Docs & Reference
+
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) — be excellent to each other
+- [CONTRIBUTING.md](CONTRIBUTING.md) — PR etiquette + guardrails
+- [PERFORMANCE_IMPROVEMENTS.md](PERFORMANCE_IMPROVEMENTS.md) — where to squeeze speed
+- [deployments/STATE_MANAGEMENT.md](deployments/STATE_MANAGEMENT.md) — how we wrangle Terraform state across clouds
 
 ## Features
 
@@ -320,7 +330,7 @@ terraform output github_secrets_config
 **AWS Deployments:**
 - [AWS Infrastructure Overview](deployments/aws/README.md) *(Start here for AWS setup)*
 - [Terraform State Bootstrap](deployments/aws/terraform-state-bootstrap/README.md) *(Do this first)*
-- [AWS Budget & Cost Management](deployments/aws/budgets/cost-management/QUICKSTART.md) *(Set spending limits before you deploy)*
+- [AWS Budget Monitoring](deployments/aws/budget-monitoring/README.md) *(Set spending limits before you deploy)*
 - [Region Control SCPs](deployments/aws/policies/region-control/README.md) *(✅ Active: Stockholm-only enforcement)*
 - [Encryption Baseline SCPs](deployments/aws/policies/encryption-baseline/README.md) *(✅ Active: S3 public access blocking)*
 
