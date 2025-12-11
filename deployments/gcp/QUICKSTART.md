@@ -39,7 +39,7 @@ gcloud auth login
 gcloud auth application-default login
 
 # Set your project (replace with your actual project ID)
-gcloud config set project YOUR-PROJECT-ID
+gcloud config set project <YOUR-PROJECT-ID>
 
 # Verify setup
 gcloud config list
@@ -63,7 +63,7 @@ terraform apply
 ```
 
 **What gets created:**
-- **GCS Bucket:** `fictional-octo-system-tfstate-<PROJECT-ID>` (encrypted, versioned)
+- **GCS Bucket:** `fictional-octo-system-tfstate-<YOUR-PROJECT-ID>` (encrypted, versioned)
 - **Service Account:** For GitHub Actions CI/CD
 - **Workload Identity Pool:** `github-actions-pool` (organization-wide)
 - **IAM Bindings:** Minimal permissions for state access
@@ -77,8 +77,8 @@ terraform apply
 cp backend.tf.example backend.tf
 
 # Update backend.tf with your project ID
-# Replace PROJECT-ID with your actual project ID
-sed -i 's/PROJECT-ID/your-actual-project-id/g' backend.tf
+# Replace <YOUR-PROJECT-ID> with your actual project ID
+sed -i 's/<YOUR-PROJECT-ID>/your-actual-project-id/g' backend.tf
 
 # Or edit manually:
 # nano backend.tf
@@ -201,7 +201,7 @@ gcloud config get-value project
 gcloud projects list
 
 # Set correct project
-gcloud config set project YOUR-CORRECT-PROJECT-ID
+gcloud config set project <YOUR-CORRECT-PROJECT-ID>
 ```
 
 ### Issue: GitHub Actions failing

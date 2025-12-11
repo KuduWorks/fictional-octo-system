@@ -9,7 +9,7 @@ This module creates a baseline Virtual Private Cloud (VPC) network configuration
 ```bash
 # Copy backend configuration
 cp backend.tf.example backend.tf
-sed -i 's/PROJECT-ID/your-project-id/g' backend.tf
+sed -i 's/<YOUR-PROJECT-ID>/your-project-id/g' backend.tf
 
 # Deploy
 terraform init

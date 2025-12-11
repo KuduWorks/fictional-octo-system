@@ -24,7 +24,7 @@ The error `google: could not find default credentials` means you need to authent
    gcloud auth application-default login
    
    # Set your default project
-   gcloud config set project YOUR-PROJECT-ID
+   gcloud config set project <YOUR-PROJECT-ID>
    ```
 
 3. **Verify Setup**:

@@ -77,7 +77,7 @@
    ```bash
    cd deployments/gcp/bootstrap/state-storage/
    cp backend.tf.example backend.tf
-   # Update PROJECT-ID in backend.tf
+   # Update <YOUR-PROJECT-ID> in backend.tf
    terraform init
    terraform apply
    ```

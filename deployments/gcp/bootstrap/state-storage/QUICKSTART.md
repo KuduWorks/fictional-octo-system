@@ -23,7 +23,7 @@ gcloud auth login
 gcloud auth application-default login
 
 # Set your project
-gcloud config set project YOUR-PROJECT-ID
+gcloud config set project <YOUR-PROJECT-ID>
 
 # Verify setup
 gcloud config list
@@ -70,8 +70,8 @@ terraform apply
 # Copy backend template
 cp backend.tf.example backend.tf
 
-# Update with your project ID (replace YOUR-PROJECT-ID)
-sed -i 's/PROJECT-ID/YOUR-PROJECT-ID/g' backend.tf
+# Update with your project ID (replace <YOUR-PROJECT-ID>)
+sed -i 's/<YOUR-PROJECT-ID>/your-actual-project-id/g' backend.tf
 
 # Migrate local state to GCS
 terraform init -migrate-state

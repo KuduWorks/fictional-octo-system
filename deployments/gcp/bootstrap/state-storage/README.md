@@ -12,7 +12,7 @@ You have a chicken-and-egg problem: You need a GCS bucket to store state, but yo
 
 ⚠️ **Before using this module**, you need to configure the backend migration:
 
-The backend configuration in `backend.tf.example` contains a placeholder `PROJECT-ID` that serves as a template. Since Terraform backend blocks don't support variables, you must **manually update** the bucket name before migrating state to GCS.
+The backend configuration in `backend.tf.example` contains a placeholder `<YOUR-PROJECT-ID>` that serves as a template. Since Terraform backend blocks don't support variables, you must **manually update** the bucket name before migrating state to GCS.
 
 **Option 1: Recommended for first-time setup**
 Comment out the entire backend block initially, create the infrastructure, then configure and migrate it.
@@ -37,7 +37,7 @@ gcloud auth login
 gcloud auth application-default login
 
 # Set your project
-gcloud config set project YOUR-PROJECT-ID
+gcloud config set project <YOUR-PROJECT-ID>
 
 # Verify setup
 gcloud config list
@@ -75,8 +75,8 @@ This will create:
 cp backend.tf.example backend.tf
 
 # Update with your actual project ID
-# Replace PROJECT-ID with your project (e.g., my-gcp-project-123456)
-sed -i 's/PROJECT-ID/your-actual-project-id/g' backend.tf
+# Replace <YOUR-PROJECT-ID> with your project (e.g., my-gcp-project-123456)
+sed -i 's/<YOUR-PROJECT-ID>/your-actual-project-id/g' backend.tf
 
 # Or edit manually if you prefer
 # nano backend.tf
@@ -223,7 +223,7 @@ To use remote state storage in other modules:
    ```hcl
    terraform {
      backend "gcs" {
-       bucket = "fictional-octo-system-tfstate-YOUR-PROJECT-ID"
+       bucket = "fictional-octo-system-tfstate-<YOUR-PROJECT-ID>"
        prefix = "gcp/service/module/terraform.tfstate"
      }
    }
@@ -242,7 +242,7 @@ To use remote state storage in other modules:
 **Solution**:
 ```bash
 gcloud auth application-default login
-gcloud config set project YOUR-PROJECT-ID
+gcloud config set project <YOUR-PROJECT-ID>
 ```
 
 ### Error: "Bucket already exists"
