@@ -1,10 +1,28 @@
-## GCP Deployments 🔴
+# GCP Deployments 🔴
 
 Short and friendly GCP Terraform recipes — bootstrap state, configure workload identity, then deploy the modules you need.  Finland (`europe-north1`) is our primary playground.
 
 Table of contents
 - [Quick Start](#quick-start)
-- [Auth (local & CI)](#auth-local--ci)
+  
+> **Note:** Replace all instances of `<YOUR-PROJECT-ID>` with your actual GCP project ID. This placeholder format matches conventions used throughout the repository for clarity and consistency.
+
+- [State backend](#state-backend)
+- [Compute & Networking](#compute--networking)
+- [Monitoring & Cost](#monitoring--cost)
+- [Help & Troubleshooting](#help--troubleshooting)
+
+Quick notes
+- Region: `europe-north1` (primary) — fallback `europe-west1` for DR.
+- Workload Identity is preferred for GitHub Actions — avoid service account keys.# GCP Deployments 🔴
+
+Short and friendly GCP Terraform recipes — bootstrap state, configure workload identity, then deploy the modules you need.  Finland (`europe-north1`) is our primary playground.
+
+Table of contents
+- [Quick Start](#quick-start)
+  
+> **Note:** Replace all instances of `<YOUR-PROJECT-ID>` with your actual GCP project ID. This placeholder format matches conventions used throughout the repository for clarity and consistency.
+
 - [State backend](#state-backend)
 - [Compute & Networking](#compute--networking)
 - [Monitoring & Cost](#monitoring--cost)
@@ -15,11 +33,28 @@ Quick notes
 - Workload Identity is preferred for GitHub Actions — avoid service account keys.
 
 ## Quick Start
-
-1. Authenticate locally:
 ```bash
+# Authenticate with Google Cloud
 gcloud auth login
 gcloud auth application-default login
+
+# Set your GCP project (replace <YOUR-PROJECT-ID> with your actual project ID)
+gcloud config set project <YOUR-PROJECT-ID>
+```
+# Authenticate with Google Cloud
+gcloud auth login
+gcloud auth application-default login
+
+# Set your GCP project (replace <YOUR-PROJECT-ID> with your actual project ID)
+gcloud config set project <YOUR-PROJECT-ID>
+```
+gcloud auth login
+gcloud auth application-default login
+gcloud config set project <YOUR-PROJECT-ID>
+1. Set your GCP project (replace `<YOUR-PROJECT-ID>` with your actual project ID):
+```bash
+gcloud config set project <YOUR-PROJECT-ID>
+```bash
 gcloud config set project <YOUR-PROJECT-ID>
 ```
 2. Bootstrap state (run first):
