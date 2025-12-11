@@ -56,7 +56,7 @@ github_repositories = {
 cp backend.tf.example backend.tf
 
 # Update with your project ID
-sed -i 's/PROJECT-ID/your-project-id/g' backend.tf
+sed -i 's/<YOUR-PROJECT-ID>/your-project-id/g' backend.tf
 
 # Deploy
 terraform init
@@ -236,7 +236,7 @@ Enable Terraform state bucket access:
 
 ```hcl
 enable_terraform_state_access = true
-terraform_state_bucket = "fictional-octo-system-tfstate-PROJECT-ID"
+terraform_state_bucket = "fictional-octo-system-tfstate-<YOUR-PROJECT-ID>"
 ```
 
 This grants `roles/storage.objectAdmin` on the state bucket to all configured service accounts.
@@ -300,7 +300,7 @@ gcloud iam workload-identity-pools list --location=global
 **Solution**:
 1. Check service account has required roles:
    ```bash
-   gcloud projects get-iam-policy PROJECT-ID --filter="bindings.members:serviceAccount:github-*"
+   gcloud projects get-iam-policy <YOUR-PROJECT-ID> --filter="bindings.members:serviceAccount:github-*"
    ```
 
 2. Add missing permissions:

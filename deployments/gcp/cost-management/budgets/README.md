@@ -54,7 +54,7 @@ budget_alert_emails = [
 cp backend.tf.example backend.tf
 
 # Update with your project ID
-sed -i 's/PROJECT-ID/kudu-star-dev-01/g' backend.tf
+sed -i 's/<YOUR-PROJECT-ID>/kudu-star-dev-01/g' backend.tf
 ```
 
 ### Step 4: Deploy Budgets
