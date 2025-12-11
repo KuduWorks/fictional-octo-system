@@ -71,7 +71,7 @@ terraform apply
 cp backend.tf.example backend.tf
 
 # Update with your project ID (replace <YOUR-PROJECT-ID>)
-sed -i 's/<YOUR-PROJECT-ID>/YOUR-PROJECT-ID/g' backend.tf
+sed -i 's/<YOUR-PROJECT-ID>/your-actual-project-id/g' backend.tf
 
 # Migrate local state to GCS
 terraform init -migrate-state
