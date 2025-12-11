@@ -56,8 +56,8 @@ deployments/gcp/
 │   └── budgets/               # GCP budgets and alerts
 │
 ├── compute/                    # Compute resources
-│   ├── gce-baseline/          # Google Compute Engine setup
-│   └── gke-cluster/           # Google Kubernetes Engine
+│   └── gce-baseline/          # Google Compute Engine setup
+│   # Kubernetes / GKE: coming soon (no cluster folder yet)
 │
 ├── networking/                 # Network resources
 │   ├── vpc-baseline/          # VPC setup with subnets

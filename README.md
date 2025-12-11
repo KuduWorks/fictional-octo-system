@@ -77,83 +77,21 @@ This repository contains Infrastructure as Code (IaC) templates and configuratio
 
 ## Features
 
-> *"All the things you wish Azure, AWS, AND GCP did automatically, now actually automated"* 🚀
+Concise overview — see per-cloud docs and `terraform/` for full details.
 
-### Multi-Cloud Infrastructure
-- **Tri-Cloud Deployment**: Parallel infrastructure patterns across Azure, AWS, and GCP *(because one cloud provider is too easy, two is getting there, three is just showing off)*
-- **Unified Terraform State**: Separate state backends per cloud (Azure Blob Storage, S3, and GCS) *(organized chaos across three dimensions)*
-- **Nordic Region Strategy**: 
-  - **AWS**: Stockholm (`eu-north-1`) *(keeping latency low and Swedes happy)*
-  - **Azure**: Sweden Central (`swedencentral`) *(because why not double down on Sweden)*
-  - **GCP**: Finland (`europe-north1`) *(spreading the Nordic love to Finland)*
-- **Policy Mirroring**: ISO 27001 compliance patterns across all three clouds *(triple the compliance, triple the fun)*
-- **OIDC Authentication**: Passwordless GitHub Actions across all platforms *(no more secret keys lying around)*
+- **Multi-Cloud strategy**: Tri-cloud IaC patterns with per-cloud state backends and a Nordic region strategy. See [deployments/azure/](deployments/azure/), [deployments/aws/](deployments/aws/), [deployments/gcp/](deployments/gcp/) and [terraform/](terraform/).
+- **Security & Identity**: OIDC / Workload Identity Federation, Key Vault / Secrets Manager patterns, and organization-level policies for prevention and compliance.
+- **Infrastructure Management**: Reusable modules, automated VM scheduling, IP management utilities, and per-cloud state bootstraps.
+- **Cost & Governance**: Budget alerts, SCPs/org policies, and monitoring playbooks to manage spend and compliance.
 
-### Infrastructure Management (Azure)
-- **Smart IP Management**: Automatic IP whitelisting for dynamic IPs *(because nobody likes manually updating firewall rules at 9 PM)*
-- **Secure VM Deployment**: Private VMs with Azure Bastion access *(no public IPs here, we're not savages)*
-- **Automated Scheduling**: VM start/stop automation (7 AM/7 PM Finnish time) *(saving money while you sleep)*
-- **Azure AD Integration**: App registration automation with secret rotation *(passwords that change themselves, living the dream)*
-- **Naming Convention Module**: Reusable Terraform module for consistent Azure resource naming *(no more debates about whether it's "rg-prod-app-01" or "prod-app-rg-01")*
-- Azure Virtual Network (VNet) deployment with NAT Gateway
-- Remote state management in Azure Storage (`tfstate20251013`)
-- Infrastructure as Code using Terraform with wrapper scripts
+## Monitoring
 
-### Security & Identity
-> *"Security so good, even your paranoid CISO will approve"* 🔐
+Monitoring summary — detailed monitoring configs live under each cloud folder.
 
-- **Key Vault with RBAC**: Secure secrets management using modern role-based access control *(not the legacy access policies with security holes)*
-- **App Registration Automation**: Service principals with automated secret rotation *(because manual rotation is how security breaches happen)*
-- **Federated Identity**: Passwordless authentication via OIDC (GitHub Actions, Kubernetes) *(passwords are so 2015)*
-- **Permission Management**: Graph vs. resource-specific scope guidance *(not just "give it Owner and hope for the best")*
-- IP-restricted storage account access *(your state file isn't open to the entire internet)*
-- Network security rules *(because defense in depth is not just a buzzword)*
-- Azure Monitor integration *(so you know when things go wrong before your manager does)*
-- Secure state storage configuration *(your terraform.tfstate is safe and sound)*
-
-### Monitoring
-> *"If it's not monitored, it doesn't exist (until it breaks at 3 AM)"* 📊
-
-**Azure:**
-- Log Analytics Workspace *(all your logs in one place, like a well-organized filing cabinet)*
-- Storage metrics collection *(because storage costs can sneak up on you)*
-- Availability monitoring *(the early warning system you actually need)*
-- Alert configurations *(emails that matter, not spam)*
-
-**AWS:**
-- AWS Config for compliance monitoring *(the robot that checks your homework)*
-- Service Control Policies (SCPs) for preventive enforcement *(✅ Active: blocks non-compliant actions)*
-- AWS Budgets for cost tracking and alerts *(emails when you're about to exceed your limit)*
-- CloudWatch for logs and metrics *(like Log Analytics, but with more confusing pricing)*
-- SNS for alerting *(because your phone needs more notifications at 3 AM)*
-- Config rules for encryption enforcement *(encrypt all the things!)*
-
-**GCP:**
-- Cloud Monitoring for metrics and alerting *(the Google way of saying "your stuff is broken")*
-- Cloud Logging for centralized log management *(like the other two, but with better search)*
-- Security Command Center for security insights *(Google's security PhD telling you what's wrong)*
-- Cloud Billing budgets and alerts *(because even Google doesn't want you to go bankrupt)*
-- Organization policies for compliance *(constraints that prevent you from doing stupid things)*
-
-### Infrastructure Management (AWS)
-- **Terraform State Backend**: S3 bucket with DynamoDB locking in eu-north-1 *(because Stockholm > Virginia for Finnish users)*
-- **Service Control Policies (SCPs)**: ✅ **ACTIVE** - Preventive enforcement at organization level
-  - Region restriction to Stockholm (eu-north-1) *(no accidental us-east-1 deployments)*
-  - S3 public access blocking *(all S3 buckets private by default)*
-  - Account-level public access blocks *(defense in depth)*
-- **AWS Config Rules**: Automated compliance monitoring (9 rules active) *(detection layer for visibility)*
-- **AWS Budgets & Cost Management**: Automated spending limits with email alerts *(know before you owe)*
-- **IAM OIDC Integration**: Passwordless GitHub Actions authentication *(no more AWS access keys!)*
-- **Secrets Manager**: AWS equivalent to Key Vault *(planned)*
-- **Systems Manager**: EC2 automation and patch management *(planned)*
-
-### Infrastructure Management (GCP)
-- **Terraform State Backend**: GCS bucket with built-in locking in europe-north1 *(Finland > Virginia for Finnish users)*
-- **Workload Identity Federation**: Passwordless GitHub Actions authentication *(the Google way of saying "no service account keys")*
-- **Cloud Billing Budgets**: Automated spending limits with email alerts *(because even Google knows cloud costs can surprise you)*
-- **Organization Policies**: Automated compliance and security constraints *(Google's way of preventing you from shooting yourself in the foot)*
-- **Secret Manager**: Google's take on secret storage *(like the others, but with Google-scale reliability)*
-- **Cloud IAM**: Fine-grained permissions with custom roles *(because sometimes you need exactly 47 permissions, not 46 or 48)*
+- **Azure**: Centralized logs and alerts via Log Analytics and Azure Monitor. See [deployments/azure/](deployments/azure/).
+- **AWS**: Compliance & observability with AWS Config, CloudWatch, Budgets, and SNS alerting. See [deployments/aws/](deployments/aws/).
+- **GCP**: Cloud Monitoring/Logging and Security Command Center for insights and alerts. See [deployments/gcp/](deployments/gcp/).
+- **Unified**: Email-based alerting and cost alerts across clouds; integrate with your PagerDuty/Slack as needed.
 
 ## Getting Started
 
