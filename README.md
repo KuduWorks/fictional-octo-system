@@ -11,7 +11,7 @@ Multi-cloud Terraform modules and deployment examples for Azure, AWS, and GCP. P
 
 ## Quick Links
 
-- **Azure** 💠: [deployments/azure/](deployments/azure/) — app registration, Key Vault, modules
+- **Azure** 🔵: [deployments/azure/](deployments/azure/) — app registration, Key Vault, modules
 - **AWS** 🟠: [deployments/aws/](deployments/aws/) — state bootstrap, budgets, IAM, networking
 - **GCP** 🔴: [deployments/gcp/](deployments/gcp/) — bootstrap, workload identity, security
 - **Terraform root**: [terraform/](terraform/) — shared state backend and VNet examples
