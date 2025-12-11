@@ -36,7 +36,7 @@ terraform init && terraform apply
 ## Auth (local & CI)
 
 - Local: use Application Default Credentials (`gcloud auth application-default login`). No key files, fewer tears.
-- CI: use [Workload Identity Federation](iam/workload-identity/). See `deployments/gcp/iam/workload-identity/README.md`.
+- CI: use [Workload Identity Federation](iam/workload-identity/). See `iam/workload-identity/README.md`.
 
 ## State backend
 
@@ -44,7 +44,7 @@ Use GCS for Terraform state. Example backend:
 ```hcl
 terraform {
   backend "gcs" {
-    bucket = "fictional-octo-system-tfstate-PROJECT-ID"
+    bucket = "fictional-octo-system-tfstate-<YOUR-PROJECT-ID>"
     prefix = "gcp/service/module/terraform.tfstate"
   }
 }
@@ -57,7 +57,7 @@ terraform {
 
 ## Monitoring & Cost
 
-- Monitoring: Cloud Monitoring / Logging; see `deployments/gcp/monitoring/`.
+- Monitoring: Cloud Monitoring / Logging.
 - Cost: budgets live under `deployments/gcp/cost-management/`.
 
 ## Help & Troubleshooting
@@ -68,7 +68,7 @@ terraform {
 ```bash
 gcloud auth list
 gcloud config list
-gsutil ls gs://fictional-octo-system-tfstate-PROJECT-ID
+gsutil ls gs://fictional-octo-system-tfstate-<YOUR-PROJECT-ID>
 ```
 
 ---
