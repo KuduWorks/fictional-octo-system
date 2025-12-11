@@ -6,40 +6,16 @@ A multi-cloud infrastructure deployment repository for managing Azure, AWS, and 
 
 ## Table of Contents
 
-- [Overview](#overview)
-- [Repository Structure](#repository-structure)
-- [Docs & Reference](#docs--reference)
-- [Features](#features)
-- [Getting Started](#getting-started)
-- [Security Features](#security-features)
-- [Monitoring Capabilities](#monitoring-capabilities)
-- [Multi-Cloud Comparison](#multi-cloud-comparison)
-- [Best Practices](#best-practices)
-- [Contributing](#contributing)
-- [Support](#support)
-- [License](#license)
-- [Acknowledgments](#acknowledgments)
 
 ## Overview
 
 This repository contains Infrastructure as Code (IaC) templates and configurations for deploying and managing **Azure**, **AWS**, and **Google Cloud Platform (GCP)** resources, with a focus on secure storage, monitoring, and virtual networking components. *(In other words: Everything you need to run tri-cloud infrastructure like a boss, with triple the complexity and triple the buzzwords)*
 
 **Multi-Cloud Strategy**: We deploy similar infrastructure patterns across Azure, AWS, and GCP, allowing for:
-- 🎯 **Vendor flexibility** *(when one cloud provider has an outage, you have... two other cloud providers with outages)*
-- 💼 **Team skill development** *(because learning two cloud platforms wasn't challenging enough)*
-- 📊 **Cost optimization** *(use the cheapest option for each service, if you can figure out all their pricing models)*
-- 🌍 **Geographic reach** *(Azure in some places, AWS in others, GCP everywhere, sanity nowhere)*
-- 🔐 **Authentication mastery** *(Azure CLI, AWS CLI, gcloud CLI - collect them all!)*
 
 ## Repository Structure
 
-- [terraform/](terraform/README.md) — Core Terraform configs (Azure) + scripts and storage docs *(organized chaos, but tidy)*
   - [QUICKSTART_DYNAMIC_IP.md](terraform/QUICKSTART_DYNAMIC_IP.md) — Dynamic IP quick start
-  - [TERRAFORM_STATE_ACCESS.md](terraform/TERRAFORM_STATE_ACCESS.md) / [STORAGE_ACCESS.md](terraform/STORAGE_ACCESS.md) — State access playbooks
-- deployments/ — Cloud-specific payloads
-  - [azure/](deployments/azure/README.md) 🔵 — app registration, Key Vault, VM automation, policies, reporting, and the [naming-convention module](deployments/azure/modules/naming-convention/README.md)
-    - [policies](deployments/azure/policies/README.md): [cost-management](deployments/azure/policies/cost-management/), [iso27001-crypto](deployments/azure/policies/iso27001-crypto/), [region-control](deployments/azure/policies/region-control/), [security-baseline](deployments/azure/policies/security-baseline/), [vm-encryption](deployments/azure/policies/vm-encryption/)
-    - [reporting](deployments/azure/reporting/README.md) — export scripts for IAM
   - [aws/](deployments/aws/README.md) 🟠 — state bootstrap, budget monitoring, CloudTrail org setup, IAM, KMS, networking, secrets, SNS
     - [terraform-state-bootstrap](deployments/aws/terraform-state-bootstrap/README.md) — S3 + DynamoDB backend
     - [budget-monitoring](deployments/aws/budget-monitoring/README.md) — keep spend honest
@@ -51,7 +27,6 @@ This repository contains Infrastructure as Code (IaC) templates and configuratio
     - [networking](deployments/aws/networking/) — VPC bits
     - [secrets](deployments/aws/secrets/) — Secrets Manager setup
     - [sns-notifications](deployments/aws/sns-notifications/) — alerts that actually alert
-    - [policies](deployments/aws/policies/README.md): [region-control](deployments/aws/policies/region-control/), [encryption-baseline](deployments/aws/policies/encryption-baseline/), [organization-protection](deployments/aws/policies/organization-protection/)
   - [gcp/](deployments/gcp/README.md) 🔴 — bootstrap, IAM, security, cost, monitoring, networking, storage, compute
     - [QUICKSTART](deployments/gcp/QUICKSTART.md) — 5-minute setup
     - [AUTHENTICATION_SETUP](deployments/gcp/AUTHENTICATION_SETUP.md) — auth prep
