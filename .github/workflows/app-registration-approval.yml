@@ -1,0 +1,406 @@
+name: App Registration Approval
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - 'deployments/azure/app-registration/**/*.tf'
+      - 'deployments/azure/app-registration/**/*.tfvars'
+      - '!deployments/azure/app-registration/**/*.md'
+      - '!deployments/azure/app-registration/**/README.md'
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write  # For Azure OIDC authentication
+
+env:
+  TERRAFORM_VERSION: '1.6.0'
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  validate-changes:
+    name: Validate App Registration Changes
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Full history for accurate diff detection
+      
+      - name: Setup Azure CLI
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Detect changed Terraform files
+        id: detect-changes
+        run: |
+          # Get changed files in this PR
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.tf$|\.tfvars$' | grep 'deployments/azure/app-registration/' || true)
+          
+          if [ -z "$CHANGED_FILES" ]; then
+            echo "skip_validation=true" >> $GITHUB_OUTPUT
+            echo "No Terraform files changed in app-registration directory"
+            exit 0
+          fi
+          
+          echo "skip_validation=false" >> $GITHUB_OUTPUT
+          echo "changed_files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED_FILES" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          
+          # Check if only documentation files changed
+          NON_DOC_CHANGES=$(echo "$CHANGED_FILES" | grep -v 'README.md\|\.md$' || true)
+          if [ -z "$NON_DOC_CHANGES" ]; then
+            echo "only_docs_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "only_docs_changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Skip validation if only docs changed
+        if: steps.detect-changes.outputs.only_docs_changed == 'true'
+        run: |
+          echo "::notice::Only documentation files changed. Skipping validation."
+          exit 0
+      
+      - name: Run owner verification script
+        id: verify-owners
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        run: |
+          cd deployments/azure/app-registration
+          
+          # Make script executable
+          chmod +x scripts/verify-owners.sh
+          
+          # Run verification and capture JSON output
+          VERIFICATION_OUTPUT=$(./scripts/verify-owners.sh 2>&1 || true)
+          
+          # Save output for PR comment
+          echo "$VERIFICATION_OUTPUT" > /tmp/owner-verification.json
+          
+          # Check if verification passed
+          if echo "$VERIFICATION_OUTPUT" | jq -e '.validation_passed == true' > /dev/null 2>&1; then
+            echo "verification_passed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Owner verification passed"
+          else
+            echo "verification_passed=false" >> $GITHUB_OUTPUT
+            echo "::warning::Owner verification failed"
+            
+            # Extract and display errors
+            ERRORS=$(echo "$VERIFICATION_OUTPUT" | jq -r '.validation_errors[]' 2>/dev/null || echo "Failed to parse verification errors")
+            echo "::error::$ERRORS"
+          fi
+          
+          # Save JSON for later use
+          echo "verification_json<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/owner-verification.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Run permission validation script
+        id: validate-permissions
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        run: |
+          cd deployments/azure/app-registration
+          
+          # Make script executable
+          chmod +x scripts/validate-permissions.sh
+          
+          # Run validation and capture JSON output
+          VALIDATION_OUTPUT=$(./scripts/validate-permissions.sh 2>&1 || true)
+          
+          # Save output for PR comment
+          echo "$VALIDATION_OUTPUT" > /tmp/permission-validation.json
+          
+          # Check if validation passed
+          if echo "$VALIDATION_OUTPUT" | jq -e '.validation_passed == true' > /dev/null 2>&1; then
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Permission validation passed"
+          else
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            echo "::warning::Permission validation failed"
+            
+            # Extract and display errors
+            ERRORS=$(echo "$VALIDATION_OUTPUT" | jq -r '.validation_errors[]' 2>/dev/null || echo "Failed to parse validation errors")
+            echo "::error::$ERRORS"
+          fi
+          
+          # Save JSON for later use
+          echo "validation_json<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/permission-validation.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Run Terraform init
+        id: terraform-init
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        working-directory: deployments/azure/app-registration
+        run: |
+          terraform init -backend=false  # Skip backend for validation-only
+        continue-on-error: true
+      
+      - name: Run Terraform validate
+        id: terraform-validate
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        working-directory: deployments/azure/app-registration
+        run: |
+          terraform validate -json > /tmp/terraform-validate.json
+          
+          # Check validation result
+          if jq -e '.valid == true' /tmp/terraform-validate.json > /dev/null 2>&1; then
+            echo "validation_passed=true" >> $GITHUB_OUTPUT
+            echo "::notice::Terraform validation passed"
+          else
+            echo "validation_passed=false" >> $GITHUB_OUTPUT
+            echo "::error::Terraform validation failed"
+            
+            # Display diagnostics
+            jq -r '.diagnostics[]? | "[\(.severity | ascii_upcase)] \(.summary): \(.detail)"' /tmp/terraform-validate.json
+          fi
+          
+          # Save JSON for later use
+          echo "validate_json<<EOF" >> $GITHUB_OUTPUT
+          cat /tmp/terraform-validate.json >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Run Terraform plan
+        id: terraform-plan
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        working-directory: deployments/azure/app-registration
+        run: |
+          # Run plan and capture output
+          terraform plan -no-color -out=tfplan 2>&1 | tee /tmp/terraform-plan.txt
+          
+          # Check for precondition failures (lifecycle validation)
+          if grep -q "Error: Resource precondition failed" /tmp/terraform-plan.txt; then
+            echo "precondition_failed=true" >> $GITHUB_OUTPUT
+            echo "::error::Terraform lifecycle preconditions failed"
+          else
+            echo "precondition_failed=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Save plan output
+          echo "plan_output<<EOF" >> $GITHUB_OUTPUT
+          head -n 200 /tmp/terraform-plan.txt >> $GITHUB_OUTPUT  # Limit to 200 lines
+          echo "EOF" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Generate validation summary
+        id: generate-summary
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        run: |
+          # Determine overall validation status
+          OWNER_PASS="${{ steps.verify-owners.outputs.verification_passed }}"
+          PERM_PASS="${{ steps.validate-permissions.outputs.validation_passed }}"
+          TF_VALIDATE_PASS="${{ steps.terraform-validate.outputs.validation_passed }}"
+          TF_PLAN_FAIL="${{ steps.terraform-plan.outputs.precondition_failed }}"
+          
+          if [ "$OWNER_PASS" = "true" ] && [ "$PERM_PASS" = "true" ] && [ "$TF_VALIDATE_PASS" = "true" ] && [ "$TF_PLAN_FAIL" = "false" ]; then
+            echo "all_checks_passed=true" >> $GITHUB_OUTPUT
+            echo "status_emoji=✅" >> $GITHUB_OUTPUT
+            echo "status_text=All validations passed" >> $GITHUB_OUTPUT
+          else
+            echo "all_checks_passed=false" >> $GITHUB_OUTPUT
+            echo "status_emoji=❌" >> $GITHUB_OUTPUT
+            echo "status_text=Validation failures detected" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Post PR comment with validation results
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            
+            // Read validation outputs
+            const ownerVerification = ${{ steps.verify-owners.outputs.verification_json || '{}' }};
+            const permissionValidation = ${{ steps.validate-permissions.outputs.validation_json || '{}' }};
+            const tfValidate = ${{ steps.terraform-validate.outputs.validate_json || '{}' }};
+            
+            // Build comment body
+            let commentBody = `## ${{ steps.generate-summary.outputs.status_emoji }} App Registration Validation Results\n\n`;
+            commentBody += `**Status:** ${{ steps.generate-summary.outputs.status_text }}\n\n`;
+            commentBody += `**Commit:** ${context.sha.substring(0, 7)}\n`;
+            commentBody += `**Triggered by:** @${context.actor}\n\n`;
+            commentBody += `---\n\n`;
+            
+            // Owner Verification Section
+            commentBody += `### 👥 Owner Verification\n\n`;
+            if (${{ steps.verify-owners.outputs.verification_passed }}) {
+              commentBody += `✅ **PASSED**\n\n`;
+              commentBody += `- **Total Owners:** ${ownerVerification.total_owner_count || 'N/A'}\n`;
+              commentBody += `- **Human Owners:** ${ownerVerification.human_owner_count || 'N/A'}\n`;
+              commentBody += `- **Placeholder SPs:** ${ownerVerification.placeholder_count || 'N/A'}\n`;
+              
+              if (ownerVerification.requested_owners && ownerVerification.requested_owners.length > 0) {
+                commentBody += `\n**Verified Owners:**\n`;
+                ownerVerification.requested_owners.forEach(owner => {
+                  const status = owner.exists ? '✅' : '❌';
+                  const enabled = owner.account_enabled ? 'Enabled' : '⚠️ DISABLED';
+                  commentBody += `- ${status} ${owner.owner_id} (${owner.owner_type}) - ${enabled}\n`;
+                });
+              }
+            } else {
+              commentBody += `❌ **FAILED**\n\n`;
+              if (ownerVerification.validation_errors && ownerVerification.validation_errors.length > 0) {
+                commentBody += `**Errors:**\n`;
+                ownerVerification.validation_errors.forEach(error => {
+                  commentBody += `- ⚠️ ${error}\n`;
+                });
+              }
+            }
+            
+            // Permission Validation Section
+            commentBody += `\n### 🔐 Permission Risk Assessment\n\n`;
+            if (${{ steps.validate-permissions.outputs.validation_passed }}) {
+              commentBody += `✅ **PASSED**\n\n`;
+              
+              if (permissionValidation.risk_summary) {
+                const summary = permissionValidation.risk_summary;
+                commentBody += `**Risk Summary:**\n`;
+                commentBody += `- **HIGH Risk:** ${summary.high_risk_count || 0} permissions\n`;
+                commentBody += `- **MEDIUM Risk:** ${summary.medium_risk_count || 0} permissions\n`;
+                commentBody += `- **LOW Risk:** ${summary.low_risk_count || 0} permissions\n`;
+              }
+              
+              if (permissionValidation.permissions && permissionValidation.permissions.length > 0) {
+                commentBody += `\n<details>\n<summary>📋 Detailed Permission List</summary>\n\n`;
+                commentBody += `| Permission | Type | Risk | Justification |\n`;
+                commentBody += `|------------|------|------|---------------|\n`;
+                permissionValidation.permissions.forEach(perm => {
+                  const riskEmoji = perm.risk_level === 'HIGH' ? '🔴' : perm.risk_level === 'MEDIUM' ? '🟡' : '🟢';
+                  const justLen = perm.justification ? perm.justification.length : 0;
+                  const justText = perm.justification ? `${justLen} chars` : 'N/A';
+                  commentBody += `| ${perm.value || perm.permission} | ${perm.type} | ${riskEmoji} ${perm.risk_level} | ${justText} |\n`;
+                });
+                commentBody += `\n</details>\n`;
+              }
+            } else {
+              commentBody += `❌ **FAILED**\n\n`;
+              if (permissionValidation.validation_errors && permissionValidation.validation_errors.length > 0) {
+                commentBody += `**Errors:**\n`;
+                permissionValidation.validation_errors.forEach(error => {
+                  commentBody += `- ⚠️ ${error}\n`;
+                });
+              }
+            }
+            
+            // Terraform Validation Section
+            commentBody += `\n### 📝 Terraform Validation\n\n`;
+            if (${{ steps.terraform-validate.outputs.validation_passed }}) {
+              commentBody += `✅ **PASSED**\n`;
+            } else {
+              commentBody += `❌ **FAILED**\n\n`;
+              if (tfValidate.diagnostics && tfValidate.diagnostics.length > 0) {
+                commentBody += `**Diagnostics:**\n`;
+                tfValidate.diagnostics.forEach(diag => {
+                  const emoji = diag.severity === 'error' ? '🔴' : '🟡';
+                  commentBody += `- ${emoji} **${diag.severity.toUpperCase()}**: ${diag.summary}\n`;
+                  if (diag.detail) {
+                    commentBody += `  ${diag.detail}\n`;
+                  }
+                });
+              }
+            }
+            
+            // Terraform Plan Section
+            commentBody += `\n### 📋 Terraform Plan\n\n`;
+            if (${{ steps.terraform-plan.outputs.precondition_failed }}) {
+              commentBody += `❌ **PRECONDITION FAILED**\n\n`;
+              commentBody += `Terraform lifecycle preconditions detected validation failures.\n`;
+              commentBody += `Review the plan output below for details.\n\n`;
+            } else {
+              commentBody += `✅ **Plan generated successfully**\n\n`;
+            }
+            
+            const planOutput = `${{ steps.terraform-plan.outputs.plan_output }}`;
+            if (planOutput) {
+              commentBody += `<details>\n<summary>📄 View Terraform Plan Output</summary>\n\n\`\`\`terraform\n${planOutput}\n\`\`\`\n\n</details>\n`;
+            }
+            
+            // Approval Requirements
+            commentBody += `\n---\n\n### ✅ Approval Requirements\n\n`;
+            if (${{ steps.generate-summary.outputs.all_checks_passed }}) {
+              commentBody += `This PR is ready for review and approval.\n\n`;
+              commentBody += `**Required Reviewers:** 2 approvals from authorized reviewers\n\n`;
+              commentBody += `Once approved, this PR will trigger deployment workflow on merge to main.\n`;
+            } else {
+              commentBody += `⚠️ **This PR cannot be merged until all validation checks pass.**\n\n`;
+              commentBody += `Please address the validation failures above and push updated changes.\n`;
+            }
+            
+            // Footer
+            commentBody += `\n---\n\n`;
+            commentBody += `<sub>🤖 This comment was automatically generated by the App Registration Approval workflow.</sub>\n`;
+            commentBody += `<sub>📚 [View approval workflow documentation](../deployments/azure/app-registration/APPROVAL_WORKFLOW.md)</sub>\n`;
+            
+            // Check for existing comment
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('App Registration Validation Results')
+            );
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+      
+      - name: Set PR check status
+        if: steps.detect-changes.outputs.skip_validation == 'false'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const allChecksPassed = ${{ steps.generate-summary.outputs.all_checks_passed }};
+            
+            await github.rest.repos.createCommitStatus({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              sha: context.sha,
+              state: allChecksPassed ? 'success' : 'failure',
+              context: 'App Registration Validation',
+              description: allChecksPassed ? 'All validations passed' : 'Validation failures detected',
+              target_url: `${context.payload.repository.html_url}/actions/runs/${context.runId}`
+            });
+      
+      - name: Fail workflow if validations failed
+        if: steps.detect-changes.outputs.skip_validation == 'false' && steps.generate-summary.outputs.all_checks_passed != 'true'
+        run: |
+          echo "::error::App registration validation failed. Review PR comment for details."
+          exit 1

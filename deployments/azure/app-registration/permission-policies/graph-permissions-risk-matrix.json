@@ -1,0 +1,160 @@
+{
+  "version": "1.0",
+  "description": "Microsoft Graph API permission risk classification matrix for app registration approval workflow",
+  "reference_url": "https://learn.microsoft.com/en-us/graph/permissions-reference",
+  "classification_rules": {
+    "HIGH": {
+      "pattern": "\\.All$",
+      "description": "Permissions ending in .All that grant broad access across all resources",
+      "justification_required": true,
+      "min_justification_length": 100,
+      "examples": [
+        "User.ReadWrite.All",
+        "Directory.Read.All",
+        "Application.ReadWrite.All",
+        "Mail.ReadWrite.All",
+        "Files.ReadWrite.All",
+        "Sites.ReadWrite.All",
+        "Calendars.ReadWrite.All",
+        "Contacts.ReadWrite.All",
+        "Group.ReadWrite.All",
+        "RoleManagement.ReadWrite.Directory"
+      ],
+      "requires_security_review": true
+    },
+    "MEDIUM": {
+      "pattern": "^Application\\.",
+      "description": "Application permissions (app-only) without .All suffix - operates without user context",
+      "justification_required": true,
+      "min_justification_length": 0,
+      "examples": [
+        "Application.ReadWrite.OwnedBy",
+        "User.Read",
+        "Mail.Send",
+        "Directory.AccessAsUser.All"
+      ],
+      "requires_security_review": false
+    },
+    "LOW": {
+      "pattern": "^Delegated\\.",
+      "description": "Delegated permissions without .All suffix - limited by signed-in user's permissions",
+      "justification_required": false,
+      "min_justification_length": 0,
+      "blast_radius_note": "⚠️ Operates in user context - limited by signed-in user's permissions",
+      "examples": [
+        "User.Read",
+        "User.ReadBasic.All",
+        "Calendars.Read",
+        "Mail.Read",
+        "Files.Read"
+      ],
+      "requires_security_review": false
+    }
+  },
+  "well_known_high_risk_permissions": [
+    {
+      "id": "06b708a9-e830-4db3-a914-8e69da51d44f",
+      "name": "Application.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write all applications",
+      "blast_radius": "Can modify any application in the directory"
+    },
+    {
+      "id": "1bfefb4e-e0b5-418b-a88f-73c46d2cc8e9",
+      "name": "Application.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write all applications (delegated)",
+      "blast_radius": "Can modify applications the user has access to"
+    },
+    {
+      "id": "19dbc75e-c2e2-444c-a770-ec69d8559fc7",
+      "name": "Directory.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write directory data",
+      "blast_radius": "Can modify any directory object including users, groups, devices"
+    },
+    {
+      "id": "c5366453-9fb0-48a5-a156-24f0c49a4b84",
+      "name": "Directory.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write directory data (delegated)",
+      "blast_radius": "Can modify directory objects the user has access to"
+    },
+    {
+      "id": "741f803b-c850-494e-b5df-cde7c675a1ca",
+      "name": "User.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write all users' full profiles",
+      "blast_radius": "Can modify any user profile, reset passwords, assign roles"
+    },
+    {
+      "id": "204e0828-b5ca-4ad8-b9f3-f32a958e7cc4",
+      "name": "User.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write all users' full profiles (delegated)",
+      "blast_radius": "Can modify user profiles the signed-in user has access to"
+    },
+    {
+      "id": "e2a3a72e-5f79-4c64-b1b1-878b674786c9",
+      "name": "Mail.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write mail in all mailboxes",
+      "blast_radius": "Can read and send email as any user"
+    },
+    {
+      "id": "024d486e-b451-40bb-833d-3e66d98c5c73",
+      "name": "Mail.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write user mail (delegated)",
+      "blast_radius": "Can read and modify mail the user has access to"
+    },
+    {
+      "id": "9e3f62cf-ca93-4989-b6ce-bf83c28f9fe8",
+      "name": "RoleManagement.ReadWrite.Directory",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Manage all directory RBAC settings",
+      "blast_radius": "Can assign any role to any principal including Global Administrator"
+    },
+    {
+      "id": "62a82d76-70ea-41e2-9197-370581804d09",
+      "name": "Group.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write all groups",
+      "blast_radius": "Can create, modify, delete any group including security groups"
+    },
+    {
+      "id": "75359482-378d-4052-8f01-80520e7db3cd",
+      "name": "Files.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write files in all site collections",
+      "blast_radius": "Can access and modify any file in SharePoint/OneDrive"
+    },
+    {
+      "id": "863451e7-0667-486c-a5d6-d135439485f0",
+      "name": "Sites.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write items in all site collections",
+      "blast_radius": "Can modify any SharePoint site content"
+    }
+  ],
+  "notes": [
+    "Application permissions (Role) generally have larger blast radius than Delegated (Scope) permissions",
+    "Any permission ending in .All should be classified as HIGH risk regardless of type",
+    "Delegated permissions without .All are LOW risk due to user context limitations",
+    "Application permissions without .All are MEDIUM risk as they operate without user context",
+    "HIGH risk permissions always require 100-character minimum justification",
+    "All permission requests must be validated against the official Microsoft Graph permissions reference"
+  ]
+}

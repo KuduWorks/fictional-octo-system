@@ -28,10 +28,62 @@ provider "azurerm" {
 # Data source to get current client configuration
 data "azuread_client_config" "current" {}
 
+# Data sources to validate owners exist and get their details
+data "azuread_user" "owners" {
+  for_each = toset([
+    for owner_id in var.app_owners : owner_id
+    if can(data.azuread_user.owners[owner_id])
+  ])
+  
+  object_id = each.value
+}
+
+data "azuread_service_principal" "owners" {
+  for_each = toset([
+    for owner_id in var.app_owners : owner_id
+    if !can(data.azuread_user.owners[owner_id])
+  ])
+  
+  object_id = each.value
+}
+
+# Local values for owner validation
+locals {
+  # Identify which owners are users vs service principals
+  user_owner_ids = [
+    for owner_id in var.app_owners : owner_id
+    if can(data.azuread_user.owners[owner_id])
+  ]
+  
+  sp_owner_ids = [
+    for owner_id in var.app_owners : owner_id
+    if can(data.azuread_service_principal.owners[owner_id])
+  ]
+  
+  # Count owners by type
+  human_owner_count = length(local.user_owner_ids)
+  placeholder_count = length(local.sp_owner_ids)
+  
+  # Validate disabled users (requires external script verification)
+  # This is a Terraform-level check; actual account status checked by verify-owners.sh in CI/CD
+  
+  # Detect if any high-risk permissions are used
+  high_risk_permissions = [
+    for perm in var.graph_permissions : perm.value
+    if can(regex("\\.All$", perm.value))
+  ]
+  
+  # Validate all high-risk permissions have justifications
+  missing_justifications = [
+    for perm in local.high_risk_permissions : perm
+    if !contains(keys(var.permission_justifications), perm)
+  ]
+}
+
 # Application Registration
 resource "azuread_application" "app" {
   display_name     = var.app_display_name
-  owners           = [data.azuread_client_config.current.object_id]
+  owners           = var.app_owners  # Use dynamic owner list instead of hard-coded current user
   sign_in_audience = var.sign_in_audience
 
   # Web application configuration
@@ -132,13 +184,92 @@ resource "azuread_application" "app" {
   }
 
   tags = toset(values(var.tags))
+  
+  # Lifecycle validation rules (zero-trust enforcement)
+  lifecycle {
+    # Rule 1: At least 1 human owner required
+    precondition {
+      condition     = local.human_owner_count >= 1
+      error_message = <<-EOT
+        FAILED: At least 1 HUMAN owner required (zero-trust principle).
+        Current: ${local.human_owner_count} human owner(s), ${local.placeholder_count} service principal(s).
+        
+        Human owners ensure accountability and prevent automation-only access.
+        Add at least one Azure AD user object ID to app_owners list.
+      EOT
+    }
+    
+    # Rule 2: Maximum 1 placeholder service principal
+    precondition {
+      condition     = local.placeholder_count <= 1
+      error_message = <<-EOT
+        FAILED: Maximum 1 placeholder service principal allowed.
+        Current: ${local.placeholder_count} service principal(s) in app_owners.
+        
+        Multiple placeholders dilute accountability and violate governance policy.
+        Replace placeholder service principals with human owners.
+        Use modules/placeholder-service-principal only when absolutely necessary.
+      EOT
+    }
+    
+    # Rule 3: If placeholder used, justification required
+    precondition {
+      condition     = local.placeholder_count == 0 || (local.placeholder_count > 0 && length(var.placeholder_owner_justification) >= 50)
+      error_message = <<-EOT
+        FAILED: Placeholder service principal detected but justification missing or too short.
+        Current placeholder_owner_justification length: ${length(var.placeholder_owner_justification)} characters.
+        
+        Placeholder justifications must be at least 50 characters.
+        Explain:
+        - Why 2 human owners are not available
+        - Timeline for replacing placeholder with human owner
+        - Business context requiring application creation before owners identified
+        
+        Placeholder service principals are reviewed quarterly (Q2/Q4 first Monday).
+        Placeholders existing >6 months will be escalated to leadership.
+      EOT
+    }
+    
+    # Rule 4: All high-risk permissions must have justifications
+    precondition {
+      condition     = length(local.missing_justifications) == 0
+      error_message = <<-EOT
+        FAILED: HIGH-RISK permissions detected without justifications.
+        Missing justifications for: ${jsonencode(local.missing_justifications)}
+        
+        Permissions ending in ".All" grant broad access and require 100+ character justification.
+        Add to permission_justifications map:
+        {
+          "Permission.Name.All" = "Detailed justification explaining business need, alternatives considered, approval details (minimum 100 characters)..."
+        }
+        
+        See permission-policies/graph-permissions-risk-matrix.json for risk classification.
+      EOT
+    }
+    
+    # Rule 5: Manual override requires justification if validation bypassed
+    precondition {
+      condition     = var.manual_override_justification == "" || length(var.manual_override_justification) >= 50
+      error_message = <<-EOT
+        FAILED: Manual override justification too short.
+        Current length: ${length(var.manual_override_justification)} characters.
+        
+        Manual overrides require 50+ character justification documenting:
+        - Why validation is being bypassed
+        - Risk assessment and mitigation
+        - Approval authority
+        
+        Manual overrides are logged and reviewed quarterly for compliance.
+      EOT
+    }
+  }
 }
 
 # Service Principal for the application
 resource "azuread_service_principal" "app_sp" {
   client_id                    = azuread_application.app.client_id
   app_role_assignment_required = var.app_role_assignment_required
-  owners                       = [data.azuread_client_config.current.object_id]
+  owners                       = var.app_owners  # Use same dynamic owner list
 
   feature_tags {
     enterprise = false
