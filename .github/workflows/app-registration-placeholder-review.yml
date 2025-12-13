@@ -1,0 +1,361 @@
+name: Quarterly Placeholder Review
+
+on:
+  schedule:
+    # Run on first Monday of Q2 (April) and Q4 (October) at 9 AM UTC
+    # Note: This approximates first Monday - manual triggering available for exact dates
+    - cron: '0 9 1-7 4,10 1'  # April and October, days 1-7, only Mondays
+  
+  workflow_dispatch:
+    inputs:
+      force_review:
+        description: 'Force review regardless of quarter'
+        required: false
+        type: boolean
+        default: false
+      escalate_old_placeholders:
+        description: 'Escalate placeholders >6 months to leadership'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  issues: write
+  id-token: write
+
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+  ESCALATION_AGE_DAYS: 182  # 6 months = ~182 days
+
+jobs:
+  check-schedule:
+    name: Validate Review Schedule
+    runs-on: ubuntu-latest
+    outputs:
+      should_run: ${{ steps.check.outputs.should_run }}
+      is_first_monday: ${{ steps.check.outputs.is_first_monday }}
+      current_quarter: ${{ steps.check.outputs.current_quarter }}
+    
+    steps:
+      - name: Check if today is first Monday of Q2/Q4
+        id: check
+        run: |
+          # Get current date info
+          CURRENT_DATE=$(date +%Y-%m-%d)
+          CURRENT_DAY=$(date +%u)  # 1-7, Monday=1
+          CURRENT_DAY_OF_MONTH=$(date +%d)
+          CURRENT_MONTH=$(date +%m)
+          
+          echo "Current date: $CURRENT_DATE"
+          echo "Day of week: $CURRENT_DAY (1=Monday)"
+          echo "Day of month: $CURRENT_DAY_OF_MONTH"
+          echo "Month: $CURRENT_MONTH"
+          
+          # Determine quarter
+          if [ "$CURRENT_MONTH" -ge 4 ] && [ "$CURRENT_MONTH" -le 6 ]; then
+            QUARTER="Q2"
+          elif [ "$CURRENT_MONTH" -ge 10 ] && [ "$CURRENT_MONTH" -le 12 ]; then
+            QUARTER="Q4"
+          else
+            QUARTER="Q1_or_Q3"
+          fi
+          
+          echo "current_quarter=$QUARTER" >> $GITHUB_OUTPUT
+          
+          # Check if it's Monday (day 1)
+          if [ "$CURRENT_DAY" != "1" ]; then
+            echo "Not Monday - skipping review"
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "is_first_monday=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Check if it's first Monday (day 1-7)
+          if [ "$CURRENT_DAY_OF_MONTH" -le 7 ]; then
+            echo "is_first_monday=true" >> $GITHUB_OUTPUT
+            
+            # Check if it's Q2 or Q4
+            if [ "$QUARTER" = "Q2" ] || [ "$QUARTER" = "Q4" ]; then
+              echo "should_run=true" >> $GITHUB_OUTPUT
+              echo "::notice::First Monday of $QUARTER - running quarterly placeholder review"
+            else
+              echo "should_run=false" >> $GITHUB_OUTPUT
+              echo "::notice::First Monday but not Q2/Q4 - skipping review"
+            fi
+          else
+            echo "is_first_monday=false" >> $GITHUB_OUTPUT
+            echo "should_run=false" >> $GITHUB_OUTPUT
+            echo "::notice::Not first Monday of month - skipping review"
+          fi
+          
+          # Override if manually triggered with force_review
+          if [ "${{ github.event.inputs.force_review }}" = "true" ]; then
+            echo "should_run=true" >> $GITHUB_OUTPUT
+            echo "::notice::Manual trigger with force_review - running review"
+          fi
+
+  scan-placeholders:
+    name: Scan for Placeholder Service Principals
+    runs-on: ubuntu-latest
+    needs: check-schedule
+    if: needs.check-schedule.outputs.should_run == 'true'
+    
+    outputs:
+      placeholders_found: ${{ steps.scan.outputs.placeholders_found }}
+      total_count: ${{ steps.scan.outputs.total_count }}
+      old_placeholders_count: ${{ steps.scan.outputs.old_placeholders_count }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Azure CLI
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq bc
+      
+      - name: Scan for placeholder service principals
+        id: scan
+        run: |
+          echo "::group::Scanning for placeholder service principals"
+          
+          # Query Azure AD for all service principals with placeholder tag
+          PLACEHOLDERS=$(az ad sp list --all --query "[?tags[?contains(@, 'purpose:placeholder-owner')]].{id:id,displayName:displayName,createdDateTime:createdDateTime,appId:appId}" -o json)
+          
+          # Save to file
+          echo "$PLACEHOLDERS" > /tmp/placeholders.json
+          
+          # Count placeholders
+          TOTAL_COUNT=$(echo "$PLACEHOLDERS" | jq 'length')
+          
+          if [ "$TOTAL_COUNT" -eq 0 ]; then
+            echo "placeholders_found=false" >> $GITHUB_OUTPUT
+            echo "total_count=0" >> $GITHUB_OUTPUT
+            echo "old_placeholders_count=0" >> $GITHUB_OUTPUT
+            echo "::notice::No placeholder service principals found"
+            exit 0
+          fi
+          
+          echo "placeholders_found=true" >> $GITHUB_OUTPUT
+          echo "total_count=$TOTAL_COUNT" >> $GITHUB_OUTPUT
+          echo "::notice::Found $TOTAL_COUNT placeholder service principal(s)"
+          
+          # Calculate age for each placeholder
+          CURRENT_TIMESTAMP=$(date +%s)
+          OLD_PLACEHOLDERS_COUNT=0
+          
+          echo "$PLACEHOLDERS" | jq -c '.[]' | while read -r placeholder; do
+            SP_ID=$(echo "$placeholder" | jq -r '.id')
+            DISPLAY_NAME=$(echo "$placeholder" | jq -r '.displayName')
+            CREATED_DATE=$(echo "$placeholder" | jq -r '.createdDateTime')
+            
+            # Convert created date to timestamp
+            CREATED_TIMESTAMP=$(date -d "$CREATED_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CREATED_DATE" +%s 2>/dev/null || echo "0")
+            
+            if [ "$CREATED_TIMESTAMP" != "0" ]; then
+              AGE_SECONDS=$((CURRENT_TIMESTAMP - CREATED_TIMESTAMP))
+              AGE_DAYS=$((AGE_SECONDS / 86400))
+              
+              echo "Placeholder: $DISPLAY_NAME (ID: $SP_ID) - Age: $AGE_DAYS days"
+              
+              # Check if older than 6 months (182 days)
+              if [ "$AGE_DAYS" -ge "${{ env.ESCALATION_AGE_DAYS }}" ]; then
+                OLD_PLACEHOLDERS_COUNT=$((OLD_PLACEHOLDERS_COUNT + 1))
+                echo "::warning::Placeholder $DISPLAY_NAME is $AGE_DAYS days old (exceeds ${{ env.ESCALATION_AGE_DAYS }} days threshold)"
+              fi
+            fi
+          done
+          
+          echo "old_placeholders_count=$OLD_PLACEHOLDERS_COUNT" >> $GITHUB_OUTPUT
+          
+          echo "::endgroup::"
+      
+      - name: Generate placeholder review report
+        id: generate-report
+        if: steps.scan.outputs.placeholders_found == 'true'
+        run: |
+          PLACEHOLDERS_JSON=$(cat /tmp/placeholders.json)
+          CURRENT_TIMESTAMP=$(date +%s)
+          
+          # Create review report
+          REPORT_FILE="/tmp/placeholder-review-$(date +%Y%m%d).md"
+          
+          cat > "$REPORT_FILE" <<EOF
+          # Quarterly Placeholder Service Principal Review
+          
+          **Review Date:** $(date +%Y-%m-%d)
+          **Quarter:** ${{ needs.check-schedule.outputs.current_quarter }}
+          **Total Placeholders:** ${{ steps.scan.outputs.total_count }}
+          **Placeholders >6 months:** ${{ steps.scan.outputs.old_placeholders_count }}
+          
+          ## Summary
+          
+          This quarterly review identifies placeholder service principals used to satisfy the 2-owner minimum requirement.
+          
+          Placeholders should be **temporary** and replaced with human owners as soon as possible.
+          
+          ---
+          
+          ## Placeholder Details
+          
+          EOF
+          
+          # Add details for each placeholder
+          echo "$PLACEHOLDERS_JSON" | jq -r '.[] | "### \(.displayName)\n\n- **Object ID:** \(.id)\n- **App ID:** \(.appId)\n- **Created:** \(.createdDateTime)\n\n"' >> "$REPORT_FILE"
+          
+          # Calculate ages and add warnings
+          echo "## Age Analysis" >> "$REPORT_FILE"
+          echo "" >> "$REPORT_FILE"
+          echo "| Placeholder | Age (days) | Status | Action |" >> "$REPORT_FILE"
+          echo "|-------------|------------|--------|--------|" >> "$REPORT_FILE"
+          
+          echo "$PLACEHOLDERS_JSON" | jq -c '.[]' | while read -r placeholder; do
+            SP_ID=$(echo "$placeholder" | jq -r '.id')
+            DISPLAY_NAME=$(echo "$placeholder" | jq -r '.displayName')
+            CREATED_DATE=$(echo "$placeholder" | jq -r '.createdDateTime')
+            
+            CREATED_TIMESTAMP=$(date -d "$CREATED_DATE" +%s 2>/dev/null || date -j -f "%Y-%m-%dT%H:%M:%SZ" "$CREATED_DATE" +%s 2>/dev/null || echo "0")
+            
+            if [ "$CREATED_TIMESTAMP" != "0" ]; then
+              AGE_SECONDS=$((CURRENT_TIMESTAMP - CREATED_TIMESTAMP))
+              AGE_DAYS=$((AGE_SECONDS / 86400))
+              
+              if [ "$AGE_DAYS" -ge "${{ env.ESCALATION_AGE_DAYS }}" ]; then
+                STATUS="🚨 ESCALATION REQUIRED"
+                ACTION="Replace immediately - escalate to leadership"
+              elif [ "$AGE_DAYS" -ge 150 ]; then
+                STATUS="⚠️ Warning"
+                ACTION="Replace soon - approaching 6-month limit"
+              else
+                STATUS="✅ OK"
+                ACTION="Replace when permanent owner identified"
+              fi
+              
+              echo "| $DISPLAY_NAME | $AGE_DAYS | $STATUS | $ACTION |" >> "$REPORT_FILE"
+            fi
+          done
+          
+          # Add action items
+          cat >> "$REPORT_FILE" <<EOF
+          
+          ---
+          
+          ## Required Actions
+          
+          ### For All Placeholders
+          
+          1. **Identify permanent owners** - Find human Azure AD users to replace placeholders
+          2. **Update Terraform configuration** - Modify \`app_owners\` variable
+          3. **Create PR** - Submit changes using app_registration.md template
+          4. **Deploy** - Merge PR to remove placeholders
+          
+          ### For Placeholders >6 Months
+          
+          🚨 **IMMEDIATE ACTION REQUIRED**
+          
+          Placeholders older than 6 months must be escalated to leadership for review.
+          
+          These applications may be candidates for:
+          - Immediate owner replacement
+          - Application decommission if no longer needed
+          - Architecture review if permanent owner cannot be identified
+          
+          ---
+          
+          **Next Review:** First Monday of next quarter (Q2 or Q4)
+          
+          <sub>Generated by Quarterly Placeholder Review workflow</sub>
+          EOF
+          
+          echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
+          
+          # Display report
+          cat "$REPORT_FILE"
+      
+      - name: Create review issue
+        if: steps.scan.outputs.placeholders_found == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '${{ steps.generate-report.outputs.report_file }}';
+            const reportContent = fs.readFileSync(reportPath, 'utf8');
+            
+            const totalCount = parseInt('${{ steps.scan.outputs.total_count }}');
+            const oldCount = parseInt('${{ steps.scan.outputs.old_placeholders_count }}');
+            
+            let title = `📋 Quarterly Placeholder Review - ${{ needs.check-schedule.outputs.current_quarter }} ${new Date().getFullYear()}`;
+            let labels = ['app-registration', 'placeholder-review', 'quarterly-review'];
+            
+            if (oldCount > 0) {
+              title = `🚨 ${title} - ${oldCount} Escalation(s) Required`;
+              labels.push('escalation-required', 'urgent');
+            }
+            
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: reportContent,
+              labels: labels
+            });
+            
+            core.notice(`Quarterly review issue created: ${issue.data.html_url}`);
+            
+            if (oldCount > 0) {
+              core.warning(`${oldCount} placeholder(s) exceed 6-month threshold - escalation required`);
+            }
+      
+      - name: Escalate old placeholders to leadership
+        if: steps.scan.outputs.old_placeholders_count > 0 && github.event.inputs.escalate_old_placeholders != 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const oldCount = parseInt('${{ steps.scan.outputs.old_placeholders_count }}');
+            
+            const escalationBody = `## 🚨 ESCALATION: Placeholder Service Principals >6 Months\n\n` +
+              `**Review Date:** ${new Date().toISOString().split('T')[0]}\n` +
+              `**Quarter:** ${{ needs.check-schedule.outputs.current_quarter }}\n\n` +
+              `### Summary\n\n` +
+              `${oldCount} placeholder service principal(s) have existed for **more than 6 months**.\n\n` +
+              `Per governance policy, placeholders are intended as **temporary** measures and should be replaced with human owners.\n\n` +
+              `### Required Leadership Action\n\n` +
+              `1. **Review Applications** - Assess business need for each application\n` +
+              `2. **Decision Required** - Choose one:\n` +
+              `   - Identify permanent human owners and replace placeholders\n` +
+              `   - Decommission application if no longer needed\n` +
+              `   - Escalate to architecture review if ownership model unclear\n` +
+              `3. **Timeline** - Decision required within 30 days\n\n` +
+              `### Applications Affected\n\n` +
+              `See full details in quarterly review issue.\n\n` +
+              `---\n\n` +
+              `**Escalated to:** Leadership Team\n` +
+              `**Severity:** High\n` +
+              `**Policy Reference:** Zero-trust governance - temporary placeholder policy\n\n` +
+              `[View quarterly review issue](${{ github.server_url }}/${{ github.repository }}/issues)\n\n` +
+              `<sub>🤖 Automated escalation from Quarterly Placeholder Review workflow</sub>`;
+            
+            const escalationIssue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 LEADERSHIP ESCALATION: ${oldCount} Placeholder(s) >6 Months - Decision Required`,
+              body: escalationBody,
+              labels: ['app-registration', 'leadership-escalation', 'high-priority', 'governance'],
+              assignees: []  // Configure in repository settings to auto-assign leadership team
+            });
+            
+            core.warning(`Leadership escalation issue created: ${escalationIssue.data.html_url}`);
+      
+      - name: No placeholders found
+        if: steps.scan.outputs.placeholders_found == 'false'
+        run: |
+          echo "::notice::✅ No placeholder service principals found"
+          echo "::notice::All app registrations have human owners - compliance achieved!"

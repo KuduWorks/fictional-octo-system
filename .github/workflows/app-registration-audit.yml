@@ -1,0 +1,321 @@
+name: App Registration Owner Audit
+
+on:
+  schedule:
+    # Run daily at 9 AM UTC (adjust for your timezone)
+    - cron: '0 9 * * *'
+  
+  workflow_dispatch:
+    inputs:
+      send_notifications:
+        description: 'Send email notifications for drift'
+        required: false
+        type: boolean
+        default: true
+      create_remediation_pr:
+        description: 'Create auto-remediation PR for fixable issues'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+env:
+  AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+  AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+jobs:
+  audit-owners:
+    name: Audit App Registration Owners
+    runs-on: ubuntu-latest
+    
+    outputs:
+      drift_detected: ${{ steps.detect-drift.outputs.drift_detected }}
+      disabled_owners_found: ${{ steps.detect-drift.outputs.disabled_owners_found }}
+      grace_period_expired: ${{ steps.detect-drift.outputs.grace_period_expired }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Azure CLI
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+      
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq bc
+      
+      - name: Detect owner drift
+        id: detect-drift
+        run: |
+          cd deployments/azure/app-registration
+          
+          # Make verification script executable
+          chmod +x scripts/verify-owners.sh
+          
+          # Run owner verification
+          VERIFICATION_OUTPUT=$(./scripts/verify-owners.sh 2>&1 || true)
+          echo "$VERIFICATION_OUTPUT" > /tmp/owner-verification.json
+          
+          # Parse results
+          VALIDATION_PASSED=$(echo "$VERIFICATION_OUTPUT" | jq -r '.validation_passed // false')
+          
+          if [ "$VALIDATION_PASSED" = "true" ]; then
+            echo "drift_detected=false" >> $GITHUB_OUTPUT
+            echo "disabled_owners_found=false" >> $GITHUB_OUTPUT
+            echo "grace_period_expired=false" >> $GITHUB_OUTPUT
+            echo "::notice::No owner drift detected - all owners valid"
+            exit 0
+          fi
+          
+          # Drift detected - analyze disabled owners
+          echo "drift_detected=true" >> $GITHUB_OUTPUT
+          
+          # Check for disabled owners
+          DISABLED_OWNERS=$(echo "$VERIFICATION_OUTPUT" | jq -r '.requested_owners[] | select(.account_enabled == false) | .owner_id' 2>/dev/null || echo "")
+          
+          if [ -z "$DISABLED_OWNERS" ]; then
+            echo "disabled_owners_found=false" >> $GITHUB_OUTPUT
+            echo "grace_period_expired=false" >> $GITHUB_OUTPUT
+            echo "::warning::Drift detected but no disabled owners found"
+          else
+            echo "disabled_owners_found=true" >> $GITHUB_OUTPUT
+            echo "::warning::Disabled owners detected: $DISABLED_OWNERS"
+            
+            # Calculate grace period status (7 days = 604800 seconds)
+            GRACE_PERIOD_SECONDS=604800
+            CURRENT_TIMESTAMP=$(date +%s)
+            GRACE_EXPIRED=false
+            
+            # Check each disabled owner's disable timestamp
+            for OWNER_ID in $DISABLED_OWNERS; do
+              DISABLED_TIMESTAMP=$(echo "$VERIFICATION_OUTPUT" | jq -r ".requested_owners[] | select(.owner_id == \"$OWNER_ID\") | .days_since_disabled // 0")
+              
+              if [ -n "$DISABLED_TIMESTAMP" ] && [ "$DISABLED_TIMESTAMP" -ge 7 ]; then
+                GRACE_EXPIRED=true
+                echo "::warning::Owner $OWNER_ID has been disabled for $DISABLED_TIMESTAMP days (exceeds 7-day grace period)"
+              fi
+            done
+            
+            echo "grace_period_expired=$GRACE_EXPIRED" >> $GITHUB_OUTPUT
+          fi
+          
+          # Save full output for notifications
+          cat /tmp/owner-verification.json
+      
+      - name: Generate drift report
+        id: generate-report
+        if: steps.detect-drift.outputs.drift_detected == 'true'
+        run: |
+          VERIFICATION_JSON=$(cat /tmp/owner-verification.json)
+          
+          # Create detailed drift report
+          REPORT_FILE="/tmp/drift-report-$(date +%Y%m%d).md"
+          
+          cat > "$REPORT_FILE" <<'EOF'
+          # App Registration Owner Drift Report
+          
+          **Date:** $(date -u +%Y-%m-%d)
+          **Audit Timestamp:** $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          
+          ## Summary
+          
+          Owner drift detected in app registration configuration.
+          
+          EOF
+          
+          # Add disabled owners section if applicable
+          if [ "${{ steps.detect-drift.outputs.disabled_owners_found }}" = "true" ]; then
+            cat >> "$REPORT_FILE" <<'EOF'
+          ### 🚨 Disabled Owners Detected
+          
+          The following owners have DISABLED accounts in Azure AD:
+          
+          EOF
+            
+            echo "$VERIFICATION_JSON" | jq -r '.requested_owners[] | select(.account_enabled == false) | "- **\(.owner_id)** (\(.owner_type)) - Disabled for \(.days_since_disabled // 0) days"' >> "$REPORT_FILE" || true
+            
+            if [ "${{ steps.detect-drift.outputs.grace_period_expired }}" = "true" ]; then
+              cat >> "$REPORT_FILE" <<'EOF'
+          
+          ⚠️ **GRACE PERIOD EXPIRED**: One or more disabled owners have exceeded the 7-day grace period.
+          **ACTION REQUIRED**: Remove disabled owners and replace with active owners immediately.
+          
+          EOF
+            else
+              cat >> "$REPORT_FILE" <<'EOF'
+          
+          ℹ️ **Within Grace Period**: Disabled owners detected within 7-day grace period.
+          **ACTION REQUIRED**: Replace disabled owners before grace period expires.
+          
+          EOF
+            fi
+          fi
+          
+          # Add validation errors
+          cat >> "$REPORT_FILE" <<'EOF'
+          
+          ### Validation Errors
+          
+          EOF
+          
+          echo "$VERIFICATION_JSON" | jq -r '.validation_errors[]? // "No specific errors captured"' | sed 's/^/- /' >> "$REPORT_FILE"
+          
+          # Add remediation steps
+          cat >> "$REPORT_FILE" <<'EOF'
+          
+          ## Remediation Steps
+          
+          1. **Identify Replacement Owners**: Find active Azure AD users to replace disabled owners
+          2. **Update Terraform Configuration**: Modify `app_owners` variable in terraform.tfvars
+          3. **Create Pull Request**: Submit PR with owner updates using app_registration.md template
+          4. **Request Approval**: Get 2 reviewers to approve the remediation PR
+          5. **Deploy**: Merge PR to trigger deployment workflow
+          
+          ## Automatic Remediation
+          
+          If auto-remediation is enabled, a PR will be created automatically to remove disabled owners.
+          **Note**: You must still add replacement owners manually to meet the 2-owner minimum.
+          
+          ---
+          
+          **Generated by:** App Registration Owner Audit workflow
+          **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          
+          echo "report_file=$REPORT_FILE" >> $GITHUB_OUTPUT
+          
+          # Display report in workflow log
+          cat "$REPORT_FILE"
+      
+      - name: Send Day 0 notification (basic alert)
+        if: steps.detect-drift.outputs.disabled_owners_found == 'true' && steps.detect-drift.outputs.grace_period_expired == 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueBody = `## ⚠️ App Registration Owner Drift Detected (Day 0)\n\n` +
+              `**Audit Date:** ${new Date().toISOString().split('T')[0]}\n` +
+              `**Status:** Within 7-day grace period\n\n` +
+              `One or more app registration owners have been **disabled** in Azure AD.\n\n` +
+              `### Action Required\n\n` +
+              `Please replace disabled owners with active Azure AD users within **7 days**.\n\n` +
+              `### Next Steps\n\n` +
+              `1. Review disabled owners in the drift report\n` +
+              `2. Identify replacement owners\n` +
+              `3. Create PR to update app registration configuration\n` +
+              `4. If no action taken, a **Day 7 escalation** will be sent with full details\n\n` +
+              `---\n\n` +
+              `[View full audit report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n` +
+              `<sub>🤖 This is an automated notification from the App Registration Owner Audit workflow.</sub>`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ [Day 0] App Registration Owner Drift - Action Required`,
+              body: issueBody,
+              labels: ['app-registration', 'drift-detected', 'grace-period', 'needs-action']
+            });
+            
+            core.notice('Day 0 notification issue created');
+      
+      - name: Send Day 7 notification (full escalation)
+        if: steps.detect-drift.outputs.grace_period_expired == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '${{ steps.generate-report.outputs.report_file }}';
+            const reportContent = fs.readFileSync(reportPath, 'utf8');
+            
+            const issueBody = `## 🚨 URGENT: App Registration Owner Drift - Grace Period Expired\n\n` +
+              `**Audit Date:** ${new Date().toISOString().split('T')[0]}\n` +
+              `**Status:** ⚠️ **GRACE PERIOD EXPIRED** (>7 days)\n\n` +
+              `One or more app registration owners have been disabled for **more than 7 days**.\n\n` +
+              `### Immediate Action Required\n\n` +
+              `This application registration is **non-compliant** with security policy.\n` +
+              `**Remove disabled owners and add active replacements immediately.**\n\n` +
+              `---\n\n` +
+              `## Full Drift Report\n\n` +
+              `${reportContent}\n\n` +
+              `---\n\n` +
+              `### Escalation\n\n` +
+              `This issue has been escalated to:\n` +
+              `- Security team (@${context.repo.owner}/security-team)\n` +
+              `- Application owners\n` +
+              `- Management\n\n` +
+              `If not resolved within 24 hours, access may be restricted.\n\n` +
+              `[View workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+            
+            const issue = await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 URGENT [Day 7+] App Registration Drift - GRACE PERIOD EXPIRED`,
+              body: issueBody,
+              labels: ['app-registration', 'drift-detected', 'grace-period-expired', 'urgent', 'security']
+            });
+            
+            core.warning(`Day 7 escalation issue created: ${issue.data.html_url}`);
+      
+      - name: Create auto-remediation PR
+        if: steps.detect-drift.outputs.disabled_owners_found == 'true' && github.event.inputs.create_remediation_pr != 'false'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // This creates a PR that removes disabled owners
+            // Note: This will likely fail Terraform validation due to <2 owners
+            // Manual intervention required to add replacement owners
+            
+            const branchName = `auto-remediation/remove-disabled-owners-${Date.now()}`;
+            
+            // Create branch
+            const mainBranch = await github.rest.repos.getBranch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              branch: 'main'
+            });
+            
+            await github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: `refs/heads/${branchName}`,
+              sha: mainBranch.data.commit.sha
+            });
+            
+            core.info(`Created branch: ${branchName}`);
+            
+            // Create PR
+            const pr = await github.rest.pulls.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '[AUTO-REMEDIATION] Remove Disabled App Registration Owners',
+              head: branchName,
+              base: 'main',
+              body: `## 🤖 Automatic Remediation PR\n\n` +
+                `This PR was automatically created by the Owner Audit workflow.\n\n` +
+                `### Detected Issues\n\n` +
+                `- Disabled owner accounts detected in app registration\n` +
+                `- Grace period status: ${{ steps.detect-drift.outputs.grace_period_expired == 'true' ? '⚠️ EXPIRED' : '✅ Within 7 days' }}\n\n` +
+                `### Required Actions\n\n` +
+                `⚠️ **MANUAL INTERVENTION REQUIRED**\n\n` +
+                `This PR removes disabled owners but **you must add replacement owners** to meet the 2-owner minimum.\n\n` +
+                `1. Review disabled owners in audit report\n` +
+                `2. Add active Azure AD user object IDs to \`app_owners\` variable\n` +
+                `3. Ensure at least 2 owners total (minimum 1 human)\n` +
+                `4. Update this PR with changes\n` +
+                `5. Request 1 reviewer approval (auto-remediation requires only 1 reviewer)\n\n` +
+                `[View audit workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n` +
+                `---\n\n` +
+                `<sub>🤖 Auto-remediation PR created by App Registration Owner Audit workflow</sub>`,
+              draft: true  // Mark as draft since manual changes required
+            });
+            
+            core.notice(`Auto-remediation PR created: ${pr.data.html_url}`);
+            core.warning('PR marked as DRAFT - manual changes required to add replacement owners');

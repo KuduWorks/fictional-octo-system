@@ -29,3 +29,9 @@ Thumbs.db
 # Logs
 *.log
 crash.log
+
+# Validation script outputs (compliance reports)
+*-compliance-*.json
+*-risk-*.json
+owner-compliance-*.json
+permission-risk-*.json

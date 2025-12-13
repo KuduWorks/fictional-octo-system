@@ -1,0 +1,332 @@
+name: Placeholder Tracking
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'deployments/azure/app-registration/**/*.tf'
+      - 'deployments/azure/app-registration/**/*.tfvars'
+  
+  push:
+    branches:
+      - main
+    paths:
+      - 'deployments/azure/app-registration/**/*.tf'
+      - 'deployments/azure/app-registration/**/*.tfvars'
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  track-placeholder-changes:
+    name: Track Placeholder Changes
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history to compare changes
+      
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq
+      
+      - name: Detect placeholder changes
+        id: detect-changes
+        run: |
+          # Get base branch for comparison
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            BASE_REF="origin/${{ github.base_ref }}"
+          else
+            # For push to main, compare with previous commit
+            BASE_REF="HEAD^"
+          fi
+          
+          echo "Comparing against: $BASE_REF"
+          
+          # Search for placeholder service principal references in Terraform files
+          CURRENT_PLACEHOLDERS=$(grep -r "purpose:placeholder-owner\|placeholder-service-principal\|placeholder_owner" deployments/azure/app-registration/ --include="*.tf" --include="*.tfvars" || echo "")
+          
+          # Get previous placeholders
+          git checkout $BASE_REF -- deployments/azure/app-registration/ 2>/dev/null || true
+          PREVIOUS_PLACEHOLDERS=$(grep -r "purpose:placeholder-owner\|placeholder-service-principal\|placeholder_owner" deployments/azure/app-registration/ --include="*.tf" --include="*.tfvars" || echo "")
+          
+          # Return to current state
+          git checkout ${{ github.event_name == 'pull_request' && github.head_ref || 'main' }} -- deployments/azure/app-registration/ 2>/dev/null || true
+          
+          # Count placeholders
+          CURRENT_COUNT=$(echo "$CURRENT_PLACEHOLDERS" | grep -c "placeholder" || echo "0")
+          PREVIOUS_COUNT=$(echo "$PREVIOUS_PLACEHOLDERS" | grep -c "placeholder" || echo "0")
+          
+          echo "current_count=$CURRENT_COUNT" >> $GITHUB_OUTPUT
+          echo "previous_count=$PREVIOUS_COUNT" >> $GITHUB_OUTPUT
+          
+          # Determine change type
+          if [ "$CURRENT_COUNT" -lt "$PREVIOUS_COUNT" ]; then
+            echo "change_type=removal" >> $GITHUB_OUTPUT
+            echo "change_detected=true" >> $GITHUB_OUTPUT
+            echo "::notice::✅ Placeholder removal detected: $PREVIOUS_COUNT → $CURRENT_COUNT"
+          elif [ "$CURRENT_COUNT" -gt "$PREVIOUS_COUNT" ]; then
+            echo "change_type=addition" >> $GITHUB_OUTPUT
+            echo "change_detected=true" >> $GITHUB_OUTPUT
+            echo "::warning::⚠️ Placeholder addition detected: $PREVIOUS_COUNT → $CURRENT_COUNT"
+          else
+            echo "change_type=none" >> $GITHUB_OUTPUT
+            echo "change_detected=false" >> $GITHUB_OUTPUT
+            echo "::notice::No placeholder count changes"
+          fi
+      
+      - name: Parse placeholder details from Terraform
+        id: parse-placeholders
+        if: steps.detect-changes.outputs.change_detected == 'true'
+        run: |
+          # Extract placeholder_owner_justification from Terraform files
+          JUSTIFICATIONS=$(grep -A 5 "placeholder_owner_justification" deployments/azure/app-registration/*.tfvars 2>/dev/null || echo "")
+          
+          if [ -n "$JUSTIFICATIONS" ]; then
+            echo "justification_found=true" >> $GITHUB_OUTPUT
+            echo "justifications<<EOF" >> $GITHUB_OUTPUT
+            echo "$JUSTIFICATIONS" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+          else
+            echo "justification_found=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Comment on PR for placeholder removal
+        if: github.event_name == 'pull_request' && steps.detect-changes.outputs.change_type == 'removal'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previousCount = parseInt('${{ steps.detect-changes.outputs.previous_count }}');
+            const currentCount = parseInt('${{ steps.detect-changes.outputs.current_count }}');
+            const removed = previousCount - currentCount;
+            
+            const commentBody = `## ✅ Placeholder Service Principal Removal Detected\n\n` +
+              `This PR removes **${removed}** placeholder service principal(s).\n\n` +
+              `**Previous count:** ${previousCount}\n` +
+              `**New count:** ${currentCount}\n\n` +
+              `### 🎉 Excellent Work!\n\n` +
+              `Removing placeholder service principals improves security posture by:\n` +
+              `- Reducing non-human owner dependencies\n` +
+              `- Improving accountability with human owners\n` +
+              `- Following zero-trust best practices\n\n` +
+              `### Approval Requirements\n\n` +
+              `✅ **Auto-remediation PR**: This PR requires **1 reviewer** (reduced from standard 2)\n\n` +
+              `Since this PR removes placeholders (compliance improvement), it qualifies for expedited review.\n\n` +
+              `---\n\n` +
+              `<sub>🤖 This comment was automatically generated by the Placeholder Tracking workflow.</sub>`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            // Add label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: ['placeholder-removal', 'compliance-improvement']
+            });
+            
+            core.notice('Placeholder removal comment posted to PR');
+      
+      - name: Comment on PR for placeholder addition
+        if: github.event_name == 'pull_request' && steps.detect-changes.outputs.change_type == 'addition'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previousCount = parseInt('${{ steps.detect-changes.outputs.previous_count }}');
+            const currentCount = parseInt('${{ steps.detect-changes.outputs.current_count }}');
+            const added = currentCount - previousCount;
+            
+            const justificationFound = '${{ steps.parse-placeholders.outputs.justification_found }}' === 'true';
+            
+            let commentBody = `## ⚠️ Placeholder Service Principal Addition Detected\n\n` +
+              `This PR adds **${added}** placeholder service principal(s).\n\n` +
+              `**Previous count:** ${previousCount}\n` +
+              `**New count:** ${currentCount}\n\n`;
+            
+            if (justificationFound) {
+              commentBody += `### ✅ Justification Provided\n\n` +
+                `Placeholder justification has been detected in Terraform configuration.\n` +
+                `Reviewers should verify:\n` +
+                `- Justification is substantive (≥50 characters)\n` +
+                `- Timeline for replacement is documented\n` +
+                `- Business need is clearly explained\n\n`;
+            } else {
+              commentBody += `### ❌ Justification Missing\n\n` +
+                `**ACTION REQUIRED**: Placeholder service principals require justification.\n\n` +
+                `Add \`placeholder_owner_justification\` variable with minimum 50 characters explaining:\n` +
+                `- Why 2 human owners are not available\n` +
+                `- Timeline for replacing placeholder with human owner\n` +
+                `- Business context requiring application creation\n\n`;
+            }
+            
+            commentBody += `### 📋 Reminder: Quarterly Review\n\n` +
+              `Placeholder service principals are reviewed quarterly (Q2/Q4 first Monday).\n` +
+              `Placeholders existing >6 months will be escalated to leadership.\n\n` +
+              `### Approval Requirements\n\n` +
+              `⚠️ **Standard approval**: This PR requires **2 reviewers**\n\n` +
+              `Placeholder additions require standard review process to ensure governance compliance.\n\n` +
+              `---\n\n` +
+              `📚 [Placeholder Service Principal Documentation](../deployments/azure/app-registration/modules/placeholder-service-principal/README.md)\n\n` +
+              `<sub>🤖 This comment was automatically generated by the Placeholder Tracking workflow.</sub>`;
+            
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: commentBody
+            });
+            
+            // Add labels
+            const labels = ['placeholder-addition'];
+            if (!justificationFound) {
+              labels.push('needs-justification');
+            }
+            
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              labels: labels
+            });
+            
+            if (!justificationFound) {
+              core.warning('Placeholder justification not found - PR requires justification');
+            }
+      
+      - name: Create issue for placeholder addition (on merge to main)
+        if: github.event_name == 'push' && steps.detect-changes.outputs.change_type == 'addition'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previousCount = parseInt('${{ steps.detect-changes.outputs.previous_count }}');
+            const currentCount = parseInt('${{ steps.detect-changes.outputs.current_count }}');
+            const added = currentCount - previousCount;
+            
+            const issueBody = `## 📊 Placeholder Service Principal Added\n\n` +
+              `**Commit:** ${context.sha.substring(0, 7)}\n` +
+              `**Date:** ${new Date().toISOString().split('T')[0]}\n` +
+              `**Added by:** @${context.actor}\n\n` +
+              `**Previous placeholder count:** ${previousCount}\n` +
+              `**New placeholder count:** ${currentCount}\n` +
+              `**Net change:** +${added}\n\n` +
+              `### 📅 Tracking Information\n\n` +
+              `This placeholder will be tracked for quarterly review.\n\n` +
+              `**Next quarterly review:** Q2 or Q4 first Monday\n` +
+              `**Escalation threshold:** 6 months (182 days)\n\n` +
+              `### Action Items\n\n` +
+              `- [ ] Identify permanent human owner\n` +
+              `- [ ] Create PR to replace placeholder\n` +
+              `- [ ] Remove placeholder within 6 months\n\n` +
+              `---\n\n` +
+              `This issue will be referenced in quarterly placeholder reviews.\n\n` +
+              `<sub>🤖 Tracking issue created by Placeholder Tracking workflow</sub>`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `📊 Placeholder Added: ${currentCount} total placeholder(s) - Track for removal`,
+              body: issueBody,
+              labels: ['app-registration', 'placeholder-tracking', 'needs-replacement']
+            });
+            
+            core.notice('Placeholder tracking issue created');
+      
+      - name: Close tracking issue for placeholder removal (on merge to main)
+        if: github.event_name == 'push' && steps.detect-changes.outputs.change_type == 'removal'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const previousCount = parseInt('${{ steps.detect-changes.outputs.previous_count }}');
+            const currentCount = parseInt('${{ steps.detect-changes.outputs.current_count }}');
+            const removed = previousCount - currentCount;
+            
+            // Find open placeholder tracking issues
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'placeholder-tracking',
+              state: 'open'
+            });
+            
+            if (issues.length > 0) {
+              // Close the most recent tracking issue
+              const latestIssue = issues[0];
+              
+              const closingComment = `## ✅ Placeholder Removed\n\n` +
+                `**Commit:** ${context.sha.substring(0, 7)}\n` +
+                `**Date:** ${new Date().toISOString().split('T')[0]}\n` +
+                `**Removed by:** @${context.actor}\n\n` +
+                `**Previous placeholder count:** ${previousCount}\n` +
+                `**New placeholder count:** ${currentCount}\n` +
+                `**Net change:** -${removed}\n\n` +
+                `🎉 **Placeholder successfully replaced with human owner(s).**\n\n` +
+                `Closing this tracking issue as placeholder has been removed.\n\n` +
+                `<sub>🤖 Automatically closed by Placeholder Tracking workflow</sub>`;
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: latestIssue.number,
+                body: closingComment
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: latestIssue.number,
+                state: 'closed',
+                labels: ['app-registration', 'placeholder-tracking', 'resolved']
+              });
+              
+              core.notice(`Closed tracking issue #${latestIssue.number}`);
+            }
+            
+            // Create celebration issue
+            const celebrationBody = `## 🎉 Placeholder Service Principal Removed!\n\n` +
+              `**Great work replacing placeholder with human owner(s)!**\n\n` +
+              `**Commit:** ${context.sha.substring(0, 7)}\n` +
+              `**Date:** ${new Date().toISOString().split('T')[0]}\n` +
+              `**Completed by:** @${context.actor}\n\n` +
+              `**Previous placeholder count:** ${previousCount}\n` +
+              `**New placeholder count:** ${currentCount}\n` +
+              `**Placeholders removed:** ${removed}\n\n` +
+              `### Security Improvements\n\n` +
+              `✅ Reduced non-human owner dependencies\n` +
+              `✅ Improved accountability with human owners\n` +
+              `✅ Compliance with zero-trust governance policy\n\n` +
+              `---\n\n` +
+              `Keep up the great work maintaining security best practices!\n\n` +
+              `<sub>🤖 Celebration issue created by Placeholder Tracking workflow</sub>`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🎉 Placeholder Removed: ${currentCount} total placeholder(s) remaining`,
+              body: celebrationBody,
+              labels: ['app-registration', 'placeholder-removal', 'compliance-win']
+            });
+            
+            core.notice('Celebration issue created for placeholder removal');
+      
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Placeholder Tracking Summary"
+          echo "Change detected: ${{ steps.detect-changes.outputs.change_detected }}"
+          echo "Change type: ${{ steps.detect-changes.outputs.change_type }}"
+          echo "Previous count: ${{ steps.detect-changes.outputs.previous_count }}"
+          echo "Current count: ${{ steps.detect-changes.outputs.current_count }}"
+          
+          if [ "${{ steps.detect-changes.outputs.change_type }}" = "removal" ]; then
+            echo "::notice::✅ Placeholder removal - compliance improvement"
+          elif [ "${{ steps.detect-changes.outputs.change_type }}" = "addition" ]; then
+            echo "::warning::⚠️ Placeholder addition - ensure justification provided"
+          fi

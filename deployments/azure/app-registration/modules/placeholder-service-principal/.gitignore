@@ -1,0 +1,10 @@
+# Terraform state files
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+
+# Module testing artifacts
+examples/.terraform/
+examples/terraform.tfstate
+examples/terraform.tfstate.backup
