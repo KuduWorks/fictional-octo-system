@@ -62,6 +62,7 @@ jobs:
           cd deployments/azure/app-registration
           chmod +x scripts/verify-owners.sh
           
+          echo "🔒 Verifying owners against approved governance list..."
           VERIFICATION_OUTPUT=$(./scripts/verify-owners.sh 2>&1 || true)
           echo "$VERIFICATION_OUTPUT" | jq '.'
           
@@ -71,6 +72,15 @@ jobs:
           else
             echo "verification_passed=false" >> $GITHUB_OUTPUT
             echo "::error::Pre-deployment owner verification failed"
+            
+            # Check for governance violations specifically
+            GOVERNANCE_ERRORS=$(echo "$VERIFICATION_OUTPUT" | jq -r '.validation_errors[] | select(contains("not on approved governance owner list"))' 2>/dev/null || echo "")
+            if [ -n "$GOVERNANCE_ERRORS" ]; then
+              echo "::error::🔒 GOVERNANCE VIOLATION: Owners not on approved list"
+              echo "::error::See: deployments/azure/app-registration/config/allowed-owners.json"
+              echo "::error::$GOVERNANCE_ERRORS"
+            fi
+            
             ERRORS=$(echo "$VERIFICATION_OUTPUT" | jq -r '.validation_errors[]' 2>/dev/null || echo "Failed to parse errors")
             echo "::error::$ERRORS"
           fi

@@ -246,7 +246,7 @@ jobs:
             if (${{ steps.verify-owners.outputs.verification_passed }}) {
               commentBody += `✅ **PASSED**\n\n`;
               commentBody += `- **Total Owners:** ${ownerVerification.total_owner_count || 'N/A'}\n`;
-              commentBody += `- **Human Owners:** ${ownerVerification.human_owner_count || 'N/A'}\n`;
+              commentBody += `- **Human Owners:** ${ownerVerification.human_owner_count || 'N/A'} (from approved governance list)\n`;
               commentBody += `- **Placeholder SPs:** ${ownerVerification.placeholder_count || 'N/A'}\n`;
               
               if (ownerVerification.requested_owners && ownerVerification.requested_owners.length > 0) {
@@ -254,16 +254,30 @@ jobs:
                 ownerVerification.requested_owners.forEach(owner => {
                   const status = owner.exists ? '✅' : '❌';
                   const enabled = owner.account_enabled ? 'Enabled' : '⚠️ DISABLED';
-                  commentBody += `- ${status} ${owner.owner_id} (${owner.owner_type}) - ${enabled}\n`;
+                  const governance = owner.owner_type === 'user' ? ' | 🔒 Approved governance user' : '';
+                  commentBody += `- ${status} ${owner.owner_id} (${owner.owner_type}) - ${enabled}${governance}\n`;
                 });
               }
             } else {
               commentBody += `❌ **FAILED**\n\n`;
               if (ownerVerification.validation_errors && ownerVerification.validation_errors.length > 0) {
                 commentBody += `**Errors:**\n`;
+                let hasGovernanceError = false;
                 ownerVerification.validation_errors.forEach(error => {
                   commentBody += `- ⚠️ ${error}\n`;
+                  if (error.includes('not on approved governance owner list')) {
+                    hasGovernanceError = true;
+                  }
                 });
+                
+                if (hasGovernanceError) {
+                  commentBody += `\n> 🔒 **Governance Requirement:** All human owners must be from the approved list.\n`;
+                  commentBody += `> See: \`deployments/azure/app-registration/config/allowed-owners.json\`\n`;
+                  commentBody += `> \n`;
+                  commentBody += `> To view approved owners: \`cat config/allowed-owners.json | jq '.allowed_owners.users[].email'\`\n`;
+                  commentBody += `> \n`;
+                  commentBody += `> Not on the list? Submit PR with CISO approval. See \`config/README.md\`\n`;
+                }
               }
             }
             

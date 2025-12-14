@@ -5,9 +5,9 @@ variable "resource_group_name" {
 }
 
 variable "location" {
-  description = "Azure region for Communication Services"
+  description = "Azure region for Communication Services (EU region for GDPR compliance)"
   type        = string
-  default     = "eastus"
+  default     = "swedencentral"
 }
 
 variable "communication_service_name" {
@@ -17,9 +17,9 @@ variable "communication_service_name" {
 }
 
 variable "data_location" {
-  description = "Data residency location for Communication Services (United States, Europe, etc.)"
+  description = "Data residency location for Communication Services (Europe for GDPR compliance)"
   type        = string
-  default     = "United States"
+  default     = "Europe"
 }
 
 variable "domain_name" {

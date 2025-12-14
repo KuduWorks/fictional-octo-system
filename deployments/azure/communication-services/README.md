@@ -10,6 +10,10 @@ Azure Communication Services provides email capabilities for:
 - Deployment notifications
 - Escalation alerts
 
+### GDPR Compliance
+
+**Data Residency:** This configuration uses **Europe** as the data location, ensuring all customer data and email metadata remain within the EU for GDPR compliance. Resources are deployed to **Sweden Central** by default.
+
 ## Prerequisites
 
 1. **Azure Subscription** with Communication Services quota
@@ -37,9 +41,10 @@ Create a `terraform.tfvars` file:
 ```hcl
 # Required variables
 resource_group_name = "rg-communication-services"
-location            = "eastus"
+location            = "swedencentral"  # EU region for GDPR compliance
 domain_name         = "notifications.yourcompany.com"
 communication_service_name = "acs-app-registration-notifications"
+data_location       = "Europe"  # Ensures data stays in EU
 
 # Optional
 sender_username = "no-reply"  # Creates no-reply@notifications.yourcompany.com

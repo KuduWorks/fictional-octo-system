@@ -38,6 +38,7 @@ jobs:
       drift_detected: ${{ steps.detect-drift.outputs.drift_detected }}
       disabled_owners_found: ${{ steps.detect-drift.outputs.disabled_owners_found }}
       grace_period_expired: ${{ steps.detect-drift.outputs.grace_period_expired }}
+      governance_violations: ${{ steps.detect-drift.outputs.governance_violations }}
     
     steps:
       - name: Checkout code
@@ -76,8 +77,19 @@ jobs:
             exit 0
           fi
           
-          # Drift detected - analyze disabled owners
+          # Drift detected - analyze disabled owners and governance violations
           echo "drift_detected=true" >> $GITHUB_OUTPUT
+          
+          # Check for governance violations (owners not on approved list)
+          GOVERNANCE_ERRORS=$(echo "$VERIFICATION_OUTPUT" | jq -r '.validation_errors[] | select(contains("not on approved governance owner list"))' 2>/dev/null || echo "")
+          
+          if [ -n "$GOVERNANCE_ERRORS" ]; then
+            echo "governance_violations=true" >> $GITHUB_OUTPUT
+            echo "::error::Governance violations detected - owners not on approved list"
+            echo "::error::$GOVERNANCE_ERRORS"
+          else
+            echo "governance_violations=false" >> $GITHUB_OUTPUT
+          fi
           
           # Check for disabled owners
           DISABLED_OWNERS=$(echo "$VERIFICATION_OUTPUT" | jq -r '.requested_owners[] | select(.account_enabled == false) | .owner_id' 2>/dev/null || echo "")
@@ -85,7 +97,9 @@ jobs:
           if [ -z "$DISABLED_OWNERS" ]; then
             echo "disabled_owners_found=false" >> $GITHUB_OUTPUT
             echo "grace_period_expired=false" >> $GITHUB_OUTPUT
-            echo "::warning::Drift detected but no disabled owners found"
+            if [ "${{ steps.detect-drift.outputs.governance_violations }}" != "true" ]; then
+              echo "::warning::Drift detected but no disabled owners or governance violations found"
+            fi
           else
             echo "disabled_owners_found=true" >> $GITHUB_OUTPUT
             echo "::warning::Disabled owners detected: $DISABLED_OWNERS"
@@ -131,6 +145,32 @@ jobs:
           Owner drift detected in app registration configuration.
           
           EOF
+          
+          # Add governance violations section if applicable
+          if [ "${{ steps.detect-drift.outputs.governance_violations }}" = "true" ]; then
+            cat >> "$REPORT_FILE" <<'EOF'
+          ### 🚫 Governance Violations Detected
+          
+          The following owners are NOT on the approved governance/security list:
+          
+          EOF
+            
+            echo "$VERIFICATION_JSON" | jq -r '.validation_errors[] | select(contains("not on approved governance owner list"))' | sed 's/^/- /' >> "$REPORT_FILE" || true
+            
+            cat >> "$REPORT_FILE" <<'EOF'
+          
+          ⚠️ **IMMEDIATE ACTION REQUIRED**: Only users from the approved governance list can own app registrations.
+          
+          **Approved owner list:** `deployments/azure/app-registration/config/allowed-owners.json`
+          
+          **Options:**
+          1. Replace with approved owner from governance list
+          2. Submit PR to add user to approved list (requires CISO approval)
+          
+          See `config/README.md` for the approval process.
+          
+          EOF
+          fi
           
           # Add disabled owners section if applicable
           if [ "${{ steps.detect-drift.outputs.disabled_owners_found }}" = "true" ]; then
@@ -195,6 +235,46 @@ jobs:
           
           # Display report in workflow log
           cat "$REPORT_FILE"
+      
+      - name: Send governance violation notification
+        if: steps.detect-drift.outputs.governance_violations == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueBody = `## 🚫 App Registration Governance Violation\n\n` +
+              `**Audit Date:** ${new Date().toISOString().split('T')[0]}\n` +
+              `**Status:** ⚠️ **GOVERNANCE POLICY VIOLATION**\n\n` +
+              `One or more app registration owners are **NOT on the approved governance/security list**.\n\n` +
+              `### Governance Requirement\n\n` +
+              `Only users from the approved governance list can own app registrations.\n\n` +
+              `**Approved list:** \`deployments/azure/app-registration/config/allowed-owners.json\`\n\n` +
+              `### Action Required\n\n` +
+              `Choose ONE of the following options:\n\n` +
+              `1. **Replace with approved owner** (recommended):\n` +
+              `   - Select owner from approved governance list\n` +
+              `   - Create PR to update app registration configuration\n` +
+              `   - Deploy changes\n\n` +
+              `2. **Add user to approved list** (requires executive approval):\n` +
+              `   - Submit PR to \`config/allowed-owners.json\`\n` +
+              `   - Include CISO approval documentation\n` +
+              `   - Typical approval time: 2-4 weeks\n` +
+              `   - See \`config/README.md\` for process\n\n` +
+              `### Security Impact\n\n` +
+              `App registrations with unapproved owners are **non-compliant** with security policy.\n` +
+              `Access may be restricted if not resolved promptly.\n\n` +
+              `---\n\n` +
+              `[View full audit report]($${{ github.server_url }}/$${{ github.repository }}/actions/runs/$${{ github.run_id }})\n\n` +
+              `<sub>🤖 This is an automated notification from the App Registration Owner Audit workflow.</sub>`;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚫 App Registration Governance Violation - Action Required`,
+              body: issueBody,
+              labels: ['app-registration', 'governance-violation', 'security', 'urgent']
+            });
+            
+            core.error('Governance violation issue created');
       
       - name: Send Day 0 notification (basic alert)
         if: steps.detect-drift.outputs.disabled_owners_found == 'true' && steps.detect-drift.outputs.grace_period_expired == 'false'
@@ -302,15 +382,18 @@ jobs:
                 `This PR was automatically created by the Owner Audit workflow.\n\n` +
                 `### Detected Issues\n\n` +
                 `- Disabled owner accounts detected in app registration\n` +
-                `- Grace period status: ${{ steps.detect-drift.outputs.grace_period_expired == 'true' ? '⚠️ EXPIRED' : '✅ Within 7 days' }}\n\n` +
+                `- Grace period status: ${{ steps.detect-drift.outputs.grace_period_expired == 'true' && '⚠️ EXPIRED' || '✅ Within 7 days' }}\n\n` +
                 `### Required Actions\n\n` +
                 `⚠️ **MANUAL INTERVENTION REQUIRED**\n\n` +
                 `This PR removes disabled owners but **you must add replacement owners** to meet the 2-owner minimum.\n\n` +
+                `**Replacement owners MUST be from approved governance list:**\n` +
+                `- View approved owners: \`cat deployments/azure/app-registration/config/allowed-owners.json | jq '.allowed_owners.users[].email'\`\n\n` +
                 `1. Review disabled owners in audit report\n` +
-                `2. Add active Azure AD user object IDs to \`app_owners\` variable\n` +
-                `3. Ensure at least 2 owners total (minimum 1 human)\n` +
-                `4. Update this PR with changes\n` +
-                `5. Request 1 reviewer approval (auto-remediation requires only 1 reviewer)\n\n` +
+                `2. Select replacement owners from approved governance list\n` +
+                `3. Add active Azure AD user object IDs to \`app_owners\` variable\n` +
+                `4. Ensure at least 2 owners total (minimum 1 human from approved list)\n` +
+                `5. Update this PR with changes\n` +
+                `6. Request 1 reviewer approval (auto-remediation requires only 1 reviewer)\n\n` +
                 `[View audit workflow run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})\n\n` +
                 `---\n\n` +
                 `<sub>🤖 Auto-remediation PR created by App Registration Owner Audit workflow</sub>`,
@@ -319,3 +402,10 @@ jobs:
             
             core.notice(`Auto-remediation PR created: ${pr.data.html_url}`);
             core.warning('PR marked as DRAFT - manual changes required to add replacement owners');
+      - name: Display grace period status
+        run: |
+          if [ "${{ steps.detect-drift.outputs.grace_period_expired }}" == "true" ]; then
+            echo "⚠️ EXPIRED"
+          else
+            echo "✅ Within 7 days"
+          fi
