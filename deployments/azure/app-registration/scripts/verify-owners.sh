@@ -3,6 +3,7 @@
 # verify-owners.sh
 # Verifies app registration owners exist in Entra ID, are enabled, and meet requirements
 # Enforces: minimum 2 total owners, minimum 1 human owner, maximum 1 placeholder service principal
+# Enforces: All human owners must be from approved governance/security list
 #
 # Usage: ./verify-owners.sh <path-to-terraform-files> [app-registration-id]
 # Outputs: JSON with owner verification results
@@ -18,8 +19,25 @@ NC='\033[0m'
 TF_DIR="${1:-.}"
 APP_REG_ID="${2:-}"
 
+# Load allowed owners configuration
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ALLOWED_OWNERS_CONFIG="$SCRIPT_DIR/../config/allowed-owners.json"
+
+if [[ ! -f "$ALLOWED_OWNERS_CONFIG" ]]; then
+    echo -e "${RED}Error: Allowed owners config not found: $ALLOWED_OWNERS_CONFIG${NC}" >&2
+    exit 1
+fi
+
+ALLOWED_EMAILS=$(jq -r '.allowed_owners.users[].email' "$ALLOWED_OWNERS_CONFIG" | tr '\n' '|' | sed 's/|$//')
+
+if [[ -z "$ALLOWED_EMAILS" ]]; then
+    echo -e "${RED}Error: No allowed owners defined in config${NC}" >&2
+    exit 1
+fi
+
 echo "👥 Verifying app registration owners..."
 echo "📂 Scanning: $TF_DIR"
+echo "🔐 Governance: $(jq -r '.allowed_owners.users | length' "$ALLOWED_OWNERS_CONFIG") approved owner(s)"
 echo ""
 
 # Check Azure CLI
@@ -76,6 +94,14 @@ for owner in "${OWNERS_ARRAY[@]}"; do
         echo "  ✓ Type: User"
         echo "  ✓ Display Name: $DISPLAY_NAME"
         echo "  ✓ Object ID: $OBJECT_ID"
+        
+        # Check if user is on approved governance list
+        if ! echo "$owner" | grep -qE "^($ALLOWED_EMAILS)$"; then
+            echo -e "  ${RED}✗ Governance: NOT on approved owner list${NC}"
+            VALIDATION_ERRORS=$(echo "$VALIDATION_ERRORS" | jq --arg email "$owner" '. += ["User not on approved governance owner list: \($email)"]')
+        else
+            echo -e "  ${GREEN}✓ Governance: Approved owner${NC}"
+        fi
         
         if [[ "$ACCOUNT_ENABLED" == "true" ]]; then
             echo -e "  ${GREEN}✓ Status: Enabled${NC}"

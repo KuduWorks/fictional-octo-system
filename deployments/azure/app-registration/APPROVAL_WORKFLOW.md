@@ -106,6 +106,9 @@ deployments/azure/app-registration/
 ├── outputs.tf                           # Module outputs
 ├── APPROVAL_WORKFLOW.md                 # This documentation
 │
+├── config/
+│   └── allowed-owners.json              # Governance-approved owner list
+│
 ├── modules/
 │   └── placeholder-service-principal/   # Zero-permission SP module
 │       ├── main.tf
@@ -153,9 +156,11 @@ deployments/azure/app-registration/
    ```hcl
    app_display_name = "MyApplication"
    
+   # IMPORTANT: Owners MUST be from approved governance list
+   # See: config/allowed-owners.json
    app_owners = [
-     "12345678-1234-1234-1234-123456789012",  # Human owner 1
-     "87654321-4321-4321-4321-210987654321"   # Human owner 2
+     "12345678-1234-1234-1234-123456789012",  # security-admin@example.com
+     "87654321-4321-4321-4321-210987654321"   # identity-admin@example.com
    ]
    
    graph_permissions = [
@@ -198,6 +203,7 @@ deployments/azure/app-registration/
 
 1. **Review PR checklist:**
    - ✅ At least 2 owners (minimum 1 human)
+   - ✅ All human owners are from approved governance list (`config/allowed-owners.json`)
    - ✅ All owners have ENABLED accounts
    - ✅ Placeholder justification substantive (if used)
    - ✅ HIGH-risk permissions have 100+ char justifications
@@ -249,16 +255,59 @@ permission_justifications = {
 
 ### Owner Requirements
 
+#### Governance Policy
+**All human owners MUST be from the approved governance/security list:**
+- See: `config/allowed-owners.json` for current approved owners
+- Only users on this list can be designated as app registration owners
+- Typically 3-8 high-privilege governance/security users
+- Ensures accountability and proper access controls
+- Changes to approved list require CISO/Security Leadership approval
+
 #### Minimum Requirements
 - **Total owners:** ≥ 2
-- **Human owners:** ≥ 1
+- **Human owners:** ≥ 1 (MUST be from approved governance list)
 - **Placeholder SPs:** ≤ 1
+
+#### Viewing Approved Owners
+
+**List current approved owners:**
+```bash
+cat deployments/azure/app-registration/config/allowed-owners.json | jq '.allowed_owners.users[] | {email, role, team}'
+```
+
+**Example output:**
+```json
+{
+  "email": "security-admin@example.com",
+  "role": "Security Administrator",
+  "team": "Information Security"
+}
+{
+  "email": "identity-admin@example.com",
+  "role": "Identity Administrator",
+  "team": "IT Operations"
+}
+```
+
+#### Requesting Addition to Approved Owner List
+
+**Process:**
+1. Submit PR to `config/allowed-owners.json`
+2. Include CISO approval documentation
+3. Provide business justification for governance role
+4. Confirm user has appropriate Entra ID admin roles
+5. Security leadership review required
+
+**Not on approved list?**
+- Work with existing approved owners to submit your request
+- Typical approval time: 2-4 weeks
+- Emergency access: See break-glass procedures
 
 #### Finding Owner Object IDs
 
 **Azure CLI:**
 ```bash
-# Find user by email
+# Find user by email (MUST be from approved list)
 az ad user show --id user@company.com --query id -o tsv
 
 # Find user by display name
@@ -330,14 +379,33 @@ module "my_app" {
 
 #### Owner Validation Failed
 
+**Error:** "User not on approved governance owner list"
+
+**Solution:**
+```bash
+# View current approved owners
+cat deployments/azure/app-registration/config/allowed-owners.json | jq '.allowed_owners.users[].email'
+
+# Replace with approved owner from list
+app_owners = [
+  "<object-id-of-approved-owner-1>",
+  "<object-id-of-approved-owner-2>"
+]
+```
+
+**Not on the list?**
+- Request addition to approved owner list (CISO approval required)
+- Work with existing approved owner to submit your request
+- See `config/allowed-owners.json` for process documentation
+
 **Error:** "At least 1 HUMAN owner required"
 
 **Solution:**
 ```hcl
-# Ensure at least one owner is a USER (not service principal)
+# Ensure at least one owner is from approved governance list
 app_owners = [
-  "user-object-id-1",     # Human user ✅
-  "user-object-id-2"      # Another human user ✅
+  "user-object-id-1",     # Must be from config/allowed-owners.json ✅
+  "user-object-id-2"      # Must be from config/allowed-owners.json ✅
 ]
 ```
 
@@ -566,7 +634,7 @@ Approved by Security Team and CISO on 2024-01-15. Annual review scheduled."
 |-----|--------|--------|
 | 0-5 months | ✅ OK | Reminder to replace when owner identified |
 | 5-6 months | ⚠️ Warning | Replace soon - approaching limit |
-| 6+ months | ��� Escalation | Immediate action + leadership escalation |
+| 6+ months | ��� Escalation | Immediate action + leadership escalation |
 
 **Leadership Escalation (>6 months):**
 - Separate escalation issue created

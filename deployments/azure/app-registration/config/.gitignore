@@ -1,0 +1,8 @@
+# Do NOT ignore the allowed-owners.json file
+# This file contains governance-approved owner list and should be version controlled
+# to track changes via PR approval process
+
+# Ignore any temporary or backup files
+*.bak
+*.tmp
+.DS_Store

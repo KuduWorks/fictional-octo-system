@@ -24,6 +24,9 @@ This module handles the complete lifecycle of Entra ID applications (so you don'
   - `Application.ReadWrite.All` (to create apps)
   - `AppRoleAssignment.ReadWrite.All` (for admin consent)
   - `Directory.Read.All` (to read directory objects)
+- **🔒 Governance Requirement**: User must be on approved owner list (`config/allowed-owners.json`)
+  - Only governance/security users can own app registrations
+  - See `config/README.md` for process to request addition
 - ☕ Coffee (recommended but not technically required)
 - 🧘 Patience for Entra ID permission propagation delays
 
@@ -37,6 +40,13 @@ module "basic_app" {
 
   app_display_name = "my-backend-api"
   sign_in_audience = "AzureADMyOrg"
+  
+  # GOVERNANCE REQUIREMENT: Owners must be from approved list
+  # See: config/allowed-owners.json
+  app_owners = [
+    "12345678-1234-1234-1234-123456789012",  # security-admin@example.com
+    "87654321-4321-4321-4321-210987654321"   # identity-admin@example.com
+  ]
   
   # Basic Microsoft Graph permissions
   graph_permissions = [

@@ -19,18 +19,30 @@ assignees: ''
 
 ### 👥 Application Owners (Minimum 2 Required)
 
-**Owner 1 (Human - Required):**
+> **🔒 GOVERNANCE REQUIREMENT:** All human owners MUST be from the approved governance/security list.
+> See: `deployments/azure/app-registration/config/allowed-owners.json`
+> 
+> **Current approved owners:**
+> - Security Administrators
+> - Identity Administrators  
+> - Compliance Officers
+> 
+> **Not on the list?** Submit PR to add yourself (requires CISO approval).
+
+**Owner 1 (Human - Required from Approved List):**
 - **Name:** 
-- **Email:** 
+- **Email:** _(Must be from approved governance list)_
 - **Azure AD Object ID:** `<user-object-id>`
 - **Role/Department:** 
+- **Verified in approved list:** ☐ Yes
 
 **Owner 2:**
-- **Type:** ☐ Human User  ☐ Placeholder Service Principal
+- **Type:** ☐ Human User (from approved list)  ☐ Placeholder Service Principal
 - **Name/Display Name:** 
-- **Email (if human):** 
+- **Email (if human):** _(Must be from approved governance list)_
 - **Azure AD Object ID:** `<user-or-sp-object-id>`
 - **Role/Department (if human):** 
+- **Verified in approved list:** ☐ Yes ☐ N/A (placeholder)
 
 > **Note:** If using a placeholder service principal, you MUST provide justification below.
 

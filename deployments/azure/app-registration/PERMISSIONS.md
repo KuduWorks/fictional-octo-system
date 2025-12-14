@@ -2,7 +2,16 @@
 
 Quick reference for common Microsoft Graph permission IDs used in Azure AD app registrations.
 
-## 🔍 How to Use This Guide
+## � Governance Requirement
+
+**IMPORTANT:** All app registration owners must be from the approved governance/security list.
+
+- See: `config/allowed-owners.json` for current approved owners
+- Only Security Administrators, Identity Administrators, and Compliance Officers
+- Submit PR with CISO approval to be added to the list
+- See `config/README.md` for full process
+
+## �🔍 How to Use This Guide
 
 Each permission has:
 - **ID**: The GUID to use in Terraform

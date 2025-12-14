@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "description": "Approved list of governance/security users authorized to own app registrations and enterprise applications. Only users on this list can be designated as owners.",
+  "last_updated": "2025-12-14",
+  "governance_approval": "Security Architecture Team",
+  "allowed_owners": {
+    "users": [
+      {
+        "email": "security-admin@example.com",
+        "role": "Security Administrator",
+        "team": "Information Security",
+        "added_date": "2025-12-14",
+        "justification": "Primary security owner for identity governance"
+      },
+      {
+        "email": "identity-admin@example.com",
+        "role": "Identity Administrator",
+        "team": "IT Operations",
+        "added_date": "2025-12-14",
+        "justification": "Entra ID identity management lead"
+      },
+      {
+        "email": "compliance-officer@example.com",
+        "role": "Compliance Officer",
+        "team": "Governance, Risk & Compliance",
+        "added_date": "2025-12-14",
+        "justification": "Compliance oversight for app registrations"
+      }
+    ]
+  },
+  "process": {
+    "add_owner": "Submit PR to this file with CISO approval and business justification",
+    "remove_owner": "Submit PR with 30-day notice and successor owner identified",
+    "emergency_access": "Break-glass account procedures apply - see runbook"
+  },
+  "notes": [
+    "This list should remain small (recommended: 3-8 users) to maintain accountability",
+    "All users must have appropriate Entra ID roles (Security Admin, Application Admin, etc.)",
+    "Placeholders (service principals) are allowed with justification but count toward owner limits",
+    "Regular access reviews of this list are mandatory (quarterly recommended)",
+    "Changes to this list require security leadership approval"
+  ]
+}
