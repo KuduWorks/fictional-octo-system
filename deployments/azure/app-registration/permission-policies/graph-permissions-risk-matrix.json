@@ -34,8 +34,9 @@
       "min_justification_length": 0,
       "examples": [
         "Application.ReadWrite.OwnedBy",
+        "Mail.Read",
         "Mail.Send",
-        "Directory.AccessAsUser.All"
+        "Calendars.Read"
       ],
       "requires_security_review": true
     },
