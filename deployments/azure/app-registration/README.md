@@ -1,14 +1,14 @@
-# Azure AD App Registration Automation
+# Microsoft Entra ID App Registration Automation
 
 > *"Because manually clicking through the Azure Portal is so 2015"* 🎭
 
-This Terraform module automates the creation and management of Azure AD (Entra ID) application registrations, service principals, and client secret rotation. It demonstrates how to wire workloads into Entra ID with best practices for authentication and authorization. No more copying GUIDs into sticky notes or storing secrets in a text file called `definitely-not-secrets.txt`.
+This Terraform module automates the creation and management of Microsoft Entra ID application registrations, service principals, and client secret rotation. It demonstrates how to wire workloads into Entra ID with best practices for authentication and authorization. No more copying GUIDs into sticky notes or storing secrets in a text file called `definitely-not-secrets.txt`.
 
 ## 🎯 Overview
 
-This module handles the complete lifecycle of Azure AD applications (so you don't have to):
+This module handles the complete lifecycle of Entra ID applications (so you don't have to):
 
-- **App Registration**: Create and configure Azure AD applications
+- **App Registration**: Create and configure Entra ID applications
 - **Service Principals**: Establish service identities for workloads
 - **Secret Rotation**: Automatic client secret rotation with configurable intervals
 - **API Permissions**: Manage Microsoft Graph and custom API permissions
@@ -20,12 +20,12 @@ This module handles the complete lifecycle of Azure AD applications (so you don'
 
 - Terraform >= 1.3.0
 - Azure CLI authenticated with appropriate permissions (aka: you've survived `az login`)
-- Azure AD permissions:
+- Microsoft Entra ID permissions:
   - `Application.ReadWrite.All` (to create apps)
   - `AppRoleAssignment.ReadWrite.All` (for admin consent)
   - `Directory.Read.All` (to read directory objects)
 - ☕ Coffee (recommended but not technically required)
-- 🧘 Patience for Azure AD permission propagation delays
+- 🧘 Patience for Entra ID permission propagation delays
 
 ## 🚀 Quick Start
 
@@ -127,7 +127,7 @@ Use **Microsoft Graph** API permissions when your application needs to:
 #### ✅ Teams and SharePoint
 # ⚠️ REQUIRED: Justify .All permissions before granting
 permission_justifications = {
-  "User.Read.All"  = "Required for automated user provisioning system. Needs to sync 5000+ users daily from HR system to Azure AD. Scoped permissions insufficient as users span multiple departments. Security review completed (ticket #SEC-2024-456). Approved by CISO on 2024-03-15. Quarterly review scheduled."
+  "User.Read.All"  = "Required for automated user provisioning system. Needs to sync 5000+ users daily from HR system to Entra ID. Scoped permissions insufficient as users span multiple departments. Security review completed (ticket #SEC-2024-456). Approved by CISO on 2024-03-15. Quarterly review scheduled."
   "Group.Read.All" = "Required to validate group memberships for access control decisions across 200+ applications. Read-only access, no modifications. Security review ticket #SEC-2024-457. Annual audit scheduled."
 }
 
@@ -210,7 +210,7 @@ custom_api_permissions = [
 | Deploy Azure VMs | ❌ No | ✅ Yes (ARM API) |
 | Access Azure Storage blobs | ❌ No | ✅ Yes (Storage API) |
 | Call your custom backend API | ❌ No | ✅ Yes (Custom API) |
-| Manage Azure AD users | ✅ Yes (`User.ReadWrite.All`) | ❌ No |
+| Manage Entra ID users | ✅ Yes (`User.ReadWrite.All`) | ❌ No |
 | Read audit logs | ✅ Yes (`AuditLog.Read.All`) | ❌ No |
 | Manage Azure Key Vault secrets | ❌ No | ✅ Yes (RBAC/Access Policies) |
 
@@ -497,7 +497,7 @@ module "github_sso" {
 
 **Configuration steps:**
 
-1. **In Azure AD:**
+1. **In Microsoft Entra ID:**
    - Deploy the module to create the Enterprise Application
    - Note the SAML sign-on URL and Entity ID from outputs
    - Download the Base64 certificate
@@ -520,7 +520,7 @@ module "github_sso" {
 - ✅ Conditional Access policies apply to GitHub access
 - ✅ Automatic user provisioning/deprovisioning (with SCIM)
 - ✅ MFA enforcement from Entra ID
-- ✅ Audit logs in Azure AD
+- ✅ Audit logs in Microsoft Entra ID
 
 ### Use Case 7: Authentication Best Practices - Managed Identity → Certificate → Secret
 
@@ -879,7 +879,7 @@ az ad sp show --id 00000003-0000-0000-c000-000000000000 \
 
 ### Method 2: Azure Portal (For Those Who Like Clicking)
 
-1. Navigate to **Azure AD** → **App registrations**
+1. Navigate to **Microsoft Entra ID** → **App registrations**
 2. Open any app → **API permissions** → **Add a permission**
 3. Select **Microsoft Graph**Risk | Description |
 |----------------|-----|------|------|-------------|
@@ -909,13 +909,13 @@ az ad sp show --id 00000003-0000-0000-c000-000000000000 \
 - **Scope** = Delegated permission (acts on behalf of user)
 - **Role** = Application permission (acts as the app itself)
 
-## 🏷️ Understanding Tags in Azure AD and Azure Resources
+## 🏷️ Understanding Tags in Microsoft Entra ID and Azure Resources
 
 This module uses three different types of tags, each serving a distinct purpose. Understanding the difference is crucial for proper configuration.
 
-### Azure AD Application Tags
+### Microsoft Entra ID Application Tags
 
-**What they are**: Simple string labels for categorizing applications in Azure AD
+**What they are**: Simple string labels for categorizing applications in Entra ID
 
 **Format**: Set of strings (not key-value pairs!)
 
@@ -927,7 +927,7 @@ resource "azuread_application" "app" {
 ```
 
 **Purpose**:
-- Categorize applications in Azure AD portal
+- Categorize applications in Entra ID portal
 - Filter and search apps
 - Custom organizational labels
 
@@ -935,7 +935,7 @@ resource "azuread_application" "app" {
 
 ---
 
-### Azure AD Service Principal Feature Tags
+### Microsoft Entra ID Service Principal Feature Tags
 
 **What they are**: Boolean flags that control the **behavior and type** of the service principal
 
@@ -946,7 +946,7 @@ resource "azuread_application" "app" {
 resource "azuread_service_principal" "app_sp" {
   feature_tags {
     enterprise = false  # Is this an Enterprise Application?
-    gallery    = false  # Is this from the Azure AD Gallery?
+    gallery    = false  # Is this from the Entra ID Gallery?
     hide       = false  # Hide from user portals?
     custom_single_sign_on = false  # Custom SSO configuration?
   }
@@ -1035,8 +1035,25 @@ resource "azurerm_key_vault_secret" "client_id" {
 ```
 
 ## 📖 Additional Resources
-⚠️ NEVER use `.All` permissions without justification**: Any permission ending in `.All` grants access to ALL resources of that type in your entire organization. Require written justification, security review, and approval before granting. Consider scoped alternatives first.  
+
+- [Microsoft Graph Permissions Reference](https://learn.microsoft.com/en-us/graph/permissions-reference)
+- [Microsoft Entra ID App Registration Best Practices](https://learn.microsoft.com/en-us/entra/identity-platform/security-best-practices-for-app-registration)
+- [Workload Identity Federation](https://learn.microsoft.com/en-us/entra/workload-id/workload-identity-federation)
+- [Certificate Credentials](https://learn.microsoft.com/en-us/entra/identity-platform/howto-create-service-principal-portal#option-1-recommended-upload-a-certificate)
+- [Azure Resource Tagging Best Practices](https://learn.microsoft.com/en-us/azure/cloud-adoption-framework/ready/azure-best-practices/resource-tagging)
+
+## 🔒 Security Best Practices
+
+> *"Because 'Everyone is Owner' is not a valid security model"* 🛡️
+
+1. **Principle of Least Privilege**: Only request necessary permissions  
+   *(Not "Permission of Most Convenience")*
+
+2. **⚠️ NEVER use `.All` permissions without justification**: Any permission ending in `.All` grants access to ALL resources of that type in your entire organization. Require written justification, security review, and approval before granting. Consider scoped alternatives first.  
    *(`.All` = "Keys to the Kingdom" - treat with extreme caution!)*
+
+3. **Use Application Permissions Sparingly**: Prefer delegated when possible  
+   *(Your app probably doesn't need to be God Mode)*
 
 4. **Federated Credentials**: Use OIDC instead of secrets when available  
    *(Passwords are so 2010. We're in the passwordless future now!)*
@@ -1045,7 +1062,7 @@ resource "azurerm_key_vault_secret" "client_id" {
    *(Not in `secrets.txt`, not in environment variables you forgot about, and definitely not in that Slack message from 2019)*
 
 6. **Regular Rotation**: Rotate secrets every 90-180 days  
-   *(Or 7 days if your Azure AD admin is particularly paranoid... they're probably right)*
+   *(Or 7 days if your Entra ID admin is particularly paranoid... they're probably right)*
 
 7. **Admin Consent Tracking**: Document why each permission is needed, especially `.All` permissions  
    *(Future you will thank present you when the auditor asks: "Why does this app have User.ReadWrite.All?")*
@@ -1055,23 +1072,6 @@ resource "azurerm_key_vault_secret" "client_id" {
 
 9. **Quarterly Reviews**: Review all `.All` permissions quarterly - verify they're still needed and properly justified  
    *(Apps change, requirements change, permissions should too)*
-2. **Use Application Permissions Sparingly**: Prefer delegated when possible  
-   *(Your app probably doesn't need to be God Mode)*
-
-3. **Federated Credentials**: Use OIDC instead of secrets when available  
-   *(Passwords are so 2010. We're in the passwordless future now!)*
-
-4. **Key Vault Storage**: Always store secrets in Key Vault  
-   *(Not in `secrets.txt`, not in environment variables you forgot about, and definitely not in that Slack message from 2019)*
-
-5. **Regular Rotation**: Rotate secrets every 90-180 days  
-   *(Or 7 days if your Azure AD admin is particularly paranoid... they're probably right)*
-
-6. **Admin Consent Tracking**: Document why each permission is needed  
-   *(Future you will thank present you when the auditor asks)*
-
-7. **Monitoring**: Set up alerts for permission changes and secret access  
-   *(So you know when things go wrong before your manager does)* 📊
 
 ## 🤝 Contributing
 
