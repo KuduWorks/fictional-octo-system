@@ -11,16 +11,19 @@
       "justification_required": true,
       "min_justification_length": 100,
       "examples": [
-        "User.ReadWrite.All",
-        "Directory.Read.All",
         "Application.ReadWrite.All",
-        "Mail.ReadWrite.All",
-        "Files.ReadWrite.All",
-        "Sites.ReadWrite.All",
+        "AppRoleAssignment.ReadWrite.All",
         "Calendars.ReadWrite.All",
         "Contacts.ReadWrite.All",
+        "Directory.AccessAsUser.All",
+        "Directory.Read.All",
+        "Directory.ReadWrite.All",
+        "Files.ReadWrite.All",
         "Group.ReadWrite.All",
-        "RoleManagement.ReadWrite.Directory"
+        "Mail.ReadWrite.All",
+        "RoleManagement.ReadWrite.Directory",
+        "Sites.ReadWrite.All",
+        "User.ReadWrite.All"
       ],
       "requires_security_review": true
     },
@@ -31,11 +34,10 @@
       "min_justification_length": 0,
       "examples": [
         "Application.ReadWrite.OwnedBy",
-        "User.Read",
         "Mail.Send",
         "Directory.AccessAsUser.All"
       ],
-      "requires_security_review": false
+      "requires_security_review": true
     },
     "LOW": {
       "pattern": "^Delegated\\.",
@@ -44,11 +46,11 @@
       "min_justification_length": 0,
       "blast_radius_note": "⚠️ Operates in user context - limited by signed-in user's permissions",
       "examples": [
-        "User.Read",
-        "User.ReadBasic.All",
-        "Calendars.Read",
-        "Mail.Read",
-        "Files.Read"
+        "email",
+        "offline_access",
+        "openid",
+        "profile",
+        "User.Read"
       ],
       "requires_security_review": false
     }
@@ -71,36 +73,124 @@
       "blast_radius": "Can modify applications the user has access to"
     },
     {
+      "id": "06b3050f-479e-4dd6-b610-072e7d5bc5f4",
+      "name": "AppRoleAssignment.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "CRITICAL",
+      "description": "Manage app permission grants and app role assignments",
+      "blast_radius": "Can grant ANY permission to ANY application - ultimate privilege escalation"
+    },
+    {
+      "id": "84bccea3-f856-4a8a-967b-dbe0a3d53a64",
+      "name": "AppRoleAssignment.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "CRITICAL",
+      "description": "Manage app permission grants and app role assignments (delegated)",
+      "blast_radius": "Can grant permissions the user has authority to manage"
+    },
+    {
+      "id": "ef54d2bf-783f-4e0f-bca1-3210c0444d99",
+      "name": "Calendars.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write calendars in all mailboxes",
+      "blast_radius": "Can read, create, modify, and delete calendar events for all users"
+    },
+    {
+      "id": "1ec239c2-d7c9-4623-a91a-a9775856bb36",
+      "name": "Calendars.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write user calendars (delegated)",
+      "blast_radius": "Can manage calendars the user has access to"
+    },
+    {
+      "id": "6918b873-d17a-4dc1-b314-35f528134491",
+      "name": "Contacts.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write contacts in all mailboxes",
+      "blast_radius": "Can read and modify all users' contact information"
+    },
+    {
+      "id": "ff74d97f-43af-4b68-9f2a-b77ee6968c5d",
+      "name": "Contacts.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write user contacts (delegated)",
+      "blast_radius": "Can manage contacts the user has access to"
+    },
+    {
+      "id": "0e263e50-5827-48a4-b97c-d940288653c7",
+      "name": "Directory.AccessAsUser.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Access directory as the signed-in user",
+      "blast_radius": "Can perform any directory operation the signed-in user can perform - impersonation risk"
+    },
+    {
+      "id": "7ab1d382-f21e-4acd-a863-ba3e13f7da61",
+      "name": "Directory.Read.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read directory data",
+      "blast_radius": "Can read ALL users, groups, applications, devices, and directory objects"
+    },
+    {
+      "id": "06da0dbc-49e2-44d2-8312-53f166ab848a",
+      "name": "Directory.Read.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read directory data (delegated)",
+      "blast_radius": "Can read directory objects the user has access to"
+    },
+    {
       "id": "19dbc75e-c2e2-444c-a770-ec69d8559fc7",
       "name": "Directory.ReadWrite.All",
       "type": "Role",
-      "risk_level": "HIGH",
+      "risk_level": "CRITICAL",
       "description": "Read and write directory data",
-      "blast_radius": "Can modify any directory object including users, groups, devices"
+      "blast_radius": "Can modify any directory object including users, groups, devices - full tenant control"
     },
     {
       "id": "c5366453-9fb0-48a5-a156-24f0c49a4b84",
       "name": "Directory.ReadWrite.All",
       "type": "Scope",
-      "risk_level": "HIGH",
+      "risk_level": "CRITICAL",
       "description": "Read and write directory data (delegated)",
       "blast_radius": "Can modify directory objects the user has access to"
     },
     {
-      "id": "741f803b-c850-494e-b5df-cde7c675a1ca",
-      "name": "User.ReadWrite.All",
+      "id": "75359482-378d-4052-8f01-80520e7db3cd",
+      "name": "Files.ReadWrite.All",
       "type": "Role",
       "risk_level": "HIGH",
-      "description": "Read and write all users' full profiles",
-      "blast_radius": "Can modify any user profile, reset passwords, assign roles"
+      "description": "Read and write files in all site collections",
+      "blast_radius": "Can access and modify any file in SharePoint/OneDrive across entire tenant"
     },
     {
-      "id": "204e0828-b5ca-4ad8-b9f3-f32a958e7cc4",
-      "name": "User.ReadWrite.All",
+      "id": "863451e7-0667-486c-a5d6-d135439485f0",
+      "name": "Files.ReadWrite.All",
       "type": "Scope",
       "risk_level": "HIGH",
-      "description": "Read and write all users' full profiles (delegated)",
-      "blast_radius": "Can modify user profiles the signed-in user has access to"
+      "description": "Read and write files in all site collections (delegated)",
+      "blast_radius": "Can manage files the user has access to"
+    },
+    {
+      "id": "62a82d76-70ea-41e2-9197-370581804d09",
+      "name": "Group.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write all groups",
+      "blast_radius": "Can create, modify, delete any group including security and M365 groups"
+    },
+    {
+      "id": "4e46008b-f24c-477d-8fff-7bb4ec7aafe0",
+      "name": "Group.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write all groups (delegated)",
+      "blast_radius": "Can manage groups the user has access to"
     },
     {
       "id": "e2a3a72e-5f79-4c64-b1b1-878b674786c9",
@@ -108,7 +198,7 @@
       "type": "Role",
       "risk_level": "HIGH",
       "description": "Read and write mail in all mailboxes",
-      "blast_radius": "Can read and send email as any user"
+      "blast_radius": "Can read and send email as any user - data exfiltration and phishing risk"
     },
     {
       "id": "024d486e-b451-40bb-833d-3e66d98c5c73",
@@ -122,25 +212,17 @@
       "id": "9e3f62cf-ca93-4989-b6ce-bf83c28f9fe8",
       "name": "RoleManagement.ReadWrite.Directory",
       "type": "Role",
-      "risk_level": "HIGH",
+      "risk_level": "CRITICAL",
       "description": "Manage all directory RBAC settings",
-      "blast_radius": "Can assign any role to any principal including Global Administrator"
+      "blast_radius": "Can assign any role to any principal including Global Administrator - complete tenant takeover"
     },
     {
-      "id": "62a82d76-70ea-41e2-9197-370581804d09",
-      "name": "Group.ReadWrite.All",
-      "type": "Role",
-      "risk_level": "HIGH",
-      "description": "Read and write all groups",
-      "blast_radius": "Can create, modify, delete any group including security groups"
-    },
-    {
-      "id": "75359482-378d-4052-8f01-80520e7db3cd",
-      "name": "Files.ReadWrite.All",
-      "type": "Role",
-      "risk_level": "HIGH",
-      "description": "Read and write files in all site collections",
-      "blast_radius": "Can access and modify any file in SharePoint/OneDrive"
+      "id": "d01b97e9-cbc0-49fe-810a-750afd5527a3",
+      "name": "RoleManagement.ReadWrite.Directory",
+      "type": "Scope",
+      "risk_level": "CRITICAL",
+      "description": "Manage directory RBAC settings (delegated)",
+      "blast_radius": "Can manage role assignments the user has authority over"
     },
     {
       "id": "863451e7-0667-486c-a5d6-d135439485f0",
@@ -148,7 +230,31 @@
       "type": "Role",
       "risk_level": "HIGH",
       "description": "Read and write items in all site collections",
-      "blast_radius": "Can modify any SharePoint site content"
+      "blast_radius": "Can modify any SharePoint site content across entire tenant"
+    },
+    {
+      "id": "89fe6a52-be36-487e-b7d8-d061c450a026",
+      "name": "Sites.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write items in all site collections (delegated)",
+      "blast_radius": "Can manage SharePoint sites the user has access to"
+    },
+    {
+      "id": "741f803b-c850-494e-b5df-cde7c675a1ca",
+      "name": "User.ReadWrite.All",
+      "type": "Role",
+      "risk_level": "HIGH",
+      "description": "Read and write all users' full profiles",
+      "blast_radius": "Can modify any user profile, reset passwords, assign licenses"
+    },
+    {
+      "id": "204e0828-b5ca-4ad8-b9f3-f32a958e7cc4",
+      "name": "User.ReadWrite.All",
+      "type": "Scope",
+      "risk_level": "HIGH",
+      "description": "Read and write all users' full profiles (delegated)",
+      "blast_radius": "Can modify user profiles the signed-in user has access to"
     }
   ],
   "notes": [
