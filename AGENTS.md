@@ -26,7 +26,7 @@ This document helps align GitHub Copilot with repository standards, security exp
 
 ## Deployment Folder Conventions
 - Each new deployment package must include a .gitignore that excludes state files, local artifacts, and generated outputs.
-- Never commit live terraform.tfvars files; provide terraform.tfvars.example templates only and ensure prompts reinforce this rule.
+- Never commit live terraform.tfvars files; always add them to .gitignore, provide terraform.tfvars.example templates only, and ensure prompts reinforce this rule.
 - Reference the appropriate cloud folder when prompting so Copilot keeps provider-specific resources isolated.
 
 ## Quick Copilot Prompt Seeds
