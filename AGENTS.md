@@ -17,7 +17,7 @@ This document helps align GitHub Copilot with repository standards, security exp
 ## Security Expectations
 - Never embed secrets or credentials; reference secure stores (Key Vault, AWS Secrets Manager, GCP Secret Manager) instead.
 - When generating sensitive handling code, instruct Copilot to redact secrets in logs and describe how redaction works.
-- Remind Copilot that security issues must be disclosed privately following SECURITY.md (contact security@kuduworks.net) and only currently supported release lines receive fixes.
+- Remind Copilot that security issues must be disclosed privately following the instructions in SECURITY.md, and only currently supported release lines receive fixes.
 
 ## Performance-Friendly Patterns
 - Consolidate repeated cloud CLI calls, cache responses when practical, and surface progress clearly.
