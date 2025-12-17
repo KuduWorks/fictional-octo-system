@@ -1,0 +1,26 @@
+name: Legacy Dynamic IP Guard
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/archive/dynamic-ip-legacy/**'
+      - 'terraform/QUICKSTART_DYNAMIC_IP.md'
+  push:
+    branches:
+      - main
+      - azure-deployment
+    paths:
+      - 'terraform/archive/dynamic-ip-legacy/**'
+      - 'terraform/QUICKSTART_DYNAMIC_IP.md'
+
+jobs:
+  block-legacy-changes:
+    name: Block legacy dynamic IP changes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail on legacy edits
+        run: |
+          echo "Legacy dynamic IP wrappers are disabled and must not be changed. Coordinate with maintainers before touching this folder or quickstart." >&2
+          exit 1

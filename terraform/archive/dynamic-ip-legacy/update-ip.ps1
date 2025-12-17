@@ -1,9 +1,12 @@
-# PowerShell script to update storage account firewall with current IP before Terraform operations
-
+# PowerShell script to update storage account firewall with current IP before Terraform operations (legacy - disabled)
+#Requires -Version 7.0
+Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$STORAGE_ACCOUNT = "tfstate20251013"
-$RESOURCE_GROUP = "rg-tfstate"
+throw "Legacy script is disabled. Use Terraform with storage_access_method and AAD/OIDC instead."
+
+$STORAGE_ACCOUNT = "<placeholder_storage_account>"
+$RESOURCE_GROUP = "<placeholder_resource_group>"
 
 Write-Host "🔍 Getting current IP address..." -ForegroundColor Cyan
 try {
