@@ -1,6 +1,6 @@
 # Storage Account Access Options
 
-Your public IP changes often, but the state storage firewall is locked down. Use Terraform's `storage_access_method` to control access. Dynamic IP wrapper scripts are archived under `archive/dynamic-ip/` and should be used only as a last resort.
+Your public IP changes often, but the state storage firewall is locked down. Use Terraform's `storage_access_method` to control access. Dynamic IP wrapper scripts are archived/disabled under `archive/dynamic-ip-legacy/` and should not be used.
 
 ## Recommended Defaults
 - State account: tfstateprod20251215 in resource group rg-tfstate, container tfstate-prod

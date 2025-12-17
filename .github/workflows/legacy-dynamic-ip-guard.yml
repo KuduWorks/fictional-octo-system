@@ -1,0 +1,80 @@
+name: Legacy Dynamic IP Guard
+permissions:
+  contents: read
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/archive/dynamic-ip-legacy/**'
+      - 'terraform/QUICKSTART_DYNAMIC_IP.md'
+  push:
+    branches:
+      - main
+      - azure-deployment
+    paths:
+      - 'terraform/archive/dynamic-ip-legacy/**'
+      - 'terraform/QUICKSTART_DYNAMIC_IP.md'
+
+jobs:
+  block-legacy-changes:
+    name: Guard legacy dynamic IP assets
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Enforce legacy guard and placeholders
+        run: |
+          set -euo pipefail
+
+          BASE_SHA="${{ github.event.pull_request.base.sha || github.event.before || '' }}"
+          if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" = "0000000000000000000000000000000000000000" ]; then
+            BASE_SHA="HEAD~1"
+          fi
+
+          CHANGED=$(git diff --name-only "$BASE_SHA" "$GITHUB_SHA" -- terraform/archive/dynamic-ip-legacy terraform/QUICKSTART_DYNAMIC_IP.md || true)
+          if [ -z "$CHANGED" ]; then
+            echo "No legacy files changed."
+            exit 0
+          fi
+
+          echo "Legacy files changed:" && echo "$CHANGED"
+
+          status=0
+
+          # Verify shell guards remain
+          for f in terraform/archive/dynamic-ip-legacy/*.sh; do
+            if [ -f "$f" ]; then
+              if ! grep -q "Legacy script is disabled" "$f"; then
+                echo "❌ Missing guard message in $f" >&2; status=1; fi
+              if ! grep -q "<placeholder_storage_account>" "$f"; then
+                echo "❌ Placeholder storage account missing in $f" >&2; status=1; fi
+              if ! grep -q "exit 1" "$f"; then
+                echo "❌ Hard stop (exit 1) missing in $f" >&2; status=1; fi
+            fi
+          done
+
+          # Verify PowerShell guards remain
+          for f in terraform/archive/dynamic-ip-legacy/*.ps1; do
+            if [ -f "$f" ]; then
+              if ! grep -q "Legacy script is disabled" "$f"; then
+                echo "❌ Missing guard message in $f" >&2; status=1; fi
+              if ! grep -q "<placeholder_storage_account>" "$f"; then
+                echo "❌ Placeholder storage account missing in $f" >&2; status=1; fi
+              if ! grep -q "throw" "$f"; then
+                echo "❌ Hard stop (throw) missing in $f" >&2; status=1; fi
+            fi
+          done
+
+          # Quickstart must continue to mark scripts disabled and reference legacy path
+          if git diff --name-only "$BASE_SHA" "$GITHUB_SHA" -- terraform/QUICKSTART_DYNAMIC_IP.md >/dev/null 2>&1; then
+            if ! grep -qi "legacy" terraform/QUICKSTART_DYNAMIC_IP.md || ! grep -q "dynamic-ip-legacy" terraform/QUICKSTART_DYNAMIC_IP.md; then
+              echo "❌ QUICKSTART_DYNAMIC_IP.md must describe the legacy/disabled status and path." >&2; status=1; fi
+          fi
+
+          if [ $status -ne 0 ]; then
+            echo "🚫 Legacy guard failed. Coordinate with maintainers if this change is intentional." >&2
+          else
+            echo "✅ Legacy guard intact; documentation-only changes are allowed."
+          fi
+          exit $status

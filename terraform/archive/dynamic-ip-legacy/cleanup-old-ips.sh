@@ -1,10 +1,13 @@
 #!/bin/bash
-# Script to clean up old IP addresses from storage account firewall
+# Legacy script (disabled): cleans up storage firewall IPs.
 
-set -e
+set -euo pipefail
 
-STORAGE_ACCOUNT="tfstate20251013"
-RESOURCE_GROUP="rg-tfstate"
+echo "This legacy script is disabled. Use Terraform with storage_access_method and AAD/OIDC instead." >&2
+exit 1
+
+STORAGE_ACCOUNT="<placeholder_storage_account>"
+RESOURCE_GROUP="<placeholder_resource_group>"
 
 echo "🔍 Getting current IP address..."
 CURRENT_IP=$(curl -s ifconfig.me)

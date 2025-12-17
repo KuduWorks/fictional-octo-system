@@ -73,7 +73,7 @@ alert_email                = "your.email@domain.com"
 
 > *"Because security through obscurity is not a feature, it's a bug"* 🔐
 
-- Storage state access via Azure AD/OIDC (no shared keys; IP scripts archived under `archive/dynamic-ip/`)
+- Storage state access via Azure AD/OIDC (no shared keys; legacy IP scripts archived/disabled under `archive/dynamic-ip-legacy/`)
 - Azure services bypass enabled for monitoring *(so Azure can talk to itself without getting lonely)*
 - Diagnostic settings configured for auditing *(for when the auditors come knocking)*
 - 30-day retention policy for logs and metrics *(long enough to debug, short enough to not bankrupt you)*

@@ -1,41 +1,21 @@
-# Archived: Dynamic IP Terraform Wrappers
+# Legacy Notice: Dynamic IP Terraform Wrappers (Disabled)
 
-These wrapper scripts are retained only for emergencies. Prefer native Terraform with `storage_access_method = "ip_whitelist"` (or `managed_identity` / `private_endpoint`) in `terraform.tfvars`.
+The old dynamic IP wrapper scripts are **archived and disabled**. They now live in `terraform/archive/dynamic-ip-legacy/` and exit immediately to avoid accidental use. Do not re-enable them in this public repo.
 
-## Current State
-- Storage account: tfstateprod20251215
-- Resource group: rg-tfstate
-- Container: tfstate-prod
-- Scripts location: terraform/archive/dynamic-ip/
+## Current Approach
+- Use Terraform with Azure AD/OIDC and `storage_access_method`.
+- Prefer `managed_identity` or `private_endpoint`; use temporary `ip_whitelist` only if you must.
 
-## Recommended Path (no wrappers)
+Example `terraform.tfvars`:
 ```hcl
-# terraform.tfvars
-storage_access_method      = "ip_whitelist"   # temporary
-allowed_ip_addresses       = ["203.0.113.10"]
-state_storage_account_name = "tfstateprod20251215"
-state_resource_group_name  = "rg-tfstate"
+storage_access_method      = "managed_identity" # or "private_endpoint"; temporary "ip_whitelist" if needed
+allowed_ip_addresses       = ["203.0.113.10"]   # only for ip_whitelist
+state_storage_account_name = "<state-storage-account-placeholder>"
+state_resource_group_name  = "<state-rg-placeholder>"
 ```
 ```bash
 terraform plan -var-file=terraform.tfvars
 terraform apply -var-file=terraform.tfvars
 ```
 
-## If You Must Use the Wrappers
-```bash
-cd terraform/archive/dynamic-ip
-./tf.sh plan   # or apply/destroy
-```
-The wrapper will add your current public IP to the storage firewall, run Terraform, and exit. Remove old IPs with `./cleanup-old-ips.sh` if needed.
-
-## Quick Commands (manual IP add)
-```bash
-az storage account network-rule add \
-  --account-name tfstateprod20251215 \
-  --resource-group rg-tfstate \
-  --ip-address $(curl -s ifconfig.me)
-```
-
-## Related Docs
-- Backend auth and rollback: TERRAFORM_STATE_ACCESS.md
-- Access options: STORAGE_ACCESS.md
+If you think you need the legacy scripts, coordinate with maintainers first.

@@ -24,7 +24,7 @@ terraform apply
 
 ## Legacy IP Scripts
 
-- Dynamic IP wrappers are archived under `terraform/archive/dynamic-ip/` and no longer used.
+- Dynamic IP wrappers are archived/disabled under `terraform/archive/dynamic-ip-legacy/` and no longer used.
 - Storage access defaults to deny; prefer `storage_access_method = "managed_identity"` or private endpoints.
 
 ## Rollback (temporary shared key)
