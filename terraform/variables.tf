@@ -7,14 +7,14 @@ variable "location" {
 variable "resource_group_name" {
   description = "The name of the resource group."
   type        = string
-  default     = "rg-monitoring" # Add default value
+  default     = "rg-monitoring"
 }
 
 variable "tags" {
   description = "A mapping of tags to assign to resources."
   type        = map(string)
   default = {
-    environment = "dev"
+    environment = "prod"
     project     = "fictional-octo-system"
     deployed_by = "terraform"
   }
@@ -41,20 +41,31 @@ variable "private_endpoints_subnet_prefix" {
 variable "alert_email" {
   description = "Email address for receiving alerts"
   type        = string
-  default     = "monitoring@kuduworks.net" # Add default value
+  default     = "monitoring@kuduworks.net"
+}
+
+variable "state_storage_account_name" {
+  description = "Name of the storage account hosting the Terraform state container."
+  type        = string
+}
+
+variable "state_storage_resource_group_name" {
+  description = "Resource group containing the Terraform state storage account."
+  type        = string
+  default     = "tfvars. state_storage_resource_group_name"
 }
 
 variable "allowed_ip_addresses" {
   description = "List of IP addresses allowed to access the storage account (managed dynamically by update-ip scripts)"
   type        = list(string)
-  default     = []
+  default     = ["130.41.101.92"]
 }
 # ==================== STORAGE ACCESS METHOD ====================
 
 variable "storage_access_method" {
   description = "Method for accessing storage: 'ip_whitelist', 'private_endpoint', 'managed_identity'"
   type        = string
-  default     = "ip_whitelist"
+  default     = "managed_identity"
 
   validation {
     condition     = contains(["ip_whitelist", "private_endpoint", "managed_identity"], var.storage_access_method)
