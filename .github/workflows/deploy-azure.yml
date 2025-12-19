@@ -7,12 +7,14 @@ on:
       - develop
     paths:
       - 'deployments/azure/**'
+      - 'terraform/**'
       - '.github/workflows/deploy-azure.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'deployments/azure/**'
+      - 'terraform/**'
       - '.github/workflows/deploy-azure.yml'
   workflow_dispatch:
     inputs:
@@ -76,7 +78,7 @@ jobs:
             -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
             -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Format Check
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
@@ -145,7 +147,7 @@ jobs:
             -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
             -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Apply
         working-directory: ${{ needs.plan.outputs.terraform_dir }}
