@@ -16,7 +16,7 @@
       "value": "Allowed Regions Policy"
     },
     "policyAssignmentDescription": {
-      "value": "This policy restricts all Azure resource deployments to Allowed regions only"
+      "value": "This policy restricts all Azure resource deployments to allowed regions only"
     },
     "enforcementMode": {
       "value": "Default"
