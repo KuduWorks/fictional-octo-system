@@ -7,9 +7,7 @@
         "swedencentral",
         "global"
       ],
-      "metadata": {
-        "comments": "Include 'global' to allow non-regional Azure resources (for example Traffic Manager, Front Door, DNS zones, and CDN profiles) that use the 'global' location. Only use this when such global services are intended to be in scope of this policy."
-      }
+      "comments": "Include 'global' to allow non-regional Azure resources (for example Traffic Manager, Front Door, DNS zones, and CDN profiles) that use the 'global' location. Only use this when such global services are intended to be in scope of this policy."
     },
     "policyAssignmentName": {
       "value": "allowed-regions-arm"
