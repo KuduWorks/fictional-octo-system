@@ -68,7 +68,7 @@ jobs:
               BASE_SHA="HEAD~1"
             fi
             # Check for changes in terraform/ or deployments/azure/
-            CHANGED_DIR=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep -E '^(terraform/|deployments/azure/)' | head -1 | xargs dirname)
+            CHANGED_DIR=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep -E '^(terraform/|deployments/azure/)' | head -1)
             echo "terraform_dir=${CHANGED_DIR:-terraform}" >> $GITHUB_OUTPUT
           fi
 
