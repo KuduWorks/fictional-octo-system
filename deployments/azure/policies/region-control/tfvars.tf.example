@@ -1,6 +1,8 @@
 # Copy this file to terraform.tfvars and adjust for your subscription.
 
 # List the only regions where resources and resource groups are allowed.
+# Note: Add "global" to the list if you need to deploy non-regional Azure services like Traffic Manager,
+# Front Door, DNS zones, or CDN profiles.
 allowed_regions = ["swedencentral", "swedensouth"]
 
 # Name and display name for the subscription-level assignment.
