@@ -1,0 +1,12 @@
+# Backend configuration for remote state storage in Azure Storage
+# Copy this file to backend.tf and fill in your values
+# backend.tf is excluded from git in .gitignore
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-tfstate"
+    storage_account_name = "tfstate<unique-id>"
+    container_name       = "tfstate"
+    key                  = "policies/region-control.tfstate"
+  }
+}
