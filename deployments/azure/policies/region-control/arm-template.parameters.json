@@ -4,14 +4,15 @@
   "parameters": {
     "allowedRegions": {
       "value": [
-        "swedencentral"
+        "swedencentral",
+        "global"
       ]
     },
     "policyAssignmentName": {
-      "value": "allowed-regions-sweden-central-arm"
+      "value": "allowed-regions-arm"
     },
     "policyAssignmentDisplayName": {
-      "value": "Allowed Regions Policy - Sweden Central (ARM)"
+      "value": "Allowed Regions Policy (ARM)"
     },
     "enforcementMode": {
       "value": "Default"

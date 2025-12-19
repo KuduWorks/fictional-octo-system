@@ -4,17 +4,18 @@
   "parameters": {
     "allowedRegions": {
       "value": [
-        "swedencentral"
+        "swedencentral",
+        "global"
       ]
     },
     "policyAssignmentName": {
-      "value": "allowed-regions-sweden-central"
+      "value": "allowed-regions"
     },
     "policyAssignmentDisplayName": {
-      "value": "Allowed Regions Policy - Sweden Central Only"
+      "value": "Allowed Regions Policy"
     },
     "policyAssignmentDescription": {
-      "value": "This policy restricts all Azure resource deployments to Sweden Central region only"
+      "value": "This policy restricts all Azure resource deployments to Allowed regions only"
     },
     "enforcementMode": {
       "value": "Default"
