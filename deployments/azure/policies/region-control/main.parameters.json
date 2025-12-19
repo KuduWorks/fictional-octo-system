@@ -7,9 +7,7 @@
         "swedencentral",
         "global"
       ],
-      "metadata": {
-        "description": "The \"global\" location is included to support non-regional Azure services (for example Traffic Manager, Front Door, DNS zones, and CDN profiles) that require this special location value. Do not remove or extend this list without reviewing the impact on region restrictions."
-      }
+      "comments": "The \"global\" location is included to support non-regional Azure services (for example Traffic Manager, Front Door, DNS zones, and CDN profiles) that require this special location value. Do not remove or extend this list without reviewing the impact on region restrictions."
     },
     "policyAssignmentName": {
       "value": "allowed-regions"
