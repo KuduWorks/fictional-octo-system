@@ -1,4 +1,4 @@
-# Terraform Infrastructure for Fictional Octo System
+# Terraform Infrastructure for Fictional Octo System.
 
 > *"Because clicking through the Azure Portal 47 times per deployment is not a sustainable DevOps strategy"* 🐙
 
