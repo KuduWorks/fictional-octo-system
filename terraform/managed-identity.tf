@@ -59,4 +59,5 @@ output "github_terraform_client_id" {
 output "github_terraform_principal_id" {
   description = "Principal ID of the User-Assigned Managed Identity"
   value       = azurerm_user_assigned_identity.github_terraform.principal_id
+  sensitive   = true
 }
