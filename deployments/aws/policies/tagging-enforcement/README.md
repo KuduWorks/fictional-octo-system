@@ -18,20 +18,14 @@ Automated AWS resource tagging enforcement using AWS Config, EventBridge, and La
 ```
 Daily @ 2am UTC:
   EventBridge Scheduled Rule
-      ↓
-  Lambda Function
-      ↓ (queries)
-  AWS Config (non-compliant resources)
-      ↓ (loads)
-  approved-tags.yaml (from S3)
-      ↓ (validates & filters)
-  - 14-day grace period
-  - Tag value validation
-  - Severity grouping
-      ↓ (sends)
-  AWS SES → Emails
-  ├── compliance@kuduworks.net (all issues)
-  └── team-specific@kuduworks.net (their issues only)
+  └── Lambda (tag_compliance_checker)
+      ├── Reads: S3://team-config-bucket/approved-tags.yaml
+      ├── Queries: AWS Config for non-compliant resources
+      ├── Filters: Resources < 14 days old (grace period)
+      ├── Groups: By team (from 'team' tag)
+      └── Sends Emails via SES:
+          ├── compliance@example.com (all issues)
+          └── team-specific@example.com (their issues only)
 ```
 
 ## 🚀 Quick Start
@@ -55,11 +49,11 @@ Before deploying, you must verify a sender email address in AWS SES:
 
 ```bash
 # Verify your sender email address in SES
-aws ses verify-email-identity --email-address noreply@kuduworks.net
+aws ses verify-email-identity --email-address noreply@example.com
 
 # Check verification status
 aws ses get-identity-verification-attributes \
-  --identities noreply@kuduworks.net
+  --identities noreply@example.com
 ```
 
 Check your email for the verification link from AWS and click it. This email will be used as the "From" address for all compliance notifications.
@@ -73,11 +67,11 @@ Edit `approved-tags.yaml` to add your teams and allowed tag values:
 ```yaml
 teams:
   platform-engineering:
-    email: platform-team@kuduworks.net
+    email: platform-team@example.com
     description: Platform and infrastructure team
   
   your-team:
-    email: your-team@kuduworks.net
+    email: your-team@example.com
     description: Your team description
 
 allowed_values:
@@ -208,7 +202,7 @@ The YAML file defines team mappings and validation rules:
 ```yaml
 teams:
   platform-engineering:
-    email: platform-team@kuduworks.net
+    email: platform-team@example.com
     description: Platform and infrastructure team
 
 allowed_values:
@@ -223,7 +217,7 @@ allowed_values:
     - ops-0001
 
 compliance:
-  compliance_email: compliance@kuduworks.net
+  compliance_email: compliance@example.com
   grace_period_days: 14
   digest_time: "02:00"
 ```
@@ -283,7 +277,7 @@ This gives teams time to:
 
 ### Email Format
 
-**Compliance Team Email** (compliance@kuduworks.net):
+**Compliance Team Email** (compliance@example.com):
 - Full report of all non-compliant resources
 - Grouped by severity (missing tags > invalid values)
 - Then grouped by resource type
@@ -334,7 +328,7 @@ Monitor compliance status:
    ```yaml
    teams:
      my-new-team:
-       email: my-team@kuduworks.net
+       email: my-team@example.com
        description: My awesome team
    ```
 
@@ -565,9 +559,9 @@ See [LICENSE](../../../LICENSE) in the root of this repository.
 5. Confirm SNS subscriptions
 6. Open issue in repo with logs attached
 
-**Questions about governance policy?** Contact: compliance@kuduworks.net
+**Questions about governance policy?** Contact: compliance@example.com
 
-**Technical implementation help?** Platform team: platform-team@kuduworks.net
+**Technical implementation help?** Platform team: platform-team@example.com
 
 ---
 
