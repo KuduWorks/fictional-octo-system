@@ -108,8 +108,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Send error notification to compliance team
         try:
             send_error_notification(error_msg)
-        except:
-            logger.error("Failed to send error notification")
+        except Exception:  
+            logger.error("Failed to send error notification", exc_info=True)  
         
         return {
             'statusCode': 500,
@@ -208,8 +208,44 @@ def get_non_compliant_resources() -> List[Dict[str, Any]]:
             
             # Process additional results (same logic as above)
             for result in response.get('EvaluationResults', []):
-                # ... (same processing)
-                pass
+                resource_id = result.get('EvaluationResultIdentifier', {}).get('EvaluationResultQualifier', {})
+                
+                # Get resource configuration history for creation time
+                resource_type = resource_id.get('ResourceType')
+                resource_name = resource_id.get('ResourceId')
+                
+                if resource_type and resource_name:
+                    try:
+                        config_history = config_client.get_resource_config_history(
+                            resourceType=resource_type,
+                            resourceId=resource_name,
+                            limit=1,
+                            laterTime=datetime.utcnow(),
+                            chronologicalOrder='Reverse'  # Get oldest first
+                        )
+                        
+                        config_item = config_history.get('configurationItems', [{}])[0]
+                        creation_time = config_item.get('resourceCreationTime')
+                        tags = config_item.get('tags', {})
+                        
+                        resources.append({
+                            'resource_type': resource_type,
+                            'resource_id': resource_name,
+                            'creation_time': creation_time,
+                            'tags': tags,
+                            'compliance_type': result.get('ComplianceType')
+                        })
+                        
+                    except Exception as e:
+                        logger.warning(f"Could not get config history for {resource_type}/{resource_name}: {str(e)}")
+                        # Still include resource but without creation time
+                        resources.append({
+                            'resource_type': resource_type,
+                            'resource_id': resource_name,
+                            'creation_time': None,
+                            'tags': {},
+                            'compliance_type': result.get('ComplianceType')
+                        })
         
         return resources
         

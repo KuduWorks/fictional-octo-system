@@ -21,7 +21,7 @@ module "required_tags" {
 
   environment = "production"
   team        = "platform-engineering"
-  costcenter  = "ENG-0001"
+  costcenter  = "eng-0001"
 }
 
 # Apply to your resources using merge()
@@ -90,7 +90,7 @@ module "prod_tags" {
 
   environment = "production"
   team        = "platform-engineering"
-  costcenter  = "ENG-0001"
+  costcenter  = "eng-0001"
 }
 ```
 

@@ -126,7 +126,6 @@ module "required_tags" {
   environment = "production"
   team        = "platform-engineering"  # Must exist in approved-tags.yaml
   costcenter  = "eng-0001"               # Must exist in approved-tags.yaml
-  region = "us-east-1"
 
   default_tags {
     tags = module.required_tags.baseline_tags
@@ -345,7 +344,7 @@ Monitor compliance status:
    allowed_values:
      costcenter:
        - eng-0001
-       - MY-NEW-CC  # Add here
+       - fin-0001  # Add here
    ```
 
 2. **Follow same PR approval process**

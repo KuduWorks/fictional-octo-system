@@ -7,7 +7,27 @@
 # Team ID to Email Mappings
 # Format: team_id: email_address
 # Team IDs must be lowercase alphanumeric with hyphens
-teams:
+# Allowed Tag Values
+# Resources with values not in these lists will be flagged as non-compliant
+allowed_values:
+  # Environment - deployment environment
+  environment:
+    - dev
+    - production
+    - staging
+  
+  # Cost Center - billing allocation codes
+  # Format: dept-nnnn (lowercase department code + four numbers)
+  costcenter:
+    - eng-0001    # Engineering - Platform
+    - eng-0002    # Engineering - Data
+    - eng-0003    # Engineering - Application Development
+    - fin-0001    # Finance
+    - mkt-0001    # Marketing
+    - ops-0001    # Operations
+    - sec-0001    # Security
+    - shd-0001    # Shared services
+  teams:
   backend-api:
     email: backend-team@kuduworks.net
     description: Backend API development team
@@ -31,28 +51,6 @@ teams:
   security:
     email: security@kuduworks.net
     description: Security and compliance team
-
-# Allowed Tag Values
-# Resources with values not in these lists will be flagged as non-compliant
-allowed_values:
-  
-  # Environment - deployment environment
-  environment:
-    - dev
-    - production
-    - staging
-  
-  # Cost Center - billing allocation codes
-  # Format: dept-nnnn (lowercase department code + four numbers)
-  costcenter:
-    - eng-0001    # Engineering - Platform
-    - eng-0002    # Engineering - Data
-    - eng-0003    # Engineering - Application Development
-    - fin-0001    # Finance
-    - mkt-0001    # Marketing
-    - ops-0001    # Operations
-    - sec-0001    # Security
-    - shd-0001    # Shared services
 # Compliance Settings
 compliance:
   # Email address for compliance team notifications
