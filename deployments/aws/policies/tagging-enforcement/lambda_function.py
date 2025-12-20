@@ -221,7 +221,7 @@ def get_non_compliant_resources() -> List[Dict[str, Any]]:
                             resourceId=resource_name,
                             limit=1,
                             laterTime=datetime.utcnow(),
-                            chronologicalOrder='Reverse'  # Get oldest first
+                            chronologicalOrder='Reverse'  # Get newest first (reverse chronological order)
                         )
                         
                         config_item = config_history.get('configurationItems', [{}])[0]
