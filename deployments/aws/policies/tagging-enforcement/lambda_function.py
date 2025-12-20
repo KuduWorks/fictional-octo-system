@@ -385,15 +385,31 @@ def send_compliance_digest(
     subject = f"🏷️ Daily Tag Compliance Digest - {datetime.utcnow().strftime('%Y-%m-%d')}"
     
     try:
-        # In real implementation, would send via SNS or SES
         logger.info(f"Sending compliance digest to {COMPLIANCE_EMAIL}")
         
         if DRY_RUN:
             logger.info(f"DRY RUN - Would send email:\n{email_body}")
         else:
-            # Send email via SNS topic or SES
-            # For now, log it
-            logger.info("Email sent to compliance team")
+            # Send email via AWS SES
+            ses_sender = os.environ.get("SES_SENDER_EMAIL")
+            if not ses_sender:
+                logger.error(
+                    "SES_SENDER_EMAIL environment variable is not set; cannot send compliance digest email."
+                )
+                return
+            
+            ses_client = boto3.client("ses")
+            ses_client.send_email(
+                Source=ses_sender,
+                Destination={"ToAddresses": [COMPLIANCE_EMAIL]},
+                Message={
+                    "Subject": {"Data": subject, "Charset": "UTF-8"},
+                    "Body": {
+                        "Text": {"Data": email_body, "Charset": "UTF-8"},
+                    },
+                },
+            )
+            logger.info(f"Compliance digest email sent to {COMPLIANCE_EMAIL}")
         
     except Exception as e:
         logger.error(f"Failed to send compliance digest: {str(e)}")

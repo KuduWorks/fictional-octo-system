@@ -34,6 +34,11 @@ variable "compliance_email" {
   type        = string
 }
 
+variable "ses_sender_email" {
+  description = "Verified SES sender email address for sending compliance notifications"
+  type        = string
+}
+
 variable "grace_period_days" {
   description = "Number of days before new resources are included in compliance checks"
   type        = number
