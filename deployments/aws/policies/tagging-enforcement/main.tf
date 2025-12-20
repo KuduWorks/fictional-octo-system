@@ -245,7 +245,7 @@ resource "aws_config_config_rule" "required_tags" {
     compliance_resource_types = var.resource_types_to_check
   }
 
-  depends_on = var.create_config_recorder ? [aws_config_configuration_recorder.main] : []
+  depends_on = [aws_config_configuration_recorder.main]
 
   tags = var.tags
 }
