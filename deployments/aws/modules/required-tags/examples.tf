@@ -15,7 +15,7 @@ resource "aws_s3_bucket" "example" {
   bucket = "my-application-bucket"
 
   tags = merge(
-    module.required_tags.baseline_tags,
+    module.tags.baseline_tags,
     {
       application         = "customer-portal"
       data_classification = "confidential"
@@ -31,7 +31,7 @@ provider "aws" {
   region = "us-east-1"
 
   default_tags {
-    tags = module.required_tags.baseline_tags
+    tags = module.tags.baseline_tags
   }
 }
 
@@ -90,7 +90,7 @@ resource "aws_rds_instance" "database" {
   instance_class = "db.t3.micro"
 
   tags = merge(
-    module.required_tags.baseline_tags,
+    module.tags.baseline_tags,
     {
       database_name = "application_db"
       backup_window = "03:00-04:00"
@@ -121,7 +121,7 @@ resource "aws_lambda_function" "processor" {
   role          = aws_iam_role.lambda.arn
 
   tags = merge(
-    module.required_tags.baseline_tags,
+    module.tags.baseline_tags,
     {
       function_type = "data-processing"
     },
@@ -161,7 +161,7 @@ resource "aws_s3_bucket" "app_buckets" {
   bucket = "${each.key}-bucket"
 
   tags = merge(
-    module.required_tags.baseline_tags,
+    module.tags.baseline_tags,
     each.value.custom_tags
   )
 }
