@@ -152,7 +152,7 @@ resource "aws_s3_bucket_policy" "config" {
 
 # SNS Topic for Config notifications
 resource "aws_sns_topic" "config" {
-  count = var.enable_sns_notifications ? 1 : 0
+  count = var.enable_sns_notifications && var.create_config_recorder ? 1 : 0
 
   name = "${var.config_recorder_name}-notifications"
 
