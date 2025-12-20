@@ -32,6 +32,7 @@ TEAM_CONFIG_BUCKET = os.environ.get('TEAM_CONFIG_BUCKET')
 TEAM_CONFIG_KEY = os.environ.get('TEAM_CONFIG_KEY', 'approved-tags.yaml')
 GRACE_PERIOD_DAYS = int(os.environ.get('GRACE_PERIOD_DAYS', '14'))
 DRY_RUN = os.environ.get('DRY_RUN', 'true').lower() == 'true'
+CONFIG_PAGE_SIZE = int(os.environ.get('CONFIG_PAGE_SIZE', '100'))
 
 # AWS clients
 config_client = boto3.client('config')
@@ -152,7 +153,7 @@ def get_non_compliant_resources() -> List[Dict[str, Any]]:
         response = config_client.get_compliance_details_by_config_rule(
             ConfigRuleName='required-tags-check',
             ComplianceTypes=['NON_COMPLIANT'],
-            Limit=100  # Adjust as needed
+            Limit=CONFIG_PAGE_SIZE
         )
         
         resources = []
@@ -202,7 +203,7 @@ def get_non_compliant_resources() -> List[Dict[str, Any]]:
             response = config_client.get_compliance_details_by_config_rule(
                 ConfigRuleName='required-tags-check',
                 ComplianceTypes=['NON_COMPLIANT'],
-                Limit=100,
+                Limit=CONFIG_PAGE_SIZE,
                 NextToken=response['NextToken']
             )
             

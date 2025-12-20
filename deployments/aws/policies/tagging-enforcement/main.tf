@@ -349,6 +349,7 @@ resource "aws_lambda_function" "tag_remediation" {
       TEAM_CONFIG_KEY    = aws_s3_object.team_emails.key
       GRACE_PERIOD_DAYS  = var.grace_period_days
       DRY_RUN            = var.dry_run_mode
+      CONFIG_PAGE_SIZE   = var.config_page_size
     }
   }
 
