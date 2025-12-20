@@ -1,0 +1,96 @@
+# AWS Tagging Enforcement Configuration
+# Copy this file to terraform.tfvars and customize for your environment
+
+# AWS Region
+aws_region = "us-east-1"
+
+# Config Recorder Settings
+config_recorder_name    = "tag-enforcement-config"
+create_config_recorder  = true  # Set to false if Config is already enabled
+config_bucket_prefix    = "kuduworks-aws-config"
+
+# Function Settings
+function_name_prefix = "kuduworks-tag-enforcer"
+
+# Required Tags (MANDATORY - must be lowercase)
+# These tags MUST be present on all monitored resources
+# Values are validated against approved-tags.yaml
+required_tags = [
+  "environment",  # Must be: dev, staging, or production
+  "team",         # Must be a valid team ID from approved-tags.yaml
+  "costcenter"    # Must be a valid cost center code from approved-tags.yaml
+]
+
+# Compliance Settings
+compliance_email  = "compliance@kuduworks.net"  # Always receives full compliance report
+grace_period_days = 14  # New resources excluded from checks for this many days
+
+# Resource Types to Monitor
+# Only taggable AWS resource types (Config filters automatically)
+resource_types_to_check = [
+  "AWS::EC2::Instance",
+  "AWS::EC2::Volume",
+  "AWS::EC2::SecurityGroup",
+  "AWS::EC2::VPC",
+  "AWS::EC2::Subnet",
+  "AWS::EC2::NetworkInterface",
+  "AWS::S3::Bucket",
+  "AWS::RDS::DBInstance",
+  "AWS::RDS::DBCluster",
+  "AWS::Lambda::Function",
+  "AWS::DynamoDB::Table",
+  "AWS::ElasticLoadBalancingV2::LoadBalancer",
+  "AWS::ElasticLoadBalancingV2::TargetGroup"
+]
+
+# Enforcement Mode
+# No auto-tagging - manual remediation via Terraform required
+dry_run_mode = true  # Set to false to actually send emails (start with true for testing)
+
+# Notifications
+enable_sns_notifications = true
+
+# CloudWatch Alarms
+enable_cloudwatch_alarms = true
+non_compliant_threshold  = 10  # Alert when more than X resources are non-compliant
+
+# Global Tags (applied to all Terraform-managed resources in this module)
+tags = {
+  environment = "production"
+  managed_by  = "terraform"
+  purpose     = "tag-enforcement"
+  team        = "platform-engineering"
+  costcenter  = "eng-0001"
+}
+
+# IMPORTANT NOTES:
+# ================
+# 
+# 1. Daily Digest Schedule:
+#    - Runs at 2am UTC every day
+#    - Only sends emails when non-compliant resources exist
+#    - Compliance team gets all issues
+#    - Individual teams get only their resources
+#
+# 2. Team Configuration:
+#    - Edit approved-tags.yaml to add/update teams
+#    - Changes require PR approval (see CODEOWNERS)
+#    - Run `terraform apply` after YAML updates to sync to S3
+#
+# 3. Remediation:
+#    - NO auto-tagging - teams must fix in Terraform
+#    - Use merge() pattern to prevent tag drift
+#    - See modules/required-tags for examples
+#    - Grace period gives teams 14 days to fix new resources
+#
+# 4. Tag Validation:
+#    - environment: must be dev, staging, or production
+#    - team: must exist in approved-tags.yaml
+#    - costcenter: must be in allowed list in approved-tags.yaml
+#    - Invalid values trigger alerts even if tag is present
+#
+# 5. Testing:
+#    - Start with dry_run_mode = true
+#    - Check CloudWatch Logs for Lambda output
+#    - Verify email content in logs
+#    - Set dry_run_mode = false when ready for real emails

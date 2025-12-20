@@ -1,0 +1,99 @@
+# Team Email Mappings and Tag Validation Rules
+# This file defines team ownership and allowed tag values for AWS resource tagging compliance
+#
+# IMPORTANT: Changes to this file require approval from the compliance team
+# See .github/CODEOWNERS for required reviewers
+
+# Team ID to Email Mappings
+# Format: team_id: email_address
+# Team IDs must be lowercase alphanumeric with hyphens
+teams:
+  backend-api:
+    email: backend-team@kuduworks.net
+    description: Backend API development team
+  
+  data-engineering:
+    email: data-team@kuduworks.net
+    description: Data platform and analytics team
+  
+  devops:
+    email: devops@kuduworks.net
+    description: DevOps and site reliability team
+  
+  frontend-web:
+    email: frontend-team@kuduworks.net
+    description: Frontend web development team
+  
+  platform-engineering:
+    email: platform-team@kuduworks.net
+    description: Platform and infrastructure team
+  
+  security:
+    email: security@kuduworks.net
+    description: Security and compliance team
+
+# Allowed Tag Values
+# Resources with values not in these lists will be flagged as non-compliant
+allowed_values:
+  
+  # Environment - deployment environment
+  environment:
+    - dev
+    - production
+    - staging
+  
+  # Cost Center - billing allocation codes
+  # Format: dept-nnnn (lowercase department code + four numbers)
+  costcenter:
+    - eng-0001    # Engineering - Platform
+    - eng-0002    # Engineering - Data
+    - eng-0003    # Engineering - Application Development
+    - fin-0001    # Finance
+    - mkt-0001    # Marketing
+    - ops-0001    # Operations
+    - sec-0001    # Security
+    - shd-0001    # Shared services
+# Compliance Settings
+compliance:
+  # Email address for compliance team notifications
+  compliance_email: compliance@kuduworks.net
+  
+  # Grace period for new resources (days)
+  grace_period_days: 14
+  
+  # Daily digest schedule (UTC)
+  digest_time: "02:00"
+
+# Resource Type Exclusions
+# These AWS resource types do not support tagging and will be excluded from checks
+# AWS Config automatically filters to taggable resources, but this list is for reference
+excluded_resource_types:
+  - AWS::CloudWatch::Alarm
+  - AWS::Route53::HealthCheck
+  - AWS::Route53::HostedZone
+  - AWS::IAM::Role
+  - AWS::IAM::Policy
+  - AWS::IAM::User
+  - AWS::EC2::NetworkInterface
+  - AWS::Logs::LogGroup
+
+# Notes for Teams
+# 
+# How to add a new team:
+# 1. Add your team ID and email under 'teams:' section above
+# 2. Create a PR with this change
+# 3. Get approval from compliance team (required by CODEOWNERS)
+# 4. After merge, platform team will run `terraform apply` to sync to S3
+# 5. Your team ID is immediately available for use in Terraform
+#
+# How to add a new cost center:
+# 1. Add your cost center code under 'allowed_values.costcenter' above
+# 2. Follow same PR approval process
+# 3. Format: dept-nnnn (e.g., eng-0004, ops-0002)
+#
+# Tag Compliance Notifications:
+# - Daily digest sent at 2am UTC
+# - Compliance team gets all non-compliant resources
+# - Individual teams get only their resources
+# - 14-day grace period for new resources
+# - Invalid team IDs only alert compliance team

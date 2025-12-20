@@ -50,20 +50,20 @@ jobs:
           terraform_version: 1.6.0
 
       - name: Terraform Init
-        working-directory: ./terraform
+        working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform init
 
       - name: Terraform Format Check
-        working-directory: ./terraform
+        working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform fmt -check
         continue-on-error: true
 
       - name: Terraform Validate
-        working-directory: ./terraform
+        working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform validate
 
       - name: Terraform Plan
-        working-directory: ./terraform
+        working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform plan -no-color
 
   # Job 2: Terraform Apply (only on main branch merge)
@@ -97,9 +97,9 @@ jobs:
           terraform_version: 1.6.0
 
       - name: Terraform Init
-        working-directory: ./terraform
+        working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform init
 
       - name: Terraform Apply
-        working-directory: ./terraform
+        working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform apply -auto-approve

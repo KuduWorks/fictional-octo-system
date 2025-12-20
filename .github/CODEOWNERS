@@ -10,3 +10,7 @@
 *       @kudu-star
 /api/   @kudu-star
 /deployments/ @KuduWorks
+
+# Tag compliance and governance
+# Requires compliance team approval for any changes to team mappings or allowed tag values
+/deployments/aws/policies/tagging-enforcement/approved-tags.yaml @kudu-star @KuduWorks

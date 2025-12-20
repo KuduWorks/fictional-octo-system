@@ -1,0 +1,12 @@
+# Backend configuration for Terraform state
+# Copy this file to backend.tf and update with your values
+
+terraform {
+  backend "s3" {
+    bucket         = "your-terraform-state-bucket"
+    key            = "policies/tagging-enforcement/terraform.tfstate"
+    region         = "us-east-1"
+    dynamodb_table = "terraform-state-lock"
+    encrypt        = true
+  }
+}
