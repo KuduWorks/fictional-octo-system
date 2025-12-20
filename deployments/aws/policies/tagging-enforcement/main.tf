@@ -44,7 +44,7 @@ resource "aws_config_delivery_channel" "main" {
 
   name           = var.config_recorder_name
   s3_bucket_name = aws_s3_bucket.config[0].id
-  sns_topic_arn  = var.enable_sns_notifications ? aws_sns_topic.config[0].arn : null
+  sns_topic_arn  = (var.enable_sns_notifications && var.create_config_recorder) ? aws_sns_topic.config[0].arn : null
 
   depends_on = [aws_config_configuration_recorder.main]
 }
@@ -234,9 +234,9 @@ resource "aws_config_config_rule" "required_tags" {
   }
 
   input_parameters = jsonencode({
-    tag1Key = var.required_tags[0]
-    tag2Key = length(var.required_tags) > 1 ? var.required_tags[1] : null
-    tag3Key = length(var.required_tags) > 2 ? var.required_tags[2] : null
+    for idx, tag_key in var.required_tags :
+    "tag${idx + 1}Key" => tag_key
+    if idx < 3
   })
 
   scope {
@@ -245,7 +245,7 @@ resource "aws_config_config_rule" "required_tags" {
     compliance_resource_types = var.resource_types_to_check
   }
 
-  depends_on = [aws_config_configuration_recorder.main]
+  depends_on = var.create_config_recorder ? [aws_config_configuration_recorder.main] : []
 
   tags = var.tags
 }
@@ -337,7 +337,7 @@ resource "aws_lambda_function" "tag_remediation" {
   role          = aws_iam_role.lambda.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.11"
-  timeout       = 60
+  timeout       = 300
 
   source_code_hash = data.archive_file.lambda.output_base64sha256
 

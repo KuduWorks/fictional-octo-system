@@ -18,7 +18,7 @@ import boto3
 import yaml
 import logging
 from datetime import datetime, timedelta
-from typing import Dict, List, Any, Set, Tuple
+from typing import Dict, List, Any
 from collections import defaultdict
 
 # Setup logging

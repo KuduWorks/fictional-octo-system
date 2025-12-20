@@ -27,27 +27,27 @@ allowed_values:
     - ops-0001    # Operations
     - sec-0001    # Security
     - shd-0001    # Shared services
-  teams:
+
+teams:
   backend-api:
     email: backend-team@kuduworks.net
     description: Backend API development team
-  
+
   data-engineering:
     email: data-team@kuduworks.net
     description: Data platform and analytics team
-  
+
   devops:
     email: devops@kuduworks.net
     description: DevOps and site reliability team
-  
+
   frontend-web:
     email: frontend-team@kuduworks.net
     description: Frontend web development team
-  
+
   platform-engineering:
     email: platform-team@kuduworks.net
     description: Platform and infrastructure team
-  
   security:
     email: security@kuduworks.net
     description: Security and compliance team
