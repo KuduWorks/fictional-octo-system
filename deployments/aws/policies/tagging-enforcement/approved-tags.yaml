@@ -4,10 +4,9 @@
 # IMPORTANT: Changes to this file require approval from the compliance team
 # See .github/CODEOWNERS for required reviewers
 
-# Team ID to Email Mappings
-# Format: team_id: email_address
-# Team IDs must be lowercase alphanumeric with hyphens
+# ==============================================================================
 # Allowed Tag Values
+# ==============================================================================
 # Resources with values not in these lists will be flagged as non-compliant
 allowed_values:
   # Environment - deployment environment
@@ -28,6 +27,12 @@ allowed_values:
     - sec-0001    # Security
     - shd-0001    # Shared services
 
+# ==============================================================================
+# Team Mappings
+# ==============================================================================
+# Team ID to Email Mappings
+# Format: team_id: email_address
+# Team IDs must be lowercase alphanumeric with hyphens
 teams:
   backend-api:
     email: backend-team@kuduworks.net
@@ -48,10 +53,14 @@ teams:
   platform-engineering:
     email: platform-team@kuduworks.net
     description: Platform and infrastructure team
+
   security:
     email: security@kuduworks.net
     description: Security and compliance team
+
+# ==============================================================================
 # Compliance Settings
+# ==============================================================================
 compliance:
   # Email address for compliance team notifications
   compliance_email: compliance@kuduworks.net
@@ -62,7 +71,9 @@ compliance:
   # Daily digest schedule (UTC)
   digest_time: "02:00"
 
+# ==============================================================================
 # Resource Type Exclusions
+# ==============================================================================
 # These AWS resource types do not support tagging and will be excluded from checks
 # AWS Config automatically filters to taggable resources, but this list is for reference
 excluded_resource_types:
@@ -75,7 +86,9 @@ excluded_resource_types:
   - AWS::EC2::NetworkInterface
   - AWS::Logs::LogGroup
 
+# ==============================================================================
 # Notes for Teams
+# ==============================================================================
 # 
 # How to add a new team:
 # 1. Add your team ID and email under 'teams:' section above
