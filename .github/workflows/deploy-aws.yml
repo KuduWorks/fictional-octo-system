@@ -58,6 +58,9 @@ jobs:
         run: terraform fmt -check
         continue-on-error: true
 
+      - name: Python Syntax Check for Lambda
+        working-directory: ./deployments/aws/policies/tagging-enforcement
+        run: python -m py_compile lambda_function.py
       - name: Terraform Validate
         working-directory: ./deployments/aws/policies/tagging-enforcement
         run: terraform validate
