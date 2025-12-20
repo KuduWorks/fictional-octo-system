@@ -23,6 +23,7 @@ required_tags = [
 
 # Compliance Settings
 compliance_email  = "compliance@kuduworks.net"  # Always receives full compliance report
+ses_sender_email  = "noreply@kuduworks.net"     # Verified SES sender address for outgoing emails
 grace_period_days = 14  # New resources excluded from checks for this many days
 
 # Resource Types to Monitor

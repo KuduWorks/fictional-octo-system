@@ -21,3 +21,8 @@ Thumbs.db
 # Lambda package
 *.zip
 lambda_package/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo

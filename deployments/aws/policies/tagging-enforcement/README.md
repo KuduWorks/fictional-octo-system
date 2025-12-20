@@ -29,7 +29,7 @@ Daily @ 2am UTC:
   - Tag value validation
   - Severity grouping
       ↓ (sends)
-  SNS → Emails
+  AWS SES → Emails
   ├── compliance@kuduworks.net (all issues)
   └── team-specific@kuduworks.net (their issues only)
 ```
@@ -46,9 +46,27 @@ Daily @ 2am UTC:
   - EventBridge
   - S3
   - SNS
+  - SES (verified sender email address)
   - IAM
 
-### Step 1: Review Team Configuration
+### Step 1: Verify SES Sender Email
+
+Before deploying, you must verify a sender email address in AWS SES:
+
+```bash
+# Verify your sender email address in SES
+aws ses verify-email-identity --email-address noreply@kuduworks.net
+
+# Check verification status
+aws ses get-identity-verification-attributes \
+  --identities noreply@kuduworks.net
+```
+
+Check your email for the verification link from AWS and click it. This email will be used as the "From" address for all compliance notifications.
+
+**Note**: If you're in the SES sandbox, you'll also need to verify recipient emails. For production use, request production access via the AWS Console.
+
+### Step 2: Review Team Configuration
 
 Edit `approved-tags.yaml` to add your teams and allowed tag values:
 
@@ -75,14 +93,14 @@ allowed_values:
 
 **Important**: Changes to `approved-tags.yaml` require PR approval from compliance team (see `.github/CODEOWNERS`).
 
-### Step 2: Configure Backend
+### Step 3: Configure Backend
 
 ```bash
 cp backend.tf.example backend.tf
 # Edit backend.tf with your S3 bucket and DynamoDB table
 ```
 
-### Step 3: Configure Variables
+### Step 4: Configure Variables
 
 ```bash
 cp terraform.tfvars.example terraform.tfvars
@@ -91,10 +109,11 @@ cp terraform.tfvars.example terraform.tfvars
 
 **Key variables to update:**
 - `compliance_email` - Where all compliance reports go
+- `ses_sender_email` - Verified SES sender address (must be verified in SES first)
 - `tags` - Must include valid environment, team, costcenter values
 - `dry_run_mode` - Start with `true` (logs emails without sending)
 
-### Step 4: Deploy
+### Step 5: Deploy
 
 ```bash
 terraform init
@@ -109,12 +128,13 @@ This creates:
 - EventBridge rule (2am UTC daily trigger)
 - SNS topic for notifications
 - CloudWatch alarms
+- IAM roles with SES send permissions
 
-### Step 5: Verify SNS Subscription
+### Step 6: Verify SNS Subscription
 
 Check your email for SNS subscription confirmation and click the link.
 
-### Step 6: Use Shared Tagging Module in Your Code
+### Step 7: Use Shared Tagging Module in Your Code
 
 In your Terraform projects:
 
@@ -157,7 +177,7 @@ resource "aws_ec2_instance" "app" {
 }
 ```
 
-### Step 7: Test and Enable
+### Step 8: Test and Enable
 
 1. Deploy with `dry_run_mode = true` initially
 2. Check CloudWatch Logs for Lambda output
@@ -449,10 +469,14 @@ environment = "production"  # Not "prod" or "prd"
 ### Emails not being sent (dry_run = false)
 
 **Check**:
-1. SNS topic subscription confirmed
-2. Lambda IAM permissions for SNS publish
-3. Check spam folder
-4. Verify email addresses in approved-tags.yaml
+1. SES sender email is verified (check SES console)
+2. If in SES sandbox, recipient emails must also be verified
+3. Request SES production access if needed
+4. SNS topic subscription confirmed
+5. Lambda IAM permissions for SES send
+6. Check spam folder
+7. Verify email addresses in approved-tags.yaml
+8. Check CloudWatch Logs for SES errors
 
 ### Grace period not working
 
@@ -472,6 +496,7 @@ Approximate monthly costs (us-east-1, 1000 resources):
 | AWS Config | 30 evaluations/day × 30 days | ~$18 |
 | Config Rules | 1 active rule | $2 |
 | Lambda | 30 invocations/month @ 60s each | < $0.01 |
+| SES | 60 emails/month | Free (first 1000/month) |
 | S3 (Config bucket) | 5GB storage | ~$0.12 |
 | S3 (Team config) | 1KB storage | < $0.01 |
 | SNS | 60 notifications/month | < $0.01 |
@@ -482,14 +507,15 @@ Approximate monthly costs (us-east-1, 1000 resources):
 
 ## 🔐 Security Considerations
 
-- **Least Privilege IAM**: Lambda has read-only Config access + S3 read + SNS publish only
+- **Least Privilege IAM**: Lambda has read-only Config access + S3 read + SNS publish + SES send only
 - **Encryption at Rest**: All S3 buckets use AES-256 encryption
-- **Encryption in Transit**: HTTPS for all AWS API calls
+- **Encryption in Transit**: HTTPS for all AWS API calls (SES uses TLS)
 - **Public Access Blocked**: S3 buckets have public access blocks enabled
 - **Versioning**: S3 buckets versioned for auditability
 - **Audit Trail**: All actions logged in CloudWatch Logs
 - **YAML Access Control**: approved-tags.yaml changes require PR approval (CODEOWNERS)
 - **No Secret Tags**: Does not handle or store sensitive data
+- **Email Security**: SES sender identity verified to prevent spoofing
 
 ## 📚 References
 
