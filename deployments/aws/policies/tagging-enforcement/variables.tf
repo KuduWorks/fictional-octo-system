@@ -111,3 +111,13 @@ variable "auto_tag_enabled" {
   type        = bool
   default     = false
 }
+
+variable "config_page_size" {
+  description = "Page size for AWS Config API pagination (max 100, affects memory and API throttling)"
+  type        = number
+  default     = 100
+  validation {
+    condition     = var.config_page_size > 0 && var.config_page_size <= 100
+    error_message = "config_page_size must be between 1 and 100 (AWS Config API limit)."
+  }
+}
