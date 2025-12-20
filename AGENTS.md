@@ -9,6 +9,7 @@ This document helps align GitHub Copilot with repository standards, security exp
 
 ## Coding and Testing Standards
 - Terraform: request terraform fmt -recursive, terraform validate, and terraform plan before proposing changes. Use descriptive module names, enforce encryption defaults, and update terraform-docs style module docs when modules change.
+- Python: use type hints, follow PEP 8, include docstrings for functions, handle exceptions explicitly, and test with pytest when applicable.
 - Shell scripts: adopt set -euo pipefail, avoid subshell while loops, use clear success/failure messaging, and prefer Azure CLI flags like --only-show-errors for cleaner output.
 - PowerShell: include #Requires statements, use Set-StrictMode -Version Latest, and test with WhatIf when applicable.
 - Documentation: ask Copilot to refresh README excerpts or module docs after code changes and explain rationale rather than restating code.
@@ -42,6 +43,10 @@ Use or adapt these short instructions when prompting Copilot:
 - Direct Copilot to mask or omit environment-specific secrets, subscription IDs, or account numbers in generated examples.
 - When creating diagnostics or logs, include instructions to sanitize outputs before sharing externally.
 - Encourage prompts that request sample data only, clearly labeled as placeholder values, and reiterate that real credentials belong in secure stores.
+- Ask Copilot to ensure architecture diagrams in the README to use generic example addresses as this is a public repo
+- Ask Copilot to always any any disclosing email addresses or sensitive data to the tfars file instead
+
+
 
 ## Further Assistance
 - If Copilot suggests ambiguous changes, prompt it to reference README.md, CONTRIBUTING.md, PERFORMANCE_IMPROVEMENTS.md, SECURITY.md, or relevant deployment README files for authoritative guidance.
