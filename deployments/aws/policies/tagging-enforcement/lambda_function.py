@@ -222,7 +222,7 @@ def get_non_compliant_resources() -> List[Dict[str, Any]]:
                             resourceId=resource_name,
                             limit=1,
                             laterTime=datetime.utcnow(),
-                            chronologicalOrder='Reverse'  # Get oldest first
+                            chronologicalOrder='Reverse'  # Get newest first (reverse chronological order)
                         )
                         
                         config_item = config_history.get('configurationItems', [{}])[0]
@@ -432,8 +432,26 @@ def send_team_digest(
         if DRY_RUN:
             logger.info(f"DRY RUN - Would send email to {team_email}:\n{email_body}")
         else:
-            # Send email via SNS or SES
-            logger.info(f"Email sent to team {team_id}")
+            # Send email via AWS SES
+            ses_sender = os.environ.get("SES_SENDER_EMAIL")
+            if not ses_sender:
+                logger.error(
+                    "SES_SENDER_EMAIL environment variable is not set; cannot send team digest email."
+                )
+                return
+            
+            ses_client = boto3.client("ses")
+            ses_client.send_email(
+                Source=ses_sender,
+                Destination={"ToAddresses": [team_email]},
+                Message={
+                    "Subject": {"Data": subject, "Charset": "UTF-8"},
+                    "Body": {
+                        "Text": {"Data": email_body, "Charset": "UTF-8"},
+                    },
+                },
+            )
+            logger.info(f"Email sent to team {team_id} at {team_email}")
         
     except Exception as e:
         logger.error(f"Failed to send team digest to {team_id}: {str(e)}")

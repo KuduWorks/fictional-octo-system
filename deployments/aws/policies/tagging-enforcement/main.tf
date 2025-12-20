@@ -44,7 +44,7 @@ resource "aws_config_delivery_channel" "main" {
 
   name           = var.config_recorder_name
   s3_bucket_name = aws_s3_bucket.config[0].id
-  sns_topic_arn  = (var.enable_sns_notifications && var.create_config_recorder) ? aws_sns_topic.config[0].arn : null
+  sns_topic_arn  = var.enable_sns_notifications ? aws_sns_topic.config[0].arn : null
 
   depends_on = [aws_config_configuration_recorder.main]
 }
