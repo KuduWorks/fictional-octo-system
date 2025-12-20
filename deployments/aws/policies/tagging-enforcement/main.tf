@@ -345,6 +345,7 @@ resource "aws_lambda_function" "tag_remediation" {
     variables = {
       REQUIRED_TAGS      = jsonencode(var.required_tags)
       COMPLIANCE_EMAIL   = var.compliance_email
+      SES_SENDER_EMAIL   = var.ses_sender_email
       TEAM_CONFIG_BUCKET = aws_s3_bucket.team_config.id
       TEAM_CONFIG_KEY    = aws_s3_object.team_emails.key
       GRACE_PERIOD_DAYS  = var.grace_period_days
@@ -433,6 +434,14 @@ resource "aws_iam_role_policy" "lambda_tagging" {
           "sns:Publish"
         ]
         Resource = aws_sns_topic.notifications.arn
+      },
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ]
+        Resource = "*"
       },
       {
         Effect = "Allow"

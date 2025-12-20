@@ -28,6 +28,7 @@ logger.setLevel(logging.INFO)
 # Environment variables
 REQUIRED_TAGS = json.loads(os.environ.get('REQUIRED_TAGS', '[]'))
 COMPLIANCE_EMAIL = os.environ.get('COMPLIANCE_EMAIL', 'compliance@kuduworks.net')
+SES_SENDER_EMAIL = os.environ.get('SES_SENDER_EMAIL', '')
 TEAM_CONFIG_BUCKET = os.environ.get('TEAM_CONFIG_BUCKET')
 TEAM_CONFIG_KEY = os.environ.get('TEAM_CONFIG_KEY', 'approved-tags.yaml')
 GRACE_PERIOD_DAYS = int(os.environ.get('GRACE_PERIOD_DAYS', '14'))
@@ -38,6 +39,7 @@ CONFIG_PAGE_SIZE = int(os.environ.get('CONFIG_PAGE_SIZE', '100'))
 config_client = boto3.client('config')
 s3_client = boto3.client('s3')
 sns_client = boto3.client('sns')
+ses_client = boto3.client('ses')
 
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -386,15 +388,29 @@ def send_compliance_digest(
     subject = f"🏷️ Daily Tag Compliance Digest - {datetime.utcnow().strftime('%Y-%m-%d')}"
     
     try:
-        # In real implementation, would send via SNS or SES
         logger.info(f"Sending compliance digest to {COMPLIANCE_EMAIL}")
         
         if DRY_RUN:
             logger.info(f"DRY RUN - Would send email:\n{email_body}")
         else:
-            # Send email via SNS topic or SES
-            # For now, log it
-            logger.info("Email sent to compliance team")
+            # Send email via AWS SES
+            if not SES_SENDER_EMAIL:
+                logger.error(
+                    "SES_SENDER_EMAIL environment variable is not set; cannot send compliance digest email."
+                )
+                return
+            
+            ses_client.send_email(
+                Source=SES_SENDER_EMAIL,
+                Destination={"ToAddresses": [COMPLIANCE_EMAIL]},
+                Message={
+                    "Subject": {"Data": subject, "Charset": "UTF-8"},
+                    "Body": {
+                        "Text": {"Data": email_body, "Charset": "UTF-8"},
+                    },
+                },
+            )
+            logger.info(f"Compliance digest email sent to {COMPLIANCE_EMAIL}")
         
     except Exception as e:
         logger.error(f"Failed to send compliance digest: {str(e)}")
@@ -433,16 +449,14 @@ def send_team_digest(
             logger.info(f"DRY RUN - Would send email to {team_email}:\n{email_body}")
         else:
             # Send email via AWS SES
-            ses_sender = os.environ.get("SES_SENDER_EMAIL")
-            if not ses_sender:
+            if not SES_SENDER_EMAIL:
                 logger.error(
                     "SES_SENDER_EMAIL environment variable is not set; cannot send team digest email."
                 )
                 return
             
-            ses_client = boto3.client("ses")
             ses_client.send_email(
-                Source=ses_sender,
+                Source=SES_SENDER_EMAIL,
                 Destination={"ToAddresses": [team_email]},
                 Message={
                     "Subject": {"Data": subject, "Charset": "UTF-8"},
