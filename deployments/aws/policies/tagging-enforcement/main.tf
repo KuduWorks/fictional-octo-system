@@ -337,7 +337,7 @@ resource "aws_lambda_function" "tag_remediation" {
   role          = aws_iam_role.lambda.arn
   handler       = "lambda_function.lambda_handler"
   runtime       = "python3.11"
-  timeout       = 300
+  timeout       = 900
 
   source_code_hash = data.archive_file.lambda.output_base64sha256
 
