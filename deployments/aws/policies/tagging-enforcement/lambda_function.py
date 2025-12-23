@@ -669,6 +669,21 @@ Time: {datetime.utcnow().strftime('%Y-%m-%d %H:%M UTC')}
 
 Please investigate the Lambda function logs.
 """
-    
+
     logger.info(f"Sending error notification to {COMPLIANCE_EMAIL}")
     logger.info(body)
+
+    try:
+        ses_client = boto3.client("ses")
+        ses_client.send_email(
+            Source=COMPLIANCE_EMAIL,
+            Destination={"ToAddresses": [COMPLIANCE_EMAIL]},
+            Message={
+                "Subject": {"Data": subject, "Charset": "UTF-8"},
+                "Body": {
+                    "Text": {"Data": body, "Charset": "UTF-8"},
+                },
+            },
+        )
+    except Exception as e:
+        logger.error(f"Failed to send error notification via SES: {e}")
