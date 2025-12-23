@@ -646,7 +646,7 @@ How to Fix:
 Documentation:
 https://github.com/KuduWorks/fictional-octo-system/tree/main/deployments/aws/modules/required-tags
 
-Need help? Contact compliance@kuduworks.net
+Need help? Contact compliance@example.com
 """
     
     return email
