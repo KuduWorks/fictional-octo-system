@@ -85,6 +85,8 @@ resource "aws_s3_bucket_lifecycle_configuration" "cloudtrail" {
     id     = "delete-old-logs"
     status = "Enabled"
 
+    filter {} # Empty filter applies to all objects
+
     expiration {
       days = var.log_retention_days
     }
@@ -179,15 +181,8 @@ resource "aws_cloudtrail" "organization" {
     read_write_type           = "All"
     include_management_events = true
 
-    data_resource {
-      type = "AWS::S3::Object"
-      values = ["arn:aws:s3:::*/"]
-    }
-
-    data_resource {
-      type = "AWS::Lambda::Function"
-      values = ["arn:aws:lambda:*:*:function/*"]
-    }
+    # Removed S3/Lambda data resources - use advanced event selectors for data events
+    # Basic event selectors don't support wildcard ARNs for all buckets
   }
 
   depends_on = [
