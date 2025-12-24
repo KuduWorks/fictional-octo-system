@@ -546,7 +546,7 @@ Grace Period: {GRACE_PERIOD_DAYS} days
         email += "\nNo resources with invalid values ✅\n"
     
     email += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    email += """
+    email += f"""
 Remediation Instructions:
 1. Use merge() pattern in Terraform to combine governance + custom tags
 2. Reference deployments/aws/modules/required-tags for baseline tags
@@ -615,31 +615,31 @@ YOUR NON-COMPLIANT RESOURCES:
                     email += f"allowed: {', '.join(invalid_tag['allowed'])}\n"
     
     email += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
-    email += """
+    email += f"""
 How to Fix:
 
 1. In your Terraform code, use the required-tags module:
 
-   module "required_tags" {
+   module "required_tags" {{
      source = "../../modules/required-tags"
      
      environment = "production"
      team        = "YOUR_TEAM_ID"
      costcenter  = "YOUR_COSTCENTER"
-   }
+   }}
 
 2. Apply tags using merge():
 
-   resource "aws_s3_bucket" "example" {
+   resource "aws_s3_bucket" "example" {{
      bucket = "my-bucket"
      
      tags = merge(
        module.required_tags.baseline_tags,
-       {
+       {{
          custom_tag = "custom_value"
-       }
+       }}
      )
-   }
+   }}
 
 3. Run terraform plan and apply to update tags
 
