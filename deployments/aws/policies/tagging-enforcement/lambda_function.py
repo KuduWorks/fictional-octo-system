@@ -648,6 +648,7 @@ https://github.com/KuduWorks/fictional-octo-system/tree/main/deployments/aws/mod
 
 Need help? Contact {COMPLIANCE_EMAIL}
 """
+    email += f"\nNeed help? Contact {COMPLIANCE_EMAIL}\n"
     
     return email
 
@@ -674,7 +675,6 @@ Please investigate the Lambda function logs.
     logger.info(body)
 
     try:
-        ses_client = boto3.client("ses")
         ses_client.send_email(
             Source=COMPLIANCE_EMAIL,
             Destination={"ToAddresses": [COMPLIANCE_EMAIL]},
