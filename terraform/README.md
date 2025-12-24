@@ -1,4 +1,4 @@
-# Terraform Infrastructure for Fictional Octo System
+# Terraform Infrastructure for Fictional Octo System.
 
 > *"Because clicking through the Azure Portal 47 times per deployment is not a sustainable DevOps strategy"* 🐙
 
@@ -6,17 +6,17 @@ This folder contains Terraform code for deploying and managing Azure resources f
 
 ## Infrastructure Components
 
-- **Storage Account**: Remote state storage with IP-restricted access
+- **Storage Account**: Remote state in `tfstateprod20251215` / `tfstate-prod` via Azure AD/OIDC (UAMI)
 - **Virtual Network**: Basic networking setup with customizable address space
 - **Monitoring**: Azure Monitor setup with Log Analytics Workspace
-- **Security**: Network rules limiting storage account access to specified IPs
+- **Security**: Network rules default deny; private endpoints optional
 
 ## File Structure
 
 - `main.tf` — Core infrastructure and provider configuration
 - `variables.tf` — Input variables definition
 - `monitoring.tf` — Monitoring and alerting configuration
-- `storage_network.tf` — Storage account network security rules
+- `storage.tf` — Storage account network security rules
 - `backend.tf` — Remote state configuration
 - `terraform.tfvars` — Variable values (not in version control)
 
@@ -28,63 +28,52 @@ This folder contains Terraform code for deploying and managing Azure resources f
 
 ## Getting Started
 
-### 🚀 Quick Start with Dynamic IP (Recommended)
+### 🚀 Quick Start with OIDC + UAMI (Production)
 
-> *"For those of us who work from coffee shops, home, the office, and that one spot in the park with good WiFi"*
-
-If your IP address changes frequently (thanks, ISP 🙄), use the provided wrapper scripts:
-
-**Bash (Linux/macOS/Git Bash):**
+1) **Authenticate (local):**
 ```bash
-# Make scripts executable (first time only)
-chmod +x update-ip.sh tf.sh
-
-# Use wrapper for all Terraform commands
-./tf.sh init
-./tf.sh plan
-./tf.sh apply
+az login
 ```
 
-**PowerShell (Windows):**
-```powershell
-# Use wrapper for all Terraform commands
-.\tf.ps1 init
-.\tf.ps1 plan
-.\tf.ps1 apply
+2) **Authenticate (GitHub Actions):** configure federated credential for subject `repo:KuduWorks/fictional-octo-system:ref:refs/heads/main` on a user-assigned managed identity with roles:
+- `Contributor` on the subscription
+- `Storage Blob Data Contributor` on the state storage account
+
+3) **Initialize backend with Azure AD auth:**
+```bash
+terraform init \
+  -backend-config="use_azuread_auth=true"
 ```
 
-The wrapper automatically updates your IP in the storage account firewall before running Terraform. *(It's like magic, but with more bash scripts)*
+4) **Plan/Apply (main only):**
+```bash
+terraform plan -var-file=terraform.tfvars
+terraform apply -var-file=terraform.tfvars
+```
 
-📖 **See [TERRAFORM_STATE_ACCESS.md](./TERRAFORM_STATE_ACCESS.md) for detailed documentation on dynamic IP handling.**
+5) **Approvals:** protect the `main` branch (required review + status checks) and require manual approval via the `production` GitHub environment before deploy.
+
+📖 **See [TERRAFORM_STATE_ACCESS.md](./TERRAFORM_STATE_ACCESS.md) for backend auth, rollback with shared keys, and OIDC notes.**
 
 ---
 
-### 📋 Standard Setup
+### 📋 Standard Setup (variables)
 
-1. **Initialize Terraform**
-   ```powershell
-   terraform init
-   ```
-
-2. **Configure Variables**
-   Create a `terraform.tfvars` file with your values *(not `terraform.tfvars.definitely-not-secrets`)*:
-   ```hcl
-   resource_group_name = "rg-monitoring"
-   alert_email = "your.email@domain.com"  # The email that will haunt you at 3 AM
-   allowed_ip_addresses = ["YOUR.IP.ADDRESS"]  # Not 0.0.0.0/0, we're not animals
-   ```
-
-3. **Deploy Infrastructure**
-   ```powershell
-   terraform plan
-   terraform apply
-   ```
+Create a `terraform.tfvars` file with your values:
+```hcl
+state_resource_group_name  = "rg-tfstate"
+state_storage_account_name = "tfstateprod20251215"
+resource_group_name        = "rg-monitoring"
+storage_access_method      = "managed_identity" # or "ip_whitelist" while waiting for UAMI
+allowed_ip_addresses       = ["203.0.113.10"]   # only if using ip_whitelist
+alert_email                = "your.email@domain.com"
+```
 
 ## Security Features
 
 > *"Because security through obscurity is not a feature, it's a bug"* 🔐
 
-- Storage account access restricted to specified IP addresses *(your future self will thank you)*
+- Storage state access via Azure AD/OIDC (no shared keys; legacy IP scripts archived/disabled under `archive/dynamic-ip-legacy/`)
 - Azure services bypass enabled for monitoring *(so Azure can talk to itself without getting lonely)*
 - Diagnostic settings configured for auditing *(for when the auditors come knocking)*
 - 30-day retention policy for logs and metrics *(long enough to debug, short enough to not bankrupt you)*
@@ -102,17 +91,11 @@ The wrapper automatically updates your IP in the storage account firewall before
 
 > *"Best practices are called 'best' for a reason, not 'good enough' practices"* 🌟
 
-- Store sensitive data in `terraform.tfvars` (not in version control)  
-  *(If I see secrets in your git history, we can't be friends)*
-
-- Use Azure CLI authentication  
-  *(Service principals are for automation, not for your Friday afternoon experiments)*
-
-- Keep Terraform provider and Azure RM versions up to date  
-  *(Running on version 1.0 from 2017? That's not vintage, that's technical debt)*
-
-- Review and adjust monitoring thresholds as needed  
-  *(Alert fatigue is real, don't make every warning a DEFCON 1)*
+- Store sensitive data in `terraform.tfvars` (not in version control)
+- Use Azure AD/OIDC auth with UAMI; avoid storage keys except for emergency rollback
+- Keep Terraform provider and Azure RM versions up to date
+- Protect `main` with required reviews + checks; gate deploys via `production` environment approvals
+- Review and adjust monitoring thresholds as needed
 
 ## Resource Dependencies
 

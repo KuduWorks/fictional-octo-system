@@ -1,0 +1,16 @@
+# Copy this file to terraform.tfvars and adjust for your subscription.
+
+# List the only regions where resources and resource groups are allowed.
+# Note: Add "global" to the list if you need to deploy non-regional Azure services like Traffic Manager,
+# Front Door, DNS zones, or CDN profiles.
+allowed_regions = ["swedencentral", "swedensouth"]
+
+# Name and display name for the subscription-level assignment.
+policy_assignment_name         = "allowed-regions-policy"
+policy_assignment_display_name = "Allowed Regions Policy - Sweden"
+
+# Enforcement mode: "Default" blocks non-compliant deployments; "DoNotEnforce" is audit-only.
+enforcement_mode = "DoNotEnforce"
+
+# Optional: explicitly target a subscription (otherwise uses the Azure CLI context).
+# subscription_id = "00000000-0000-0000-0000-000000000000"

@@ -1,0 +1,19 @@
+# Terraform variable defaults for reference; copy to terraform.tfvars and customize.
+
+location                         = "swedencentral"
+resource_group_name              = "rg-monitoring"
+alert_email                      = "you@example.com"
+
+# Remote state storage (override if you move state to a new account/RG).
+state_storage_account_name       = "tfstateprod2025"
+state_storage_resource_group_name = "rg-tfstate-prod"
+
+# Storage access method: managed identity is preferred for OIDC/AAD.
+storage_access_method = "managed_identity"
+
+# Tagging baseline.
+tags = {
+  environment = "prod"
+  project     = "fictional-octo-system"
+  deployed_by = "terraform"
+}

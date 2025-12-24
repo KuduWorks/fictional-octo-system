@@ -7,12 +7,14 @@ on:
       - develop
     paths:
       - 'deployments/azure/**'
+      - 'terraform/**'
       - '.github/workflows/deploy-azure.yml'
   pull_request:
     branches:
       - main
     paths:
       - 'deployments/azure/**'
+      - 'terraform/**'
       - '.github/workflows/deploy-azure.yml'
   workflow_dispatch:
     inputs:
@@ -65,8 +67,9 @@ jobs:
             if [ -z "$BASE_SHA" ] || [ "$BASE_SHA" == "0000000000000000000000000000000000000000" ]; then
               BASE_SHA="HEAD~1"
             fi
-            CHANGED_DIR=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep '^deployments/azure/' | head -1 | xargs dirname)
-            echo "terraform_dir=${CHANGED_DIR:-deployments/azure/key-vault}" >> $GITHUB_OUTPUT
+            # Check for changes in terraform/ or deployments/azure/
+            CHANGED_DIR=$(git diff --name-only $BASE_SHA ${{ github.sha }} | grep -E '^(terraform/|deployments/azure/)' | head -1)
+            echo "terraform_dir=${CHANGED_DIR:-terraform}" >> $GITHUB_OUTPUT
           fi
 
       - name: Terraform Init
@@ -76,7 +79,7 @@ jobs:
             -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
             -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Format Check
         working-directory: ${{ steps.determine-dir.outputs.terraform_dir }}
@@ -110,7 +113,7 @@ jobs:
     needs: plan
     if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
     environment:
-      name: azure-production
+      name: azure-prod
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -145,7 +148,7 @@ jobs:
             -backend-config="storage_account_name=${{ secrets.TF_STATE_STORAGE_ACCOUNT }}" \
             -backend-config="container_name=${{ secrets.TF_STATE_CONTAINER_NAME }}" \
             -backend-config="key=${{ secrets.TF_STATE_KEY }}" \
-            -backend-config="access_key=${{ secrets.TF_STATE_ACCESS_KEY }}"
+            -backend-config="use_azuread_auth=true"
 
       - name: Terraform Apply
         working-directory: ${{ needs.plan.outputs.terraform_dir }}
