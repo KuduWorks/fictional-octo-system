@@ -673,7 +673,6 @@ Please investigate the Lambda function logs.
     logger.info(body)
 
     try:
-        ses_client = boto3.client("ses")
         ses_client.send_email(
             Source=COMPLIANCE_EMAIL,
             Destination={"ToAddresses": [COMPLIANCE_EMAIL]},
