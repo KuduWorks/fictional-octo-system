@@ -42,14 +42,6 @@ Service Control Policies (SCPs) for:
 - Exempts truly global services
 - Organization-level enforcement
 
-### resource-tagging/
-**Status**: 📋 Planned
-
-AWS tagging policies for:
-- Required tag enforcement
-- Tag-based access control
-- Cost allocation tags
-
 ## Enforcement Model: AWS vs Azure
 
 ### Azure Policy Approach
@@ -116,13 +108,13 @@ aws s3api create-bucket --bucket test --region us-east-2
 # AccessDenied (correct - policy working!)
 ```
 
-See: [cross-account-role setup](../iam/cross-account-role/README.md)
+See: [cross-account-role setup](../../iam/cross-account-role/README.md)
 
 ## Deployment Order
 
 1. **First**: Deploy `region-control/` to establish geographic boundaries
 2. **Second**: Deploy `encryption-baseline/` to enforce security controls
-3. **Third**: Set up [cross-account-role](../iam/cross-account-role/) for proper testing
+3. **Third**: Set up [cross-account-role](../../iam/cross-account-role/) for proper testing
 4. **Verify**: Wait 5-15 minutes for SCP propagation
 5. **Test**: Assume role in member account and run test scripts
 
