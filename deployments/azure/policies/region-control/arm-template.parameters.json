@@ -4,14 +4,16 @@
   "parameters": {
     "allowedRegions": {
       "value": [
-        "swedencentral"
-      ]
+        "swedencentral",
+        "global"
+      ],
+      "comments": "Include 'global' to allow non-regional Azure resources (for example Traffic Manager, Front Door, DNS zones, and CDN profiles) that use the 'global' location. Only use this when such global services are intended to be in scope of this policy."
     },
     "policyAssignmentName": {
-      "value": "allowed-regions-sweden-central-arm"
+      "value": "allowed-regions-arm"
     },
     "policyAssignmentDisplayName": {
-      "value": "Allowed Regions Policy - Sweden Central (ARM)"
+      "value": "Allowed Regions Policy (ARM)"
     },
     "enforcementMode": {
       "value": "Default"

@@ -116,16 +116,29 @@ terraform state show azurerm_subscription_policy_assignment.rg_location_assignme
 
 For production, use remote state storage:
 
-```hcl
-terraform {
-  backend "azurerm" {
-    resource_group_name  = "rg-tfstate"
-    storage_account_name = "tfstate20251013"
-    container_name       = "tfstate"
-    key                  = "azure-policies.tfstate"
-  }
-}
-```
+1. Copy the backend template:
+   ```bash
+   cp backend.tf.example backend.tf
+   ```
+
+2. Edit `backend.tf` with your storage account details:
+   ```hcl
+   terraform {
+     backend "azurerm" {
+       resource_group_name  = "rg-tfstate"
+       storage_account_name = "tfstate20251013"
+       container_name       = "tfstate"
+       key                  = "policies/region-control.tfstate"
+     }
+   }
+   ```
+
+3. Migrate existing state:
+   ```bash
+   terraform init -migrate-state
+   ```
+
+**Note:** `backend.tf` is excluded from git to keep credentials private.
 
 ## Validation & Testing
 
