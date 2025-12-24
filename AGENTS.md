@@ -44,7 +44,7 @@ Use or adapt these short instructions when prompting Copilot:
 - When creating diagnostics or logs, include instructions to sanitize outputs before sharing externally.
 - Encourage prompts that request sample data only, clearly labeled as placeholder values, and reiterate that real credentials belong in secure stores.
 - Ask Copilot to ensure architecture diagrams in the README to use generic example addresses as this is a public repo
-- Ask Copilot to always any any disclosing email addresses or sensitive data to the tfars file instead
+- Ask Copilot to always add any disclosing email addresses or sensitive data to the tfvars file instead
 
 
 
