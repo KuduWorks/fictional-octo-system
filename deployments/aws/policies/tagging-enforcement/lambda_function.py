@@ -556,7 +556,7 @@ Remediation Instructions:
 Documentation:
 https://github.com/KuduWorks/fictional-octo-system/tree/main/deployments/aws/policies/tagging-enforcement
 
-Questions? Contact: compliance@kuduworks.net
+Questions? Contact: {COMPLIANCE_EMAIL}
 """
     
     return email
@@ -646,7 +646,7 @@ How to Fix:
 Documentation:
 https://github.com/KuduWorks/fictional-octo-system/tree/main/deployments/aws/modules/required-tags
 
-Need help? Contact compliance@example.com
+Need help? Contact {COMPLIANCE_EMAIL}
 """
     
     return email
