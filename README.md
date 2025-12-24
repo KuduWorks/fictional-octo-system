@@ -11,18 +11,33 @@ Multi-cloud Terraform modules and deployment examples for Azure, AWS, and GCP. P
 
 ## Quick Links
 
-- **Azure** 🔵: [deployments/azure/](deployments/azure/) — app registration, Key Vault, modules
-- **AWS** 🟠: [deployments/aws/](deployments/aws/) — state bootstrap, budgets, IAM, networking
-- **GCP** 🔴: [deployments/gcp/](deployments/gcp/) — bootstrap, workload identity, security
+- **Azure** 🔵: [deployments/azure/](deployments/azure/) — app registration, Key Vault, policies, communication services, reporting
+- **AWS** 🟠: [deployments/aws/](deployments/aws/) — state bootstrap, budgets, SCPs, FinOps Lambda, CloudTrail, GitHub OIDC
+- **GCP** 🔴: [deployments/gcp/](deployments/gcp/) — bootstrap, workload identity, security, cost management
 - **Terraform root**: [terraform/](terraform/) — shared state backend and VNet examples
 
 
 ## Features
 
-- **Multi-cloud IaC**: Terraform modules for Azure, AWS, and GCP
-- **Security**: OIDC authentication, Key Vault/Secrets Manager patterns
-- **Cost management**: Budget alerts and monitoring examples
-- **State backends**: Bootstrap modules for each cloud provider
+### Security & Compliance
+- **Preventive enforcement**: Service Control Policies (AWS) and Azure Policies with Deny effects
+- **OIDC authentication**: GitHub Actions integration without secrets (because math > secrets)
+- **Encryption baselines**: S3, EBS, RDS, DynamoDB encryption requirements
+- **Region controls**: Geographic restrictions (Stockholm for AWS, configurable for Azure)
+- **Organization-level CloudTrail**: Centralized audit logging across AWS accounts
+- **Key management**: Azure Key Vault and AWS KMS/Secrets Manager patterns
+
+### Cost Management
+- **Budget monitoring**: Multi-tier alerting for AWS and GCP with email notifications
+- **FinOps automation**: Lambda functions for cost optimization and reporting
+- **SNS notifications**: Real-time budget alerts (before the CFO finds out)
+- **Cost allocation**: Tagging strategies and reporting templates
+
+### Infrastructure as Code
+- **Multi-cloud modules**: Reusable Terraform for Azure, AWS, and GCP
+- **State management**: Remote backend bootstrap for all three clouds
+- **Policy as Code**: ISO 27001-aligned security baselines
+- **Automated compliance**: AWS Config rules and Azure Policy continuous monitoring
 
 See individual cloud folders for detailed documentation.
 

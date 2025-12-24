@@ -1,7 +1,0 @@
-# Example terraform.tfvars file
-# Copy this file to terraform.tfvars and update with your values
-
-org_alert_email    = "finance@example.com"     # Organization-wide budget alerts
-member_alert_email = "devops@example.com"      # Member account workload alerts
-aws_region         = "us-east-1"               # Must be us-east-1 for AWS Budgets
-environment        = "prod"

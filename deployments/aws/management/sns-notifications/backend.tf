@@ -1,0 +1,13 @@
+# Example backend configuration for remote state storage
+# Copy this file to backend.tf and update with your values
+# Run: terraform init -migrate-state
+
+terraform {
+  backend "s3" {
+    bucket         = "fictional-octo-system-tfstate-494367313227"  # e.g., fictional-octo-system-tfstate-123456789012
+    key            = "aws/sns-notifications/terraform.tfstate"
+    region         = "eu-north-1"
+    dynamodb_table = "terraform-state-locks"
+    encrypt        = true
+  }
+}
