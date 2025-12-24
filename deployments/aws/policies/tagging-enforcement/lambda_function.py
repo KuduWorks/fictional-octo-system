@@ -645,9 +645,8 @@ How to Fix:
 
 Documentation:
 https://github.com/KuduWorks/fictional-octo-system/tree/main/deployments/aws/modules/required-tags
-
-Need help? Contact compliance@example.com
 """
+    email += f"\nNeed help? Contact {COMPLIANCE_EMAIL}\n"
     
     return email
 
