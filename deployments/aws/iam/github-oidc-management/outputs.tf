@@ -25,5 +25,5 @@ output "aws_account_id" {
 
 output "github_actions_workflow_example" {
   description = "Example GitHub Actions workflow configuration"
-  value = "- name: Configure AWS Credentials\n  uses: aws-actions/configure-aws-credentials@v4\n  with:\n    role-to-assume: $${{ secrets.AWS_DEPLOY_ROLE_ARN }}\n    aws-region: us-east-1"
+  value       = "- name: Configure AWS Credentials\n  uses: aws-actions/configure-aws-credentials@v4\n  with:\n    role-to-assume: $${{ secrets.AWS_DEPLOY_ROLE_ARN }}\n    aws-region: us-east-1"
 }

@@ -22,14 +22,23 @@ terraform apply
 terraform output github_actions_deploy_role_arn
 ```
 
-Add the output ARN to GitHub secrets as `AWS_MEMBER_DEPLOY_ROLE_ARN`.
+Add the output ARN to GitHub secrets as `AWS_MEMBER_DEPLOY_ROLE_ARN` at:
+https://github.com/KuduWorks/fictional-octo-system/settings/secrets/actions
 
 ## Resources Created
 
 - OIDC provider for GitHub (if not exists)
-- `github-actions-member-readonly` - read-only role
-- `github-actions-member-deploy` - deploy role for workload resources
+- `github-actions-member-readonly` - read-only role (for plan-only workflows)
+- `github-actions-member-deploy` - deploy role for workload resources (VPC, apps, tagging)
+
+## Security
+
+- OIDC trust restricted to `main` and `develop` branches only
+- Apply workflows require push to `main` (PRs cannot trigger deploys)
+- Configure required reviewers on `aws-member` environment in GitHub for additional protection
 
 ## Next Steps
 
-After deployment, update `.github/workflows/deploy-aws.yml` to use `AWS_MEMBER_DEPLOY_ROLE_ARN`.
+1. Ensure `AWS_MEMBER_DEPLOY_ROLE_ARN` secret is set in GitHub
+2. Add Terraform modules to `deployments/aws/member/` folder
+3. Workflow will automatically deploy on merge to main

@@ -22,14 +22,24 @@ terraform apply
 terraform output github_actions_deploy_role_arn
 ```
 
-Add the output ARN to GitHub secrets as `AWS_MGMT_DEPLOY_ROLE_ARN`.
+Add the output ARN to GitHub secrets as `AWS_MGMT_DEPLOY_ROLE_ARN` at:
+https://github.com/KuduWorks/fictional-octo-system/settings/secrets/actions
 
 ## Resources Created
 
 - OIDC provider for GitHub (if not exists)
-- `github-actions-mgmt-readonly` - read-only role
-- `github-actions-mgmt-deploy` - deploy role for org resources
+- `github-actions-mgmt-readonly` - read-only role (for plan-only workflows)
+- `github-actions-mgmt-deploy` - deploy role for org resources (SCPs, CloudTrail, budgets)
+
+## Security
+
+- OIDC trust restricted to `main` and `develop` branches only
+- Apply workflows require push to `main` (PRs cannot trigger deploys)
+- Configure required reviewers on `aws-management` environment in GitHub for additional protection
 
 ## Next Steps
 
-After deployment, update `.github/workflows/deploy-aws.yml` to use `AWS_MGMT_DEPLOY_ROLE_ARN`.
+1. Ensure `AWS_MGMT_DEPLOY_ROLE_ARN` secret is set in GitHub
+2. Deploy member account OIDC in `../github-oidc-member/`
+3. Add Terraform modules to `deployments/aws/management/` folder
+4. Workflow will automatically deploy on merge to main
