@@ -3,12 +3,11 @@
 *.tfstate.*
 *.tfstate.backup
 .terraform/
+.terraform.lock.hcl
 terraform.tfvars
 !terraform.tfvars.example
-override.tf
-override.tf.json
-*_override.tf
-*_override.tf.json
+backend.tf
+!backend.tf.example
 
 # Crash log files
 crash.log
@@ -18,23 +17,10 @@ crash.*.log
 *.pem
 *.key
 *.crt
-*.p12
-*.pfx
-secrets.auto.tfvars
-client_secret.txt
-credentials.json
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-*~
+# Logs
+*.log
 
 # OS
 .DS_Store
 Thumbs.db
-
-# Logs
-*.log
-backend.tf

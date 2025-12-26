@@ -515,6 +515,7 @@ If you previously deployed the standalone VM encryption policy:
    - Commit `.terraform.lock.hcl` to ensure consistent provider versions
    - Do NOT commit `.terraform/` directory or `*.tfstate` files
    - Store state remotely (Azure Storage) for team collaboration
+   - Use `backend.tf` (excluded from git) for backend config; commit `backend.tf.example` as template
 
 4. **Policy Testing**
    - Always test in non-production subscription first

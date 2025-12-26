@@ -4,17 +4,19 @@
   "parameters": {
     "allowedRegions": {
       "value": [
-        "swedencentral"
-      ]
+        "swedencentral",
+        "global"
+      ],
+      "comments": "The \"global\" location is included to support non-regional Azure services (for example Traffic Manager, Front Door, DNS zones, and CDN profiles) that require this special location value. Do not remove or extend this list without reviewing the impact on region restrictions."
     },
     "policyAssignmentName": {
-      "value": "allowed-regions-sweden-central"
+      "value": "allowed-regions"
     },
     "policyAssignmentDisplayName": {
-      "value": "Allowed Regions Policy - Sweden Central Only"
+      "value": "Allowed Regions Policy"
     },
     "policyAssignmentDescription": {
-      "value": "This policy restricts all Azure resource deployments to Sweden Central region only"
+      "value": "This policy restricts all Azure resource deployments to allowed regions only"
     },
     "enforcementMode": {
       "value": "Default"

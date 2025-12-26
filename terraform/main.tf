@@ -14,8 +14,9 @@ provider "azurerm" {
 
 # Data source for existing Terraform state storage account
 data "azurerm_storage_account" "state_storage_account" {
-  name                = "tfstate20251013"
-  resource_group_name = "rg-tfstate"
+  name                = var.state_storage_account_name
+  resource_group_name = var.state_storage_resource_group_name
+
 }
 
 # Resource Group
