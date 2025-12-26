@@ -40,12 +40,50 @@ catch {
 Write-Host "🔑 Checking Azure connection..." -ForegroundColor Yellow
 try {
     $context = Get-AzContext
-    if (-not $context) {
-        Connect-AzAccount
+    $subscriptions = @()
+    
+    # Check if we have a valid context with subscriptions
+    if ($context) {
+        $subscriptions = Get-AzSubscription -ErrorAction SilentlyContinue
     }
+    
+    # If no context or no subscriptions, force a fresh login
+    if (-not $context -or $subscriptions.Count -eq 0) {
+        Write-Host "Authenticating to Azure (browser window will open)..." -ForegroundColor Yellow
+        Connect-AzAccount | Out-Null
+        $context = Get-AzContext
+        $subscriptions = Get-AzSubscription
+    }
+    
     Write-Host "✅ Connected to Azure as $($context.Account.Id)" -ForegroundColor Green
+    
+    if ($subscriptions.Count -eq 0) {
+        Write-Host "❌ No subscriptions found for this account" -ForegroundColor Red
+        Write-Host "Please ensure your account has access to at least one Azure subscription" -ForegroundColor Yellow
+        exit 1
+    }
+    
+    # List available subscriptions and prompt user to select one
+    Write-Host "`n📋 Available subscriptions:" -ForegroundColor Yellow
+    for ($i = 0; $i -lt $subscriptions.Count; $i++) {
+        Write-Host "  [$i] $($subscriptions[$i].Name) ($($subscriptions[$i].Id))" -ForegroundColor Cyan
+    }
+    
+    if ($subscriptions.Count -eq 1) {
+        Write-Host "`nUsing only available subscription: $($subscriptions[0].Name)" -ForegroundColor Green
+        Set-AzContext -SubscriptionId $subscriptions[0].Id | Out-Null
+    } else {
+        $selection = Read-Host "`nEnter subscription number [0-$($subscriptions.Count - 1)]"
+        if ($selection -match '^\d+$' -and [int]$selection -ge 0 -and [int]$selection -lt $subscriptions.Count) {
+            Set-AzContext -SubscriptionId $subscriptions[[int]$selection].Id | Out-Null
+            Write-Host "✅ Subscription set to: $($subscriptions[[int]$selection].Name)" -ForegroundColor Green
+        } else {
+            Write-Host "❌ Invalid selection" -ForegroundColor Red
+            exit 1
+        }
+    }
 } catch {
-    Write-Host "❌ Failed to connect to Azure. Please run Connect-AzAccount" -ForegroundColor Red
+    Write-Host "❌ Failed to connect to Azure: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
