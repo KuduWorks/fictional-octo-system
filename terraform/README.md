@@ -65,7 +65,7 @@ state_resource_group_name  = "rg-tfstate"  # Your state resource group
 state_storage_account_name = "yourstorageaccount"  # Must be globally unique
 resource_group_name        = "rg-monitoring"  # Your monitoring resource group
 storage_access_method      = "managed_identity" # or "ip_whitelist" while waiting for UAMI
-allowed_ip_addresses       = ["1.2.3.4"]   # only if using ip_whitelist
+allowed_ip_addresses       = ["203.0.113.10"]   # only if using ip_whitelist (documentation IP per RFC 5737)
 alert_email                = "your.email@domain.com"
 ```
 
