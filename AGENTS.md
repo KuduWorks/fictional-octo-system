@@ -23,7 +23,7 @@ This document helps align GitHub Copilot with repository standards, security exp
 - **Use the variables.tf and .tfvars.example pattern**: 
   - Define all configurable values in `variables.tf` with clear descriptions
   - Provide `terraform.tfvars.example` with placeholder/example values
-  - Add `terraform.tfvars` to `.gitignore` - this file should NEVER be committed
+  - Add `terraform.tfvars` and `*.auto.tfvars` to `.gitignore` - these files should NEVER be committed
   - Document in README how to copy and customize the example file
 
 - **Sanitize workflow files**: GitHub Actions workflows should use repository secrets (`${{ secrets.AZURE_SUBSCRIPTION_ID }}`) instead of hardcoded values.
