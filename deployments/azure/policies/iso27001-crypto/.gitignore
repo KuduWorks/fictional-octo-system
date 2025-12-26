@@ -5,6 +5,8 @@
 .terraform/
 terraform.tfvars
 !terraform.tfvars.example
+backend.tf
+!backend.tf.example
 override.tf
 override.tf.json
 *_override.tf

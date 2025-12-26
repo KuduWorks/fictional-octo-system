@@ -1,0 +1,16 @@
+# Backend Configuration for ISO 27001 Crypto Policies
+#
+# INSTRUCTIONS:
+# 1. Copy this file: cp backend.tf.example backend.tf
+# 2. Run: terraform init -migrate-state
+#
+# This uses the existing state storage created in /terraform folder
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-mytfstate"
+    storage_account_name = "tfstate123456789"
+    container_name       = "tfstate123456789"
+    key                  = "policies/iso27001-crypto.tfstate123456789"
+  }
+}
