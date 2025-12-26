@@ -10,7 +10,7 @@ terraform {
   backend "azurerm" {
     resource_group_name  = "rg-mytfstate"
     storage_account_name = "tfstate123456789"
-    container_name       = "tfstate123456789"
+    container_name       = "tfstate"
     key                  = "policies/iso27001-crypto.tfstate123456789"
   }
 }
