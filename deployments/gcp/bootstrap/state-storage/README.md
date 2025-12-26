@@ -198,8 +198,8 @@ terraform plan
 ```hcl
 environment = "dev"
 gcp_region = "europe-north1"
-github_org = "KuduWorks"
-github_repo = "fictional-octo-system"
+github_org = "<your-github-org>"
+github_repo = "<your-repo-name>"
 ```
 
 **Cost**: $0.00/month

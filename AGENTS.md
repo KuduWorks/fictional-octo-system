@@ -7,6 +7,29 @@ This document helps align GitHub Copilot with repository standards, security exp
 - Keep prompts concise and reference relevant folders (deployments/aws, deployments/azure, deployments/gcp, terraform) so Copilot scopes changes correctly.
 - Favor modular, reviewable pull requests that follow contribution expectations from CONTRIBUTING.md.
 
+## ⚠️ Public Repository Guidelines
+**This is a PUBLIC repository. All generated content must be safe for public visibility.**
+
+- **Generalize all identifiers in documentation**: Never include actual subscription IDs, account IDs, tenant IDs, storage account names, or organization-specific resource names in README files or documentation.
+  - ✅ Use: `yourstorageaccount`, `<your-subscription-id>`, `<your-org>/<your-repo>`
+  - ❌ Avoid: `tfstateprod20251215`, `3025782a-c912-49dd-ab77-7167b5d3e0fa`, `KuduWorks/fictional-octo-system`
+
+- **Always include .gitignore files**: Every deployment folder and Terraform project must have a `.gitignore` that excludes:
+  - State files: `*.tfstate`, `*.tfstate.*`, `*.tfstate.backup`
+  - Variables: `terraform.tfvars`, `*.auto.tfvars` (except `.example` files)
+  - Secrets: `*.pem`, `*.key`, `*.pfx`, credentials files
+  - Generated files: `.terraform/`, `crash.log`
+
+- **Use variables.tf and .tfvars.example pattern**: 
+  - Define all configurable values in `variables.tf` with clear descriptions
+  - Provide `terraform.tfvars.example` with placeholder/example values
+  - Add `terraform.tfvars` to `.gitignore` - this file should NEVER be committed
+  - Document in README how to copy and customize the example file
+
+- **Sanitize workflow files**: GitHub Actions workflows should use repository secrets (`${{ secrets.AZURE_SUBSCRIPTION_ID }}`) instead of hardcoded values.
+
+- **Prompt Copilot explicitly**: When asking Copilot to create documentation or examples, include: "This is a public repo - use generic placeholders for all subscription IDs, account numbers, and resource names."
+
 ## Coding and Testing Standards
 - Terraform: request terraform fmt -recursive, terraform validate, and terraform plan before proposing changes. Use descriptive module names, enforce encryption defaults, and update terraform-docs style module docs when modules change.
 - Shell scripts: adopt set -euo pipefail, avoid subshell while loops, use clear success/failure messaging, and prefer Azure CLI flags like --only-show-errors for cleaner output.
@@ -39,9 +62,18 @@ Use or adapt these short instructions when prompting Copilot:
 - "Generate branch plan using feature/ or fix/ prefix, conventional commit type(scope): subject, and list tests run (terraform fmt/validate/plan, shellcheck, PowerShell WhatIf)."
 
 ## Sensitive Data Handling
-- Direct Copilot to mask or omit environment-specific secrets, subscription IDs, or account numbers in generated examples.
+- **Critical**: This repository is PUBLIC - direct Copilot to mask or omit ALL environment-specific identifiers:
+  - Subscription IDs, account IDs, tenant IDs
+  - Resource names (storage accounts, resource groups, key vaults)
+  - Email addresses, organization names
+  - Any value that could identify production infrastructure
 - When creating diagnostics or logs, include instructions to sanitize outputs before sharing externally.
-- Encourage prompts that request sample data only, clearly labeled as placeholder values, and reiterate that real credentials belong in secure stores.
+- All examples must use clearly labeled placeholder values: `<placeholder>`, `example-value`, `your-resource-name`
+- Real credentials and identifiers belong in:
+  - Secure stores (Key Vault, AWS Secrets Manager, GCP Secret Manager)
+  - Local `terraform.tfvars` files (gitignored)
+  - GitHub repository secrets
+  - Environment variables (documented but not hardcoded)
 
 ## Further Assistance
 - If Copilot suggests ambiguous changes, prompt it to reference README.md, CONTRIBUTING.md, PERFORMANCE_IMPROVEMENTS.md, SECURITY.md, or relevant deployment README files for authoritative guidance.
