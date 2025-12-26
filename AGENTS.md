@@ -20,7 +20,7 @@ This document helps align GitHub Copilot with repository standards, security exp
   - Secrets: `*.pem`, `*.key`, `*.pfx`, credentials files
   - Generated files: `.terraform/`, `crash.log`
 
-- **Use variables.tf and .tfvars.example pattern**: 
+- **Use the variables.tf and .tfvars.example pattern**: 
   - Define all configurable values in `variables.tf` with clear descriptions
   - Provide `terraform.tfvars.example` with placeholder/example values
   - Add `terraform.tfvars` to `.gitignore` - this file should NEVER be committed
