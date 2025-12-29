@@ -6,7 +6,7 @@ This folder contains Terraform code for deploying and managing Azure resources f
 
 ## Infrastructure Components
 
-- **Storage Account**: Remote state in `tfstateprod20251215` / `tfstate-prod` via Azure AD/OIDC (UAMI)
+- **Storage Account**: Remote state via Azure AD/OIDC (UAMI)
 - **Virtual Network**: Basic networking setup with customizable address space
 - **Monitoring**: Azure Monitor setup with Log Analytics Workspace
 - **Security**: Network rules default deny; private endpoints optional
@@ -35,7 +35,7 @@ This folder contains Terraform code for deploying and managing Azure resources f
 az login
 ```
 
-2) **Authenticate (GitHub Actions):** configure federated credential for subject `repo:KuduWorks/fictional-octo-system:ref:refs/heads/main` on a user-assigned managed identity with roles:
+2) **Authenticate (GitHub Actions):** configure federated credential for subject `repo:<your-org>/<your-repo>:ref:refs/heads/main` on a user-assigned managed identity with roles:
 - `Contributor` on the subscription
 - `Storage Blob Data Contributor` on the state storage account
 
@@ -61,11 +61,11 @@ terraform apply -var-file=terraform.tfvars
 
 Create a `terraform.tfvars` file with your values:
 ```hcl
-state_resource_group_name  = "rg-tfstate"
-state_storage_account_name = "tfstateprod20251215"
-resource_group_name        = "rg-monitoring"
+state_resource_group_name  = "rg-tfstate"  # Your state resource group
+state_storage_account_name = "yourstorageaccount"  # Must be globally unique
+resource_group_name        = "rg-monitoring"  # Your monitoring resource group
 storage_access_method      = "managed_identity" # or "ip_whitelist" while waiting for UAMI
-allowed_ip_addresses       = ["203.0.113.10"]   # only if using ip_whitelist
+allowed_ip_addresses       = ["203.0.113.10"]   # only if using ip_whitelist (documentation IP per RFC 5737)
 alert_email                = "your.email@domain.com"
 ```
 

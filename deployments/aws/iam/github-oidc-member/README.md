@@ -23,7 +23,7 @@ terraform output github_actions_deploy_role_arn
 ```
 
 Add the output ARN to GitHub secrets as `AWS_MEMBER_DEPLOY_ROLE_ARN` at:
-https://github.com/KuduWorks/fictional-octo-system/settings/secrets/actions
+https://github.com/<your-org>/<your-repo>/settings/secrets/actions
 
 ## Resources Created
 
