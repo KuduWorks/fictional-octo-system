@@ -76,9 +76,12 @@ resource "google_storage_bucket" "terraform_state" {
     enabled = true
   }
   
-  # Enable encryption
-  encryption {
-    default_kms_key_name = var.kms_key_name
+  # Enable encryption (only if KMS key is specified)
+  dynamic "encryption" {
+    for_each = var.kms_key_name != "" ? [var.kms_key_name] : []
+    content {
+      default_kms_key_name = var.kms_key_name
+    }
   }
   
   # Block public access
