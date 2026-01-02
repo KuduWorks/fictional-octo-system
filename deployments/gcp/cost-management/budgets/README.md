@@ -54,7 +54,7 @@ budget_alert_emails = [
 cp backend.tf.example backend.tf
 
 # Update with your project ID
-sed -i 's/<YOUR-PROJECT-ID>/kudu-star-dev-01/g' backend.tf
+sed -i 's/<YOUR-PROJECT-ID>/<YOUR-PROJECT-ID>/g' backend.tf
 ```
 
 ### Step 4: Deploy Budgets
@@ -99,7 +99,7 @@ Total Budget:   €50/month
 
 ### Web Console
 ```
-https://console.cloud.google.com/billing/budgets?project=kudu-star-dev-01
+https://console.cloud.google.com/billing/budgets?project=<YOUR-PROJECT-ID>
 ```
 
 ### CLI
@@ -163,7 +163,7 @@ threshold_rules {
 ### "Permission denied" error
 ```bash
 # Ensure you have billing admin permissions
-gcloud projects add-iam-policy-binding kudu-star-dev-01 \
+gcloud projects add-iam-policy-binding <YOUR-PROJECT-ID> \
   --member="user:YOUR-EMAIL@domain.com" \
   --role="roles/billing.admin"
 ```
