@@ -61,11 +61,11 @@ terraform apply -var-file=terraform.tfvars
 
 Create a `terraform.tfvars` file with your values:
 ```hcl
-state_resource_group_name  = "<your-rg-name>"  # Your state resource group
-state_storage_account_name = "yourstorageaccount"  # Must be globally unique
-resource_group_name        = "rg-monitoring"  # Your monitoring resource group
-storage_access_method      = "managed_identity" # or "ip_whitelist" while waiting for UAMI
-allowed_ip_addresses       = ["203.0.113.10"]   # only if using ip_whitelist (documentation IP per RFC 5737)
+state_resource_group_name  = "<your-rg-name>"             # Your state resource group
+state_storage_account_name = "<your-storage-account-name>"  # Must be globally unique
+resource_group_name        = "rg-monitoring"              # Your monitoring resource group
+storage_access_method      = "managed_identity"           # or "ip_whitelist" while waiting for UAMI
+allowed_ip_addresses       = ["203.0.113.10"]             # only if using ip_whitelist (documentation IP per RFC 5737)
 alert_email                = "your.email@domain.com"
 ```
 
