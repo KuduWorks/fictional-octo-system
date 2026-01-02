@@ -16,7 +16,7 @@ This guide walks through setting up a GCP Organization using Cloud Identity Free
 cd deployments/gcp/bootstrap/organization-setup
 cp config.example.sh config.sh
 # Edit config.sh with your actual values
-source config.sh
+source ./config.sh
 ```
 
 The actual `config.sh` file is gitignored and will never be committed.
@@ -157,7 +157,7 @@ gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
    - In **SAML Certificates** section
    - Find **Certificate (Base64)** (NOT Federation Metadata XML)
    - Click **Download** → Saves as `.cer` file
-   - **Note**: GCP requires Base64/PEM format, NOT XML
+   - **Note**: GCP requires a Base64-encoded certificate (PEM format), NOT XML
    - **Optional**: Add additional certificates for rotation before expiration
 
 5. **Copy IdP URLs** (needed for Part B):

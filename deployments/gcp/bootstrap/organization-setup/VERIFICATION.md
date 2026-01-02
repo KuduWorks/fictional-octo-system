@@ -545,12 +545,12 @@ done
 # Expected: No USER_MANAGED keys (only SYSTEM_MANAGED)
 
 # Audit Cloud Audit Logs configuration
-gcloud logging sinks list --organization=$ORG_ID
+gcloud logging sinks list --organization=$GCP_ORG_ID
 
 # Expected: Will be configured in next phase
 
 # Check organization policies
-gcloud resource-manager org-policies list --organization=$ORG_ID
+gcloud resource-manager org-policies list --organization=$GCP_ORG_ID
 
 # Expected: Will be configured in next phase
 ```
