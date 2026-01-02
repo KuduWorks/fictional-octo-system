@@ -1,44 +1,59 @@
 # GCP Organization Verification Guide
 
-This guide provides verification commands to confirm your GCP Organization is properly configured with Cloud Identity, external M365 accounts, and break-glass access.
+This guide provides verification commands to confirm your GCP Organization is properly configured with Cloud Identity, M365 SAML SSO, and break-glass access.
+
+## ⚠️ Security Notice
+
+**Load your configuration before running any commands:**
+```bash
+cd deployments/gcp/bootstrap/organization-setup
+source config.sh
+```
+
+This ensures all commands use your actual values from the gitignored configuration file.
 
 ## Prerequisites Checklist
 
 Before verifying, ensure you've completed:
 - ✅ Cloud Identity Free signup
-- ✅ Added M365 account as external user with Organization Admin role
-- ✅ Created native break-glass account with randomized name
+- ✅ SAML federation configured between Entra ID and Cloud Identity
+- ✅ M365 account granted IAM Organization Admin role
+- ✅ Created native break-glass account
 - ✅ Linked billing account to organization
+- ✅ Created and loaded config.sh with your values
 
 ## Verification Steps
 
 ### Step 1: Verify Organization Exists
 
-**Check organization is created**:
+**Load configuration and check organization**:
 
 ```bash
+# Load your configuration
+source config.sh
+
 # List all organizations you have access to
 gcloud organizations list
 
 # Expected output:
 # DISPLAY_NAME              ID            DIRECTORY_CUSTOMER_ID
-# <YOUR-DOMAIN>             <ORG-ID>      <DIRECTORY-CUSTOMER-ID>
+# $GCP_ORG_DOMAIN           $GCP_ORG_ID   <DIRECTORY-CUSTOMER-ID>
 ```
 
 **Get organization details**:
 
 ```bash
-# Store organization ID for subsequent commands
-ORG_ID=$(gcloud organizations list --format="value(ID)")
-echo "Organization ID: $ORG_ID"
+# Verify organization ID from config
+echo "Organization ID: $GCP_ORG_ID"
+echo "Organization Domain: $GCP_ORG_DOMAIN"
 
 # Get full organization information
-gcloud organizations describe $ORG_ID
+gcloud organizations describe $GCP_ORG_ID
 
 # Expected output:
 # creationTime: '2025-12-29T...'
-# displayName: <YOUR-DOMAIN>
-# name: organizations/<ORG-ID>
+# displayName: $GCP_ORG_DOMAIN
+# name: organizations/$GCP_ORG_ID
 # owner:
 #   directoryCustomerId: <DIRECTORY-CUSTOMER-ID>
 # state: ACTIVE
@@ -48,25 +63,61 @@ gcloud organizations describe $ORG_ID
 
 ```bash
 # Organization must be ACTIVE
-gcloud organizations describe $ORG_ID --format="value(state)"
+gcloud organizations describe $GCP_ORG_ID --format="value(state)"
 
 # Expected: ACTIVE
 ```
 
-### Step 2: Verify M365 External Account Access
+### Step 2: Verify M365 SAML SSO Authentication
 
-**Test authentication with M365 credentials**:
+**Test SAML federation in browser first**:
+
+```bash
+# Load configuration
+source config.sh
+
+# Open browser to test SSO
+echo "Testing SAML SSO for: $GCP_ADMIN_EMAIL"
+echo "1. Open incognito browser: https://accounts.google.com"
+echo "2. Enter: $GCP_ADMIN_EMAIL"
+echo "3. Should redirect to: login.microsoftonline.com"
+echo "4. Complete M365 authentication"
+echo "5. Should redirect back to Google"
+```
+
+**Verify SAML configuration in Cloud Identity**:
+
+```bash
+# In Cloud Identity Admin Console (https://admin.google.com/)
+# Navigate to: Security → Authentication → SSO with third-party IdP
+# Should show: Entra ID SAML configuration
+# Status: Active
+```
+
+**Verify Entra ID Enterprise Application**:
+
+```bash
+# In Azure Portal: https://portal.azure.com
+# Enterprise Applications → Google Cloud Platform - $GCP_ORG_DOMAIN
+# Verify:
+# - Application is active
+# - $GCP_ADMIN_EMAIL is assigned under Users and groups
+# - SAML SSO is configured
+```
+
+**Test gcloud authentication with M365 credentials**:
 
 ```bash
 # Sign out current account
 gcloud auth revoke --all
 
 # Authenticate with M365 account
-gcloud auth login <YOUR-ADMIN-EMAIL>
+gcloud auth login $GCP_ADMIN_EMAIL
 
-# Browser will open → Microsoft login page
+# Browser will open → Microsoft login page (SAML redirect)
 # Use your Microsoft 365 password and MFA
 # GCP will redirect to: https://login.microsoftonline.com/...
+# After SAML assertion, you'll be authenticated
 
 # After successful auth, verify active account
 gcloud auth list
@@ -74,19 +125,22 @@ gcloud auth list
 # Expected output:
 #              Credentialed Accounts
 # ACTIVE  ACCOUNT
-# *       <YOUR-ADMIN-EMAIL>
+# *       $GCP_ADMIN_EMAIL
 ```
 
 **Verify organization admin permissions**:
 
 ```bash
+# Load configuration
+source config.sh
+
 # List organizations (should see your org)
 gcloud organizations list
 
 # Get IAM policy to confirm your permissions
-gcloud organizations get-iam-policy $ORG_ID \
+gcloud organizations get-iam-policy $GCP_ORG_ID \
   --flatten="bindings[].members" \
-  --filter="bindings.members:<YOUR-ADMIN-EMAIL>" \
+  --filter="bindings.members:$GCP_ADMIN_EMAIL" \
   --format="table(bindings.role)"
 
 # Expected roles:
@@ -98,10 +152,10 @@ gcloud organizations get-iam-policy $ORG_ID \
 
 ```bash
 # Try listing all projects in the organization
-gcloud projects list --organization=$ORG_ID
+gcloud projects list --organization=$GCP_ORG_ID
 
 # Try viewing organization IAM policy
-gcloud organizations get-iam-policy $ORG_ID
+gcloud organizations get-iam-policy $GCP_ORG_ID
 
 # Both should succeed without permission errors
 ```
@@ -111,11 +165,14 @@ gcloud organizations get-iam-policy $ORG_ID
 **Option A: If using Cloud Identity native account**:
 
 ```bash
+# Load configuration
+source config.sh
+
 # Sign out M365 account
 gcloud auth revoke --all
 
 # Authenticate with break-glass account
-gcloud auth login breakglass-<RANDOM>@<YOUR-DOMAIN>
+gcloud auth login $GCP_BREAKGLASS_EMAIL
 
 # Use the password stored in Azure Key Vault
 # Complete 2FA challenge
@@ -124,16 +181,16 @@ gcloud auth login breakglass-<RANDOM>@<YOUR-DOMAIN>
 gcloud auth list
 
 # Expected:
-# *       breakglass-<RANDOM>@<YOUR-DOMAIN>
+# *       $GCP_BREAKGLASS_EMAIL
 
 # Verify organization access
 gcloud organizations list
-gcloud organizations describe $ORG_ID
+gcloud organizations describe $GCP_ORG_ID
 
 # Verify admin permissions
-gcloud organizations get-iam-policy $ORG_ID \
+gcloud organizations get-iam-policy $GCP_ORG_ID \
   --flatten="bindings[].members" \
-  --filter="bindings.members:breakglass-<RANDOM>@<YOUR-DOMAIN>" \
+  --filter="bindings.members:$GCP_BREAKGLASS_EMAIL" \
   --format="table(bindings.role)"
 
 # Expected:
@@ -144,28 +201,31 @@ gcloud organizations get-iam-policy $ORG_ID \
 **Option B: If using service account break-glass**:
 
 ```bash
-# Retrieve service account key from Azure Key Vault
+# Load configuration
+source config.sh
+
+# Retrieve service account key from Azure Key Vault (using obscure secret name)
 az keyvault secret show \
-  --vault-name <YOUR-KEYVAULT> \
-  --name "gcp-breakglass-sa-key" \
-  --query value -o tsv > breakglass-key.json
+  --vault-name $AZURE_KEYVAULT_NAME \
+  --name "gcp-svc-automation-key" \
+  --query value -o tsv > sa-key.json
 
 # Activate service account
 gcloud auth activate-service-account \
-  breakglass-admin@<PROJECT-ID>.iam.gserviceaccount.com \
-  --key-file=breakglass-key.json
+  svc-automation@$GCP_DEV_PROJECT_ID.iam.gserviceaccount.com \
+  --key-file=sa-key.json
 
 # Verify active account
 gcloud auth list
 
 # Expected:
-# *       breakglass-admin@<PROJECT-ID>.iam.gserviceaccount.com
+# *       svc-automation@$GCP_DEV_PROJECT_ID.iam.gserviceaccount.com
 
 # Verify organization access
 gcloud organizations list
 
 # Clean up key file
-rm breakglass-key.json
+rm sa-key.json
 ```
 
 ### Step 4: Verify Billing Account Linkage
@@ -173,39 +233,45 @@ rm breakglass-key.json
 **Check billing account exists**:
 
 ```bash
+# Load configuration
+source config.sh
+
 # List all billing accounts
 gcloud billing accounts list
 
 # Expected output:
-# ACCOUNT_ID            NAME                OPEN  MASTER_ACCOUNT_ID
-# <BILLING-ACCOUNT-ID>  Billing Account 1   True
+# ACCOUNT_ID               NAME                OPEN  MASTER_ACCOUNT_ID
+# $GCP_BILLING_ACCOUNT_ID  Billing Account 1   True
 
 # Get billing account details
-gcloud billing accounts describe <BILLING-ACCOUNT-ID>
+gcloud billing accounts describe $GCP_BILLING_ACCOUNT_ID
 ```
 
 **Verify billing permissions**:
 
 ```bash
 # Check who has access to billing account
-gcloud billing accounts get-iam-policy <BILLING-ACCOUNT-ID>
+gcloud billing accounts get-iam-policy $GCP_BILLING_ACCOUNT_ID
 
 # Should include:
-# - <YOUR-ADMIN-EMAIL> with roles/billing.admin
+# - $GCP_ADMIN_EMAIL with roles/billing.admin
 # - Organization admins with billing access
 ```
 
 **Test billing account assignment**:
 
 ```bash
+# Load configuration
+source config.sh
+
 # When creating new projects, verify billing can be linked
 gcloud projects create test-billing-check-001 \
-  --organization=$ORG_ID \
+  --organization=$GCP_ORG_ID \
   --labels=environment=test,purpose=verification
 
 # Link billing to test project
 gcloud billing projects link test-billing-check-001 \
-  --billing-account=<BILLING-ACCOUNT-ID>
+  --billing-account=$GCP_BILLING_ACCOUNT_ID
 
 # Verify billing is enabled
 gcloud billing projects describe test-billing-check-001
@@ -219,12 +285,15 @@ gcloud projects delete test-billing-check-001 --quiet
 **Check existing service accounts**:
 
 ```bash
-# List service accounts in current project
-gcloud iam service-accounts list
+# Load configuration
+source config.sh
+
+# List service accounts in dev project
+gcloud iam service-accounts list --project=$GCP_DEV_PROJECT_ID
 
 # Expected (from existing deployments):
-# main-github-actions@<PROJECT-ID>.iam.gserviceaccount.com
-# terraform-automation@<PROJECT-ID>.iam.gserviceaccount.com
+# main-github-actions@$GCP_DEV_PROJECT_ID.iam.gserviceaccount.com
+# terraform-automation@$GCP_DEV_PROJECT_ID.iam.gserviceaccount.com
 ```
 
 **Verify Workload Identity Pool**:
@@ -233,7 +302,7 @@ gcloud iam service-accounts list
 # List workload identity pools
 gcloud iam workload-identity-pools list \
   --location=global \
-  --project=<PROJECT-ID>
+  --project=$GCP_DEV_PROJECT_ID
 
 # Expected:
 # github-actions-pool
@@ -241,7 +310,7 @@ gcloud iam workload-identity-pools list \
 # Get pool details
 gcloud iam workload-identity-pools describe github-actions-pool \
   --location=global \
-  --project=<PROJECT-ID>
+  --project=$GCP_DEV_PROJECT_ID
 ```
 
 **Verify no long-lived service account keys** (security best practice):
@@ -249,7 +318,7 @@ gcloud iam workload-identity-pools describe github-actions-pool \
 ```bash
 # Check for service account keys (should be minimal)
 gcloud iam service-accounts keys list \
-  --iam-account=main-github-actions@<PROJECT-ID>.iam.gserviceaccount.com
+  --iam-account=main-github-actions@$GCP_DEV_PROJECT_ID.iam.gserviceaccount.com
 
 # Should only show system-managed keys, no user-managed keys
 # Expected:
@@ -261,31 +330,47 @@ gcloud iam service-accounts keys list \
 
 ### Step 6: Verify Cloud Identity Configuration
 
-**Check Cloud Identity users**:
+**Check Cloud Identity users and SAML federation**:
 
 ```bash
+# Load configuration
+source config.sh
+
 # Note: Cloud Identity user management requires Cloud Identity API or Admin Console
 # Verify via Admin Console: https://admin.google.com/ac/users
 
 # Alternative: Check organization IAM policy for user list
-gcloud organizations get-iam-policy $ORG_ID \
+gcloud organizations get-iam-policy $GCP_ORG_ID \
   --flatten="bindings[].members" \
   --filter="bindings.members:user*" \
   --format="value(bindings.members)" | sort -u
 
 # Expected users:
-# user:<YOUR-ADMIN-EMAIL>
-# user:breakglass-<RANDOM>@<YOUR-DOMAIN>
+# user:$GCP_ADMIN_EMAIL (federated via SAML)
+# user:$GCP_BREAKGLASS_EMAIL (native Cloud Identity)
 ```
 
-**Verify external identity configuration**:
+**Verify SAML SSO configuration**:
 
 ```bash
-# Check if M365 domain is NOT verified in GCP (it shouldn't be)
-gcloud domains verify <YOUR-DOMAIN> 2>&1 | grep "not verified"
+# In Cloud Identity Admin Console (https://admin.google.com/):
+# Security → Authentication → SSO with third-party IdP
+# Should show:
+# - Provider: Microsoft Entra ID
+# - Status: Active
+# - Domain: $GCP_ORG_DOMAIN
 
-# Expected: Error message indicating domain is not verified
-# This is CORRECT - we're using external identity, not domain verification
+echo "Verify SAML SSO at: https://admin.google.com/ac/security/sso"
+echo "Domain configured: $GCP_ORG_DOMAIN"
+echo "Federated user: $GCP_ADMIN_EMAIL"
+```
+
+**Verify domain is NOT verified in GCP** (correct for SAML SSO):
+
+```bash
+# M365 owns the domain DNS, GCP uses SAML for authentication
+# Domain verification is NOT needed for SAML federation
+echo "Domain $GCP_ORG_DOMAIN is federated via SAML, not verified in GCP"
 ```
 
 ### Step 7: Verify Regional Configuration
@@ -308,7 +393,7 @@ gcloud config set compute/zone europe-north1-a
 
 ```bash
 # List organization policies (should be empty initially)
-gcloud resource-manager org-policies list --organization=$ORG_ID
+gcloud resource-manager org-policies list --organization=$GCP_ORG_ID
 
 # Expected: Empty or minimal policies
 # Organization policies will be implemented in next phase
@@ -321,18 +406,15 @@ After running all commands, you should have confirmed:
 | Component | Status | Command |
 |-----------|--------|---------|
 | ✅ Organization exists | ACTIVE | `gcloud organizations list` |
-| ✅ M365 account access | Working | `gcloud auth login <YOUR-ADMIN-EMAIL>` |
-| ✅ Break-glass account | Working | `gcloud auth login breakglass-<RANDOM>@<YOUR-DOMAIN>` |
+| ✅ SAML SSO configured | Active | Cloud Identity Admin Console |
+| ✅ Entra ID app configured | Active | Azure Portal Enterprise Apps |
+| ✅ M365 account access | Working | `gcloud auth login $GCP_ADMIN_EMAIL` |
+| ✅ Break-glass account | Working | `gcloud auth login $GCP_BREAKGLASS_EMAIL` |
 | ✅ Organization Admin IAM | Granted | `gcloud organizations get-iam-policy` |
 | ✅ Billing account linked | Active | `gcloud billing accounts list` |
 | ✅ Service accounts exist | Configured | `gcloud iam service-accounts list` |
 | ✅ Workload Identity Pool | Active | `gcloud iam workload-identity-pools list` |
-| ✅ Default region | europe-north1 | `gcloud config list` |
-
-## Common Issues and Solutions
-
-### Issue 1: Organization Not Found
-
+| ✅ Configuration loaded | Ready | `source config.sh` |
 **Symptom**:
 ```bash
 gcloud organizations list
@@ -355,19 +437,26 @@ gcloud organizations list
 
 **Symptom**:
 ```bash
-gcloud organizations get-iam-policy $ORG_ID
+source config.sh
+gcloud organizations get-iam-policy $GCP_ORG_ID
 # Error: Permission denied
 ```
 
 **Solutions**:
-1. Re-authenticate with account that created organization
-2. Grant permissions to M365 account:
+1. Verify SAML authentication completed successfully:
    ```bash
-   gcloud organizations add-iam-policy-binding $ORG_ID \
-     --member="user:<YOUR-ADMIN-EMAIL>" \
+   gcloud auth list
+   # Should show: $GCP_ADMIN_EMAIL as ACTIVE
+   ```
+2. Re-authenticate with break-glass account and grant permissions:
+   ```bash
+   gcloud auth login $GCP_BREAKGLASS_EMAIL
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
+     --member="user:$GCP_ADMIN_EMAIL" \
      --role="roles/resourcemanager.organizationAdmin"
    ```
-3. Wait 60 seconds for IAM propagation, then retry
+3. Verify user is assigned in Entra ID Enterprise Application
+4. Wait 60 seconds for IAM propagation, then retry
 
 ### Issue 3: Billing Account Not Accessible
 
@@ -381,51 +470,69 @@ gcloud billing accounts list
 1. Verify billing account exists in Console: https://console.cloud.google.com/billing
 2. Grant billing admin role:
    ```bash
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="user:<YOUR-ADMIN-EMAIL>" \
      --role="roles/billing.admin"
    ```
 3. Check billing account ID is correct: `<BILLING-ACCOUNT-ID>`
 
-### Issue 4: Break-Glass Account 2FA Issues
+### Issue 4: Emergency Access Account 2FA Issues
 
-**Symptom**: Can't complete 2FA challenge for break-glass account
+**Symptom**: Can't complete 2FA challenge for emergency access account
 
 **Solutions**:
-1. Use backup codes stored in Azure Key Vault:
+1. Use backup codes stored in Azure Key Vault (using obscure secret name):
    ```bash
+   source config.sh
    az keyvault secret show \
-     --vault-name <YOUR-KEYVAULT> \
-     --name "gcp-breakglass-2fa-codes"
+     --vault-name $AZURE_KEYVAULT_NAME \
+     --name "gcp-svc-auth-2fa"
    ```
 2. Reset 2FA using M365 admin account via Cloud Identity Admin Console
 3. Generate new backup codes and update Key Vault
 
-### Issue 5: M365 Authentication Redirect Loop
+### Issue 5: M365 SAML Authentication Issues
 
-**Symptom**: Browser keeps redirecting between GCP and Microsoft login
+**Symptom**: Browser keeps redirecting, or "Account not found" error
 
 **Solutions**:
-1. Clear browser cache and cookies
-2. Use incognito/private browsing window
-3. Ensure M365 account is added as external user in Cloud Identity:
+1. **Verify SAML configuration**:
+   - Cloud Identity: https://admin.google.com/ac/security/sso
+   - Entra ID: https://portal.azure.com (Enterprise Applications)
+
+2. **Check user assignment**:
+   ```bash
+   source config.sh
+   echo "Verify $GCP_ADMIN_EMAIL is assigned in:"
+   echo "Azure Portal → Enterprise Applications → Google Cloud Platform - $GCP_ORG_DOMAIN → Users and groups"
    ```
-   https://admin.google.com/ac/users
-   ```
-4. Check for Conditional Access policies in Azure AD that might block GCP
+
+3. **Test SAML flow manually**:
+   - Clear browser cache and cookies
+   - Use incognito/private browsing window
+   - Navigate to: https://accounts.google.com
+   - Enter: `$GCP_ADMIN_EMAIL`
+   - Should redirect to: login.microsoftonline.com
+   - If redirect doesn't happen, SAML is not configured
+
+4. **Check Conditional Access policies** in Azure AD that might block GCP
+5. **Verify SAML metadata** was uploaded correctly to Cloud Identity
 
 ## Security Audit Commands
 
 Run these regularly to audit security configuration:
 
 ```bash
+# Load configuration
+source config.sh
+
 # List all organization admins
-gcloud organizations get-iam-policy $ORG_ID \
+gcloud organizations get-iam-policy $GCP_ORG_ID \
   --flatten="bindings[].members" \
   --filter="bindings.role:roles/resourcemanager.organizationAdmin" \
   --format="value(bindings.members)"
 
-# Expected: Only <YOUR-ADMIN-EMAIL> and breakglass-<RANDOM>@<YOUR-DOMAIN>
+# Expected: Only $GCP_ADMIN_EMAIL and $GCP_BREAKGLASS_EMAIL
 
 # Check for service account keys (should be minimal)
 for SA in $(gcloud iam service-accounts list --format="value(email)"); do
@@ -438,12 +545,12 @@ done
 # Expected: No USER_MANAGED keys (only SYSTEM_MANAGED)
 
 # Audit Cloud Audit Logs configuration
-gcloud logging sinks list --organization=$ORG_ID
+gcloud logging sinks list --organization=$GCP_ORG_ID
 
 # Expected: Will be configured in next phase
 
 # Check organization policies
-gcloud resource-manager org-policies list --organization=$ORG_ID
+gcloud resource-manager org-policies list --organization=$GCP_ORG_ID
 
 # Expected: Will be configured in next phase
 ```
@@ -475,18 +582,23 @@ Once all verification steps pass, proceed to:
 Record verification results:
 
 ```bash
+# Load configuration
+source config.sh
+
 # Create verification log
-cat > verification-results.txt << 'EOF'
+cat > verification-results.txt << EOF
 GCP Organization Verification Results
 Date: $(date)
 Verified by: $(gcloud auth list --filter=status:ACTIVE --format="value(account)")
 
-Organization ID: $(gcloud organizations list --format="value(ID)")
-Organization State: $(gcloud organizations describe $ORG_ID --format="value(state)")
-Billing Account: 01B0BF-5CA797-5BB7B8
+Organization ID: $GCP_ORG_ID
+Organization Domain: $GCP_ORG_DOMAIN
+Organization State: $(gcloud organizations describe $GCP_ORG_ID --format="value(state)")
+Billing Account: $GCP_BILLING_ACCOUNT_ID
 
-M365 Account Access: ✅ Verified
-Break-Glass Account Access: ✅ Verified
+SAML SSO: ✅ Configured
+M365 Account Access ($GCP_ADMIN_EMAIL): ✅ Verified
+Break-Glass Account ($GCP_BREAKGLASS_EMAIL): ✅ Verified
 Organization Admin Permissions: ✅ Verified
 Billing Account Linkage: ✅ Verified
 Service Accounts: ✅ Verified
