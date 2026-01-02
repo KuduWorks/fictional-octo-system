@@ -393,7 +393,7 @@ gcloud config set compute/zone europe-north1-a
 
 ```bash
 # List organization policies (should be empty initially)
-gcloud resource-manager org-policies list --organization=$ORG_ID
+gcloud resource-manager org-policies list --organization=$GCP_ORG_ID
 
 # Expected: Empty or minimal policies
 # Organization policies will be implemented in next phase
@@ -470,7 +470,7 @@ gcloud billing accounts list
 1. Verify billing account exists in Console: https://console.cloud.google.com/billing
 2. Grant billing admin role:
    ```bash
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="user:<YOUR-ADMIN-EMAIL>" \
      --role="roles/billing.admin"
    ```

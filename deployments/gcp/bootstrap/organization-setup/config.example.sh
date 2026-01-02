@@ -16,7 +16,7 @@ export GCP_PROD_PROJECT_ID="your-prod-project-id" # e.g., my-prod-project
 
 # User Accounts
 export GCP_ADMIN_EMAIL="your-admin@your-domain.com"        # Your M365 admin account
-export GCP_BREAKGLASS_EMAIL="svc-xe7k9m@your-domain.com"   # Emergency access account (use obscure name, not "breakglass")
+export GCP_BREAKGLASS_EMAIL="<random-identifier>@your-domain.com"   # Emergency access account (use a strong, random, non-obvious identifier; do not use words like "admin" or "breakglass")
 
 # Azure Key Vault (for storing GCP secrets)
 export AZURE_KEYVAULT_NAME="your-keyvault-name"

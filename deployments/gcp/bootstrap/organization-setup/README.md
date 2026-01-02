@@ -480,11 +480,11 @@ Following patterns from `deployments/gcp/iam/workload-identity/`:
      --project=<DEV-PROJECT-ID>
    
    # Grant organization-level permissions
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="serviceAccount:terraform-automation@<DEV-PROJECT-ID>.iam.gserviceaccount.com" \
      --role="roles/resourcemanager.folderAdmin"
    
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="serviceAccount:terraform-automation@<DEV-PROJECT-ID>.iam.gserviceaccount.com" \
      --role="roles/resourcemanager.projectCreator"
    ```
@@ -492,7 +492,7 @@ Following patterns from `deployments/gcp/iam/workload-identity/`:
 2. **GitHub Actions Service Account** (Already Implemented):
    ```bash
    # Extend to organization level
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="serviceAccount:main-github-actions@<PROJECT-ID>.iam.gserviceaccount.com" \
      --role="roles/viewer"
    ```
@@ -503,11 +503,11 @@ Following patterns from `deployments/gcp/iam/workload-identity/`:
      --display-name="Monitoring and Logging Agent" \
      --project=<DEV-PROJECT-ID>
    
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="serviceAccount:monitoring-agent@<DEV-PROJECT-ID>.iam.gserviceaccount.com" \
      --role="roles/logging.logWriter"
    
-   gcloud organizations add-iam-policy-binding $ORG_ID \
+   gcloud organizations add-iam-policy-binding $GCP_ORG_ID \
      --member="serviceAccount:monitoring-agent@<DEV-PROJECT-ID>.iam.gserviceaccount.com" \
      --role="roles/monitoring.metricWriter"
    ```
