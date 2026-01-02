@@ -78,7 +78,7 @@ resource "google_storage_bucket" "terraform_state" {
   
   # Enable encryption (only if KMS key is specified)
   dynamic "encryption" {
-    for_each = var.kms_key_name != "" ? [1] : []
+    for_each = var.kms_key_name != "" ? [var.kms_key_name] : []
     content {
       default_kms_key_name = var.kms_key_name
     }
