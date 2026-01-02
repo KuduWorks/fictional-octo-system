@@ -44,7 +44,7 @@ nano terraform.tfvars
 
 **Key settings to verify:**
 ```hcl
-github_org = "KuduWorks"                    # Your GitHub org
+github_org = "<YOUR-ORG>"                   # Your GitHub org
 github_repo = "fictional-octo-system"       # Your repository
 environment = "dev"                         # Environment name
 ```

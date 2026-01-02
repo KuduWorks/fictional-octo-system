@@ -125,8 +125,8 @@ For production, use remote state storage:
    ```hcl
    terraform {
      backend "azurerm" {
-       resource_group_name  = "rg-tfstate"
-       storage_account_name = "tfstate20251013"
+       resource_group_name  = "<your-rg-name>"
+       storage_account_name = "<your-storage-account>"
        container_name       = "tfstate"
        key                  = "policies/region-control.tfstate"
      }
