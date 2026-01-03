@@ -20,9 +20,9 @@ This module manages Google Cloud billing budgets and cost alerts to prevent surp
 ```
 Organization Budget (€100/month)
 ├─ Dev Project Budget (€50/month)
-│  └─ Project ID: centering-force-388308
+│  └─ Project ID: my-dev-project-12345
 └─ Prod Project Budget (€50/month)
-   └─ Project ID: kudu-star-dev-01
+   └─ Project ID: my-prod-project-67890
 ```
 
 ### Budget Breakdown
