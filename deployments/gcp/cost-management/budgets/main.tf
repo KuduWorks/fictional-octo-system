@@ -111,7 +111,7 @@ resource "google_monitoring_notification_channel" "budget_email" {
 
 # Development project budget
 resource "google_billing_budget" "dev_project_budget" {
-  count = var.dev_project_id != "" && var.billing_account_id != "" ? 1 : 0
+  count = var.dev_project_id != "" && var.billing_account_id != "" && var.dev_project_budget_amount > 0 ? 1 : 0
 
   billing_account = var.billing_account_id
   display_name    = "${var.dev_project_id}-budget"
