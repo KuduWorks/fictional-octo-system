@@ -33,3 +33,52 @@ variable "budget_alert_emails" {
   type        = list(string)
   default     = []
 }
+
+variable "dev_project_id" {
+  description = "Immutable GCP project ID for development environment (ensures stability if project display name changes)"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.dev_project_id == "" || can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.dev_project_id))
+    error_message = "The dev_project_id must be a valid GCP project ID (6-30 characters, lowercase letters, digits, hyphens)."
+  }
+}
+
+variable "prod_project_id" {
+  description = "Immutable GCP project ID for production environment (ensures stability if project display name changes)"
+  type        = string
+  default     = ""
+
+  validation {
+    condition     = var.prod_project_id == "" || can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.prod_project_id))
+    error_message = "The prod_project_id must be a valid GCP project ID (6-30 characters, lowercase letters, digits, hyphens)."
+  }
+}
+
+variable "dev_project_budget_amount" {
+  description = "Monthly budget amount in EUR for development project"
+  type        = number
+  default     = 50
+
+  validation {
+    condition     = var.dev_project_budget_amount >= 0
+    error_message = "The dev_project_budget_amount must be non-negative."
+  }
+}
+
+variable "prod_project_budget_amount" {
+  description = "Monthly budget amount in EUR for production project"
+  type        = number
+  default     = 50
+
+  validation {
+    condition     = var.prod_project_budget_amount >= 0
+    error_message = "The prod_project_budget_amount must be non-negative."
+  }
+
+  validation {
+    condition     = var.dev_project_budget_amount + var.prod_project_budget_amount <= var.monthly_budget_amount
+    error_message = "The sum of dev_project_budget_amount and prod_project_budget_amount must not exceed monthly_budget_amount."
+  }
+}

@@ -66,31 +66,20 @@ resource "google_billing_budget" "monthly_budget" {
     }
   }
 
-  # Alert at 50%, 75%, 90%, and 100% of budget
+  # Alert at 50%, 80%, and 100% of budget
   threshold_rules {
     threshold_percent = 0.5
     spend_basis       = "CURRENT_SPEND"
   }
 
   threshold_rules {
-    threshold_percent = 0.75
-    spend_basis       = "CURRENT_SPEND"
-  }
-
-  threshold_rules {
-    threshold_percent = 0.9
+    threshold_percent = 0.8
     spend_basis       = "CURRENT_SPEND"
   }
 
   threshold_rules {
     threshold_percent = 1.0
     spend_basis       = "CURRENT_SPEND"
-  }
-
-  # Forecasted spend alert at 100%
-  threshold_rules {
-    threshold_percent = 1.0
-    spend_basis       = "FORECASTED_SPEND"
   }
 
   # Email notifications
@@ -118,4 +107,100 @@ resource "google_monitoring_notification_channel" "budget_email" {
   }
 
   enabled = true
+}
+
+# Development project budget
+resource "google_billing_budget" "dev_project_budget" {
+  count = var.dev_project_id != "" && var.billing_account_id != "" ? 1 : 0
+
+  billing_account = var.billing_account_id
+  display_name    = "${var.environment}-dev-project-budget"
+
+  budget_filter {
+    projects               = ["projects/${var.dev_project_id}"]
+    calendar_period        = "MONTH"
+    credit_types_treatment = "INCLUDE_ALL_CREDITS"
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "EUR"
+      units         = tostring(var.dev_project_budget_amount)
+    }
+  }
+
+  # Alert at 50%, 80%, and 100% of budget
+  threshold_rules {
+    threshold_percent = 0.5
+    spend_basis       = "CURRENT_SPEND"
+  }
+
+  threshold_rules {
+    threshold_percent = 0.8
+    spend_basis       = "CURRENT_SPEND"
+  }
+
+  threshold_rules {
+    threshold_percent = 1.0
+    spend_basis       = "CURRENT_SPEND"
+  }
+
+  # Email notifications
+  all_updates_rule {
+    monitoring_notification_channels = [
+      for email in var.budget_alert_emails :
+      google_monitoring_notification_channel.budget_email[email].id
+    ]
+    disable_default_iam_recipients = false
+  }
+
+  depends_on = [google_project_service.cloudbilling]
+}
+
+# Production project budget
+resource "google_billing_budget" "prod_project_budget" {
+  count = var.prod_project_id != "" && var.billing_account_id != "" ? 1 : 0
+
+  billing_account = var.billing_account_id
+  display_name    = "${var.environment}-prod-project-budget"
+
+  budget_filter {
+    projects               = ["projects/${var.prod_project_id}"]
+    calendar_period        = "MONTH"
+    credit_types_treatment = "INCLUDE_ALL_CREDITS"
+  }
+
+  amount {
+    specified_amount {
+      currency_code = "EUR"
+      units         = tostring(var.prod_project_budget_amount)
+    }
+  }
+
+  # Alert at 50%, 80%, and 100% of budget
+  threshold_rules {
+    threshold_percent = 0.5
+    spend_basis       = "CURRENT_SPEND"
+  }
+
+  threshold_rules {
+    threshold_percent = 0.8
+    spend_basis       = "CURRENT_SPEND"
+  }
+
+  threshold_rules {
+    threshold_percent = 1.0
+    spend_basis       = "CURRENT_SPEND"
+  }
+
+  # Email notifications
+  all_updates_rule {
+    monitoring_notification_channels = [
+      for email in var.budget_alert_emails :
+      google_monitoring_notification_channel.budget_email[email].id
+    ]
+    disable_default_iam_recipients = false
+  }
+
+  depends_on = [google_project_service.cloudbilling]
 }
