@@ -114,7 +114,7 @@ resource "google_billing_budget" "dev_project_budget" {
   count = var.dev_project_id != "" && var.billing_account_id != "" ? 1 : 0
 
   billing_account = var.billing_account_id
-  display_name    = "${var.environment}-dev-project-budget"
+  display_name    = "${var.dev_project_id}-budget"
 
   budget_filter {
     projects               = ["projects/${var.dev_project_id}"]
