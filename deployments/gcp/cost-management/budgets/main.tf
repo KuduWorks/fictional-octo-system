@@ -111,18 +111,25 @@ resource "google_monitoring_notification_channel" "budget_email" {
 
 # Project budgets using for_each to eliminate code duplication
 locals {
+  # Define project configurations
+  project_configs = {
+    dev = {
+      project_id    = var.dev_project_id
+      budget_amount = var.dev_project_budget_amount
+      require_positive_amount = true  # Dev budget requires amount > 0
+    }
+    prod = {
+      project_id    = var.prod_project_id
+      budget_amount = var.prod_project_budget_amount
+      require_positive_amount = false  # Prod budget allows 0 amount
+    }
+  }
+
+  # Filter to only include projects that meet their conditions
   project_budgets = {
-    for env, config in {
-      dev = {
-        project_id    = var.dev_project_id
-        budget_amount = var.dev_project_budget_amount
-      }
-      prod = {
-        project_id    = var.prod_project_id
-        budget_amount = var.prod_project_budget_amount
-      }
-    } : env => config
-    if config.project_id != "" && var.billing_account_id != "" && config.budget_amount > 0
+    for env, config in local.project_configs : env => config
+    if config.project_id != "" && var.billing_account_id != "" && 
+       (!config.require_positive_amount || config.budget_amount > 0)
   }
 }
 
