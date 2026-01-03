@@ -9,10 +9,17 @@ environment = "dev"
 billing_account_id = ""  # Add your billing account ID here
 
 # Budget Settings
-monthly_budget_amount = 50  # EUR per month
+# Organization-wide budget (total for all projects)
+monthly_budget_amount = 100  # EUR per month
+
+# Project-specific budgets (immutable project IDs)
+dev_project_id            = ""  # Your dev project ID (e.g., "my-dev-project-12345")
+prod_project_id           = ""  # Your prod project ID (e.g., "my-prod-project-67890")
+dev_project_budget_amount = 50  # EUR per month for dev project
+prod_project_budget_amount = 50  # EUR per month for prod project
 
 # Email addresses for budget alerts
 budget_alert_emails = [
   # "your.email@domain.com",
-  # "team@domain.com"
+  # "billing@domain.com"
 ]
