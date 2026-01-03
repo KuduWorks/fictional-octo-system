@@ -128,8 +128,7 @@ locals {
   # Filter to only include projects that meet their conditions
   project_budgets = {
     for env, config in local.project_configs : env => config
-    if config.project_id != "" && var.billing_account_id != "" && 
-       (!config.require_positive_amount || config.budget_amount > 0)
+    if config.project_id != "" && var.billing_account_id != "" && (!config.require_positive_amount || config.budget_amount > 0)
   }
 }
 
