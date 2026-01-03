@@ -80,7 +80,10 @@ variable "prod_project_budget_amount" {
 
 check "project_budget_amounts_within_monthly_limit" {
   assert {
-    condition     = var.dev_project_budget_amount + var.prod_project_budget_amount <= var.monthly_budget_amount
-    error_message = "The sum of dev_project_budget_amount and prod_project_budget_amount must not exceed monthly_budget_amount."
+    condition = (
+      (var.dev_project_id == "" ? 0 : var.dev_project_budget_amount) +
+      (var.prod_project_id == "" ? 0 : var.prod_project_budget_amount)
+    ) <= var.monthly_budget_amount
+    error_message = "The sum of dev_project_budget_amount and prod_project_budget_amount (for enabled projects) must not exceed monthly_budget_amount."
   }
 }

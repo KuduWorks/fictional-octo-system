@@ -130,12 +130,12 @@ Organization Budget:   €100/month (Billing Account)
 ├─ Scope:             Entire billing account
 ├─ Alerts:            50%, 80%, 100%
 │
-├─ Dev Project:       €50/month (Project: centering-force-388308)
+├─ Dev Project:       €50/month (Project: example-dev-project-1234)
 │  ├─ Applies to:     All services in dev project
 │  ├─ Scope:          Development project only
 │  └─ Alerts:         50%, 80%, 100%
 │
-└─ Prod Project:      €50/month (Project: kudu-star-dev-01)
+└─ Prod Project:      €50/month (Project: example-prod-project-5678)
    ├─ Applies to:     All services in prod project
    ├─ Scope:          Production project only
    └─ Alerts:         50%, 80%, 100%
