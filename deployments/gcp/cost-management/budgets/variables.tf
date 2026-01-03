@@ -76,8 +76,10 @@ variable "prod_project_budget_amount" {
     condition     = var.prod_project_budget_amount >= 0
     error_message = "The prod_project_budget_amount must be non-negative."
   }
+}
 
-  validation {
+check "project_budget_amounts_within_monthly_limit" {
+  assert {
     condition     = var.dev_project_budget_amount + var.prod_project_budget_amount <= var.monthly_budget_amount
     error_message = "The sum of dev_project_budget_amount and prod_project_budget_amount must not exceed monthly_budget_amount."
   }
