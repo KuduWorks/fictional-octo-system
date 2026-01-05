@@ -44,6 +44,13 @@ variable "alert_email" {
   default     = "monitoring@kuduworks.net"
 }
 
+# Retention period variable
+variable "retention_days" {
+  description = "Number of days to retain logs and blobs for compliance."
+  type        = number
+  default     = 30
+}
+
 variable "state_storage_account_name" {
   description = "Name of the storage account hosting the Terraform state container."
   type        = string

@@ -1,10 +1,3 @@
-# Retention period variable
-variable "retention_days" {
-  description = "Number of days to retain logs and blobs for compliance."
-  type        = number
-  default     = 30
-}
-
 # Storage Account Diagnostic Settings
 resource "azurerm_monitor_diagnostic_setting" "storage" {
   name                       = "storage-diagnostics"

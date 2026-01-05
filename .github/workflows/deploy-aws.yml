@@ -38,7 +38,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS OIDC (Management)
+      - name: Configure AWS OIDC (Management - Read-only for PRs)
+        if: github.event_name == 'pull_request'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_MGMT_READONLY_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+          role-session-name: mgmt-plan-pr-${{ github.run_id }}
+
+      - name: Configure AWS OIDC (Management - Deploy for main/develop)
+        if: github.event_name != 'pull_request'
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_MGMT_DEPLOY_ROLE_ARN }}

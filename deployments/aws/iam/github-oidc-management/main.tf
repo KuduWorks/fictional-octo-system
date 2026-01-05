@@ -36,7 +36,7 @@ resource "aws_iam_openid_connect_provider" "github" {
   }
 }
 
-# Trust policy for GitHub Actions
+# Trust policy for GitHub Actions - Allows all branches and PRs
 data "aws_iam_policy_document" "github_actions_assume_role" {
   statement {
     effect = "Allow"
@@ -59,10 +59,17 @@ data "aws_iam_policy_document" "github_actions_assume_role" {
       variable = "token.actions.githubusercontent.com:sub"
       values = flatten([
         for repo in var.github_repositories : [
-          "repo:${var.github_org}/${repo}:ref:refs/heads/main",
-          "repo:${var.github_org}/${repo}:ref:refs/heads/develop"
+          "repo:${var.github_org}/${repo}:ref:refs/heads/*",
+          "repo:${var.github_org}/${repo}:ref:refs/tags/*"
         ]
       ])
+    }
+
+    # Explicitly block fork pull requests
+    condition {
+      test     = "StringEquals"
+      variable = "token.actions.githubusercontent.com:repository_owner"
+      values   = [var.github_org]
     }
   }
 }
@@ -118,12 +125,12 @@ resource "aws_iam_role_policy_attachment" "github_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/ReadOnlyAccess"
 }
 
-# Deploy Role (can create and modify resources)
+# Deploy Role (can create and modify resources) - Main branch only
 resource "aws_iam_role" "github_deploy" {
   count = var.create_deploy_role ? 1 : 0
 
   name               = var.deploy_role_name
-  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role.json
+  assume_role_policy = data.aws_iam_policy_document.github_actions_assume_role_main_only.json
 
   tags = {
     Name        = var.deploy_role_name
