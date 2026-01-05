@@ -20,7 +20,7 @@ terraform apply
 
 # Get role ARNs for GitHub secrets
 terraform output github_readonly_role_arn
-terraform output github_deploy_role_arn
+terraform output github_actions_deploy_role_arn
 ```
 
 Add the output ARNs to GitHub secrets at:
