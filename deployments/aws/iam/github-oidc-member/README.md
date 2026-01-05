@@ -19,8 +19,8 @@ terraform plan
 terraform apply
 
 # Get role ARNs for GitHub secrets
-terraform output github_readonly_role_arn
-terraform output github_deploy_role_arn
+terraform output readonly_role_arn
+terraform output deploy_role_arn
 ```
 
 Add the output ARNs to GitHub secrets at:
@@ -32,8 +32,8 @@ https://github.com/<your-org>/<your-repo>/settings/secrets/actions
 ## Resources Created
 
 - OIDC provider for GitHub (if not exists)
-- **Read-Only Role** (`github-actions-member-readonly`) - For all branches and PRs (plan, validate, lint)
-- **Deploy Role** (`github-actions-member-deploy`) - For `main` branch only (terraform apply)
+- **Read-Only Role** (`github-actions-readonly` by default) - For all branches and PRs (plan, validate, lint)
+- **Deploy Role** (`github-actions-deploy` by default) - For `main` branch only (terraform apply)
 - **Admin Role** (optional) - For `main` branch only (full admin access)
 
 ## Security
