@@ -15,8 +15,11 @@ This folder contains Terraform code for deploying and managing Azure resources f
 
 - `main.tf` — Core infrastructure and provider configuration
 - `variables.tf` — Input variables definition
+- `outputs.tf` — Output values definition
+- `managed-identity.tf` — User-Assigned Managed Identity for GitHub Actions
 - `monitoring.tf` — Monitoring and alerting configuration
 - `storage.tf` — Storage account network security rules
+- `vnet.tf` — Virtual network and subnet configuration
 - `backend.tf` — Remote state configuration
 - `terraform.tfvars` — Variable values (not in version control)
 
@@ -117,8 +120,9 @@ Log Analytics
 |------|-------------|---------|
 | `resource_group_name` | Name of the resource group | `"rg-monitoring"` |
 | `location` | Azure region for deployment | `"swedencentral"` |
-| `allowed_ip_addresses` | List of IPs allowed to access storage | `[]` |
-| `alert_email` | Email for monitoring alerts | - |
+| `retention_days` | Number of days to retain logs and blobs | `30` |
+| `allowed_ip_addresses` | List of IPs allowed to access storage | `["130.41.101.92"]` |
+| `alert_email` | Email for monitoring alerts | `"monitoring@kuduworks.net"` |
 
 ## Contributing
 
