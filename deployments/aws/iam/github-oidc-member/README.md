@@ -58,6 +58,8 @@ https://github.com/<your-org>/<your-repo>/settings/secrets/actions
   uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ secrets.AWS_MEMBER_READONLY_ROLE_ARN }}
+    aws-region: us-east-1  # Replace with your AWS region
+    role-session-name: GitHubActions-${{ github.repository }}-${{ github.run_id }}
 
 # Main branch uses deploy role
 - name: Configure AWS (Deploy)
@@ -65,6 +67,8 @@ https://github.com/<your-org>/<your-repo>/settings/secrets/actions
   uses: aws-actions/configure-aws-credentials@v4
   with:
     role-to-assume: ${{ secrets.AWS_MEMBER_DEPLOY_ROLE_ARN }}
+    aws-region: us-east-1  # Replace with your AWS region
+    role-session-name: GitHubActions-${{ github.repository }}-${{ github.run_id }}
 ```
 
 ### Additional Hardening
