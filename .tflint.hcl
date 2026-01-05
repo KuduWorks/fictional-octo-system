@@ -22,10 +22,6 @@ plugin "google" {
 }
 
 # General Terraform rules (apply to all providers)
-rule "terraform_deprecated_syntax" {
-  enabled = true
-}
-
 rule "terraform_unused_declarations" {
   enabled = true
 }
