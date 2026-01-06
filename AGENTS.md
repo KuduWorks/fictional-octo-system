@@ -34,7 +34,7 @@ This document helps align GitHub Copilot with repository standards, security exp
 - Terraform: request terraform fmt -recursive, terraform validate, and terraform plan before proposing changes. Use descriptive module names, enforce encryption defaults, and update terraform-docs style module docs when modules change.
 - Shell scripts: adopt set -euo pipefail, avoid subshell while loops, use clear success/failure messaging, and prefer Azure CLI flags like --only-show-errors for cleaner output.
 - PowerShell: include #Requires statements, use Set-StrictMode -Version Latest, and test with WhatIf when applicable.
-- Documentation: ask Copilot to refresh README excerpts or module docs after code changes and explain rationale rather than restating code—then make sure the README knows about your latest adventure so there are no plot holes.
+- Documentation: ask Copilot to refresh README excerpts or module docs after code changes and explain rationale rather than restating code, and ensure the README accurately reflects all changes to maintain consistency.
 - Automation: mention existing pre-commit hooks and CI checks so Copilot keeps generated code compatible with repo automation.
 
 ## Security Expectations

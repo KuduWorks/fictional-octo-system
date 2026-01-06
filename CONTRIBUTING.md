@@ -374,7 +374,7 @@ Added troubleshooting section for common authentication errors.
 - [ ] Run `terraform fmt -recursive`
 - [ ] Run `terraform validate` on affected modules
 - [ ] Test changes in development environment
-- [ ] Update documentation (tell the README what changed so it can brag about it)
+- [ ] Update documentation (e.g., README and related docs) to reflect your changes
 - [ ] Add/update examples if applicable
 - [ ] Check for sensitive data in commits
 - [ ] Ensure CI/CD checks pass
