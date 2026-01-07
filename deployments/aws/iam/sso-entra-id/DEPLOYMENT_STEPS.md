@@ -1,4 +1,6 @@
-# AWS IAM Identity Center (Entra ID) Deployment Steps
+# AWS IAM Identity Center (sso-entra-id) Deployment Steps
+
+This guide shows how to wire AWS IAM Identity Center to Entra ID as the IdP so users can sign in to AWS (console and CLI) via SSO using their Entra ID credentials.
 
 > This is a public repo. Use placeholders (e.g., `<your-tenant>`, `<your-sso-portal>`, `<your-account-id>`) and store secrets only in secure locations. Do not commit `terraform.tfvars` or credentials.
 
