@@ -15,7 +15,7 @@
 
 ## 2) Connect Entra ID via SAML
 - In Identity Center, select external identity provider and download the AWS SAML metadata.
-- In Entra ID, create an Enterprise App (non-gallery or “AWS IAM Identity Center” if available).
+- In Entra ID, create an Enterprise App (non-gallery or `AWS IAM Identity Center` if available).
 - Upload AWS metadata; set Identifier/Reply URLs from that metadata.
 - Set NameID to UPN or email per policy.
 - Download Entra SAML metadata and upload it back into Identity Center.
@@ -38,8 +38,8 @@
 - Plan a change window; inform users that cached CLI SSO tokens may need re-login after source or assignment changes.
 
 ## 6) Enforce access policies
-- In Entra, apply Conditional Access/MFA to the Enterprise App.
-- Avoid double MFA in AWS; rely on Entra.
+- In Entra, apply Conditional Access/MFA to the Enterprise App so MFA is enforced centrally.
+- When Conditional Access is enforcing MFA for this app, do not additionally require MFA in AWS (for example, IAM user MFA or extra MFA prompts in IAM Identity Center), to avoid redundant prompts and sign-in failures; leave AWS MFA requirements disabled or not configured unless you have a specific, documented exception.
 
 ## 7) CLI/IDE SSO usage
 - Ensure AWS CLI v2+ is installed.
