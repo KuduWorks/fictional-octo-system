@@ -9,6 +9,7 @@ Quick links
 - [policies/](policies/) — Policy templates and enforcement guidance (ISO-friendly)
 - [reporting/](reporting/) — export scripts and reports (for the auditors and curious humans)
 - [modules/](modules/) — reusable Terraform modules (naming convention, etc.)
+- [branding/](branding/) — Entra sign-in branding (partial layout, assets, CSS, terms)
 
 Quick Start
 1. Pick a subfolder above and read its README — that's where the real instructions live.

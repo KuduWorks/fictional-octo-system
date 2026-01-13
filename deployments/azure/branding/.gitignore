@@ -1,0 +1,13 @@
+# State and local artifacts (keep out of repo)
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+terraform.tfvars
+*.auto.tfvars
+.terraform/
+crash.log
+
+# Secrets/keys
+*.pem
+*.key
+*.pfx
