@@ -37,4 +37,4 @@ Partial-screen branding for the standard Entra (non-B2C) sign-in page, with ligh
 ### Notes
 - This repo is public: use placeholders for tenant URLs and do not commit secrets or real identifiers.
 - Keep assets as small as possible for fast first paint; avoid busy backgrounds behind the form.
-- If CSS is disabled in your tenant, use only images/colors/text fields.
+- If CSS is disabled in your tenant, use only images/colors/text fields. It can be easier and simpler to use.
