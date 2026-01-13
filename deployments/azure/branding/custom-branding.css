@@ -1,0 +1,33 @@
+/* Minimal Entra company branding overrides (legacy CSS). Keep small and revalidate after UI updates. */
+
+.login-paginated-body {
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background-color: #0b1b2b;
+  color: #f4f7fb;
+}
+
+.login-paginated-body .background-image {
+  background-position: center right;
+  background-size: cover;
+  filter: saturate(1.05);
+}
+
+.login-paginated-body .form-container {
+  background: rgba(12, 24, 40, 0.76);
+  border-radius: 12px;
+  padding: 24px 28px;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+}
+
+.login-paginated-body .header .logo-container img {
+  max-height: 36px;
+  object-fit: contain;
+}
+
+.login-paginated-body a {
+  color: #9bd1ff;
+}
+
+.login-paginated-body a:hover {
+  color: #c2e4ff;
+}
