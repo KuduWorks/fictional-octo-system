@@ -22,6 +22,7 @@ echo -e "${BLUE}=== Deploy All Azure Policies ===${NC}"
 # Policy categories in deployment order
 POLICY_CATEGORIES=(
     "region-control"
+    "network-security"
     "security-baseline" 
     "cost-management"
 )
@@ -38,60 +39,127 @@ deploy_policy_category() {
         return 0
     fi
     
-    if [ ! -f "$category_path/arm-template.json" ]; then
-        echo -e "${YELLOW}Warning: ARM template not found in $category_path, skipping...${NC}"
-        return 0
-    fi
-    
-    # Check for parameters file
-    local params_file="$category_path/arm-template.parameters.json"
-    local deploy_params=""
-    
-    if [ -f "$params_file" ]; then
-        deploy_params="--parameters $params_file"
-        echo -e "${GREEN}Using parameters file: $params_file${NC}"
-    else
-        echo -e "${YELLOW}No parameters file found, using defaults${NC}"
-    fi
-    
-    # Validate template
-    echo -e "${YELLOW}Validating $category ARM template...${NC}"
-    if az deployment sub validate \
-        --location "$LOCATION" \
-        --template-file "$category_path/arm-template.json" \
-        $deploy_params \
-        --only-show-errors; then
-        echo -e "${GREEN}Template validation successful!${NC}"
-    else
-        echo -e "${RED}Template validation failed for $category${NC}"
-        return 1
-    fi
-    
-    # Deploy
-    local deployment_name="azure-policy-$category-$DEPLOY_TIMESTAMP"
-    echo -e "${BLUE}Deploying $category policies...${NC}"
-    
-    local deployment_result=$(az deployment sub create \
-        --location "$LOCATION" \
-        --template-file "$category_path/arm-template.json" \
-        $deploy_params \
-        --name "$deployment_name" \
-        --query "properties.provisioningState" -o tsv)
-    
-    if [ "$deployment_result" = "Succeeded" ]; then
-        echo -e "${GREEN}✅ $category policies deployed successfully!${NC}"
+    # Check if this is a Terraform-based policy or ARM template
+    if [ -f "$category_path/main.tf" ]; then
+        # Terraform deployment
+        echo -e "${GREEN}Detected Terraform configuration${NC}"
         
-        # Show outputs if available
-        echo -e "${BLUE}Deployment outputs for $category:${NC}"
-        az deployment sub show \
-            --name "$deployment_name" \
-            --query "properties.outputs" \
-            --output table 2>/dev/null || echo "No outputs available"
+        if ! command -v terraform &> /dev/null; then
+            echo -e "${RED}Terraform not found. Please install Terraform.${NC}"
+            return 1
+        fi
+        
+        cd "$category_path" || return 1
+        
+        # Check for configuration files
+        if [ ! -f "backend.tf" ]; then
+            echo -e "${YELLOW}Warning: backend.tf not found. Using local state.${NC}"
+            echo -e "${YELLOW}For production, copy backend.tf.example to backend.tf${NC}"
+        fi
+        
+        if [ ! -f "terraform.tfvars" ]; then
+            echo -e "${YELLOW}Warning: terraform.tfvars not found. Using defaults.${NC}"
+            echo -e "${YELLOW}For custom config, copy terraform.tfvars.example to terraform.tfvars${NC}"
+        fi
+        
+        # Initialize Terraform
+        echo -e "${YELLOW}Running terraform init...${NC}"
+        if ! terraform init -input=false; then
+            echo -e "${RED}Terraform init failed for $category${NC}"
+            cd - > /dev/null
+            return 1
+        fi
+        
+        # Validate configuration
+        echo -e "${YELLOW}Validating Terraform configuration...${NC}"
+        if ! terraform validate; then
+            echo -e "${RED}Terraform validation failed for $category${NC}"
+            cd - > /dev/null
+            return 1
+        fi
+        
+        # Plan
+        echo -e "${YELLOW}Running terraform plan...${NC}"
+        if ! terraform plan -out=tfplan -input=false; then
+            echo -e "${RED}Terraform plan failed for $category${NC}"
+            cd - > /dev/null
+            return 1
+        fi
+        
+        # Apply
+        echo -e "${BLUE}Deploying with Terraform...${NC}"
+        if terraform apply -input=false tfplan; then
+            echo -e "${GREEN}✅ $category policies deployed successfully!${NC}"
             
-        return 0
+            # Show outputs
+            echo -e "${BLUE}Terraform outputs for $category:${NC}"
+            terraform output || echo "No outputs available"
+            
+            cd - > /dev/null
+            return 0
+        else
+            echo -e "${RED}❌ Terraform apply failed for $category${NC}"
+            cd - > /dev/null
+            return 1
+        fi
+        
+    elif [ -f "$category_path/arm-template.json" ]; then
+        # ARM template deployment
+        echo -e "${GREEN}Detected ARM template${NC}"
+        
+        # Check for parameters file
+        local params_file="$category_path/arm-template.parameters.json"
+        local deploy_params=""
+        
+        if [ -f "$params_file" ]; then
+            deploy_params="--parameters $params_file"
+            echo -e "${GREEN}Using parameters file: $params_file${NC}"
+        else
+            echo -e "${YELLOW}No parameters file found, using defaults${NC}"
+        fi
+        
+        # Validate template
+        echo -e "${YELLOW}Validating $category ARM template...${NC}"
+        if az deployment sub validate \
+            --location "$LOCATION" \
+            --template-file "$category_path/arm-template.json" \
+            $deploy_params \
+            --only-show-errors; then
+            echo -e "${GREEN}Template validation successful!${NC}"
+        else
+            echo -e "${RED}Template validation failed for $category${NC}"
+            return 1
+        fi
+        
+        # Deploy
+        local deployment_name="azure-policy-$category-$DEPLOY_TIMESTAMP"
+        echo -e "${BLUE}Deploying $category policies...${NC}"
+        
+        local deployment_result=$(az deployment sub create \
+            --location "$LOCATION" \
+            --template-file "$category_path/arm-template.json" \
+            $deploy_params \
+            --name "$deployment_name" \
+            --query "properties.provisioningState" -o tsv)
+        
+        if [ "$deployment_result" = "Succeeded" ]; then
+            echo -e "${GREEN}✅ $category policies deployed successfully!${NC}"
+            
+            # Show outputs if available
+            echo -e "${BLUE}Deployment outputs for $category:${NC}"
+            az deployment sub show \
+                --name "$deployment_name" \
+                --query "properties.outputs" \
+                --output table 2>/dev/null || echo "No outputs available"
+                
+            return 0
+        else
+            echo -e "${RED}❌ $category deployment failed with status: $deployment_result${NC}"
+            return 1
+        fi
     else
-        echo -e "${RED}❌ $category deployment failed with status: $deployment_result${NC}"
-        return 1
+        echo -e "${YELLOW}Warning: No deployment configuration found in $category_path, skipping...${NC}"
+        return 0
     fi
 }
 
@@ -102,7 +170,7 @@ validate_deployment() {
     # List all policy assignments
     echo -e "${BLUE}Policy assignments created:${NC}"
     az policy assignment list \
-        --query "[?contains(name, 'region') || contains(name, 'security') || contains(name, 'cost')].{Name:name, DisplayName:displayName, Scope:scope, EnforcementMode:enforcementMode}" \
+        --query "[?contains(name, 'region') || contains(name, 'security') || contains(name, 'cost') || contains(name, 'nsg-required') || contains(name, 'deny-vm-public-ip')].{Name:name, DisplayName:displayName, Scope:scope, EnforcementMode:enforcementMode}" \
         --output table
     
     # List policy definitions

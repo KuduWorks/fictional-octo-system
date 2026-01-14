@@ -1,0 +1,17 @@
+# Backend configuration for remote state storage in Azure Storage
+# Copy this file to backend.tf and fill in your values
+# backend.tf is excluded from git in .gitignore
+#
+# INSTRUCTIONS:
+# 1. Copy this file: cp backend.tf.example backend.tf
+# 2. Update the values below with your storage account details
+# 3. Run: terraform init -migrate-state
+
+terraform {
+  backend "azurerm" {
+    resource_group_name  = "rg-tfstate"
+    storage_account_name = "tfstate<unique-id>"
+    container_name       = "tfstate"
+    key                  = "policies/network-security.tfstate"
+  }
+}

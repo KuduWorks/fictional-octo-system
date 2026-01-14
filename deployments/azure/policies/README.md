@@ -9,17 +9,24 @@ policies/
 ├── region-control/           # ✅ Geographic restrictions (Terraform)
 │   ├── main.tf
 │   ├── terraform.tfvars
-│   ├── TERRAFORM.md
+│   ├── QUICKSTART.md
+│   └── README.md
+├── network-security/         # ✅ NSG requirement + Bastion enforcement (Terraform)
+│   ├── main.tf
+│   ├── variables.tf
+│   ├── exemptions.tf
+│   ├── monitoring.tf
+│   ├── QUICKSTART.md
 │   └── README.md
 ├── iso27001-crypto/          # ✅ ISO 27001 A.10.1.1 Cryptography Compliance (Terraform)
-│   ├── main.tf              # 12 encryption policies (Storage, SQL, KeyVault, VMs, Disks, Kusto, AKS)
+│   ├── main.tf              # 26 encryption policies (Storage, SQL, KeyVault, VMs, Disks, Kusto, AKS)
 │   ├── terraform.tfvars
 │   └── README.md
 ├── vm-encryption/            # ⚠️ DEPRECATED - Moved to iso27001-crypto/
 │   └── MOVED.md             # Migration instructions
 ├── security-baseline/        # 🚧 Planned - Security hardening policies
 ├── cost-management/          # 🚧 Planned - Cost optimization policies
-├── shared/                   # Legacy scripts (not used with Terraform)
+├── shared/                   # Deployment automation scripts
 └── README.md                 # This file
 ```
 
@@ -34,7 +41,20 @@ policies/
 - **Target Region**: Sweden Central
 - **Status**: Deployed and enforced
 
-### 2. ISO 27001 Cryptography Compliance (`iso27001-crypto/`) ✅ Active
+### 2. Network Security (`network-security/`) ✅ Active
+- **Purpose**: Network hardening through NSG enforcement and Bastion-first approach
+- **Deployment**: Terraform
+- **Policies**: 2 policies (1 custom, 1 built-in)
+  - **NSG Required on Subnets** (custom): Denies subnet creation without NSG (excludes Gateway/Firewall/Bastion)
+  - **No Public IPs on VMs** (built-in): Denies public IPs to enforce Azure Bastion usage
+- **Features**:
+  - Exemption framework for resources legitimately needing public IPs (bastion hosts, NAT gateways)
+  - Automated expiration monitoring (60-day alerts)
+  - Audit mode support for gradual rollout
+- **Status**: Deployed, recommended DoNotEnforce initially
+- **Compliance Standard**: ISO 27001 A.13.1.3
+
+### 3. ISO 27001 Cryptography Compliance (`iso27001-crypto/`) ✅ Active
 - **Purpose**: ISO 27001 A.10.1.1 Cryptographic Controls compliance
 - **Deployment**: Terraform
 - **Policies**: 26 policies (11 built-in, 15 custom)
@@ -52,7 +72,7 @@ policies/
 - **Status**: Deployed and enforced
 - **Compliance Standard**: ISO 27001:2013 A.10.1.1
 
-### 3. VM Encryption (`vm-encryption/`) ⚠️ DEPRECATED
+### 6. VM Encryption (`vm-encryption/`) ⚠️ DEPRECATED
 - **Status**: Moved to `iso27001-crypto/`
 - **Migration**: See `vm-encryption/MOVED.md` for details
 - **Action Required**: Use `iso27001-crypto/` for all encryption policies
@@ -79,9 +99,26 @@ policies/
 3. **Appropriate permissions**:
    - `Policy Contributor` role at subscription level
    - `User Access Administrator` or `Owner` role (for managed identity assignments)
-4. **Active Azure subscription**
+4. **ActiveNetwork Security Policies
 
-## Quick Start
+```bash
+cd deployments/azure/policies/network-security
+cp backend.tf.example backend.tf
+cp terraform.tfvars.example terraform.tfvars
+# Edit terraform.tfvars (start with enforcement_mode = "DoNotEnforce")
+terraform init
+terraform plan
+terraform apply
+```
+
+### Deploy  Azure subscription
+
+### Quick Start
+
+### Network security (audit mode recommended initially)
+cd ../network-security
+cp terraform.tfvars.example terraform.tfvars
+terraform init && terraform apply -auto-approve
 
 ### Deploy Region Control Policies
 
@@ -458,7 +495,15 @@ az policy definition list \
 ### Verify Cleanup
 
 ```bash
-# Check no policies remain
+### Check Network Security
+- **Deployment Guide**: [network-security/README.md](network-security/README.md)
+- **Quick Start**: [network-security/QUICKSTART.md](network-security/QUICKSTART.md)
+- **Policies**: 2 policies (1 custom, 1 built-in)
+- **Effect**: Deny (blocks non-compliant resources)
+- **Features**: Exemption framework, expiration monitoring
+- **Scope**: Subscription-level
+
+### Check no policies remain
 az policy assignment list \
   --query "[?contains(name, 'iso27001') || contains(name, 'region')].{Name:name, DisplayName:displayName}" \
   -o table
@@ -559,10 +604,10 @@ If you previously deployed the standalone VM encryption policy:
 - [Azure Geographies](https://azure.microsoft.com/en-us/global-infrastructure/geographies/)
 
 ## Support
-
-For issues or questions:
-1. Check the troubleshooting section above
-2. Review individual policy folder README files:
+January 14, 2026  
+**Terraform Version**: >= 1.0  
+**AzureRM Provider**: ~> 3.0  
+**Active Policy Sets**: Region Control, Network Security README.md files:
    - [region-control/README.md](region-control/README.md)
    - [iso27001-crypto/README.md](iso27001-crypto/README.md)
 3. Review Terraform documentation for azurerm provider
