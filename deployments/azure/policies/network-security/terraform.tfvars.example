@@ -1,0 +1,48 @@
+# Network Security Policy Configuration
+# Copy this file to terraform.tfvars and adjust for your subscription
+# terraform.tfvars is excluded from git in .gitignore
+
+# Enforcement mode - Start with "DoNotEnforce" for audit-only
+# After validating compliance for 2-4 weeks, switch to "Default" for enforcement
+enforcement_mode = "DoNotEnforce"
+
+# VM NIC NSG policy effect - Start with "audit" to assess impact
+# After validation, can switch to "deny" to enforce
+vm_nic_nsg_effect = "audit"
+
+# Optional: explicitly target a subscription (otherwise uses Azure CLI context)
+# subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Policy Exemptions for VMs requiring public IPs
+# IMPORTANT: Use sparingly and only with documented compensating controls
+# Maximum exemption period: 12 months
+# Review quarterly for continued necessity
+exempted_resources = {
+  bastion-host = {
+    resource_id           = "/subscriptions/YOUR-SUB-ID/resourceGroups/rg-network/providers/Microsoft.Compute/virtualMachines/bastion-vm-01"
+    justification         = "Azure Bastion host requires public IP for remote access gateway functionality"
+    expires_on            = "2027-01-14T23:59:00Z"  # 12 months from deployment
+    compensating_controls = "NSG with IP whitelist (corporate IPs only), Azure MFA enforced, audit logging enabled, JIT access configured"
+    approved_by           = "security-lead@example.com"
+    ticket_number         = "SEC-2026-001"
+  }
+  
+  # Example: NAT Gateway VM
+  # nat-gateway-vm = {
+  #   resource_id           = "/subscriptions/YOUR-SUB-ID/resourceGroups/rg-network/providers/Microsoft.Compute/virtualMachines/nat-gateway-vm"
+  #   justification         = "NAT gateway VM for outbound internet access from private subnets"
+  #   expires_on            = "2026-07-14T23:59:00Z"  # 6 months from deployment
+  #   compensating_controls = "Dedicated NAT subnet with NSG, egress filtering enabled, no SSH/RDP from internet, audit logs retained 90 days"
+  #   approved_by           = "network-team@example.com"
+  #   ticket_number         = "NET-2026-045"
+  # }
+}
+
+# Email address for exemption expiration alerts (60 days before expiry)
+alert_email = "security@example.com"
+
+# Resource group for monitoring resources
+monitoring_resource_group_name = "rg-policy-monitoring"
+
+# Azure region for monitoring resources
+monitoring_location = "swedencentral"
