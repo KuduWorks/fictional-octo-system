@@ -267,9 +267,9 @@ try {
 }
 
 #
-# TEST 5: VM NIC without NSG (should be audited)
-#
-Write-Host "`n━━━ TEST 5: VM NIC NSG Policy Check ━━━" -ForegroundColor Cyan
+# TEST 6: VM NIC without NSG (should be audited)  
+#  
+Write-Host "`n━━━ TEST 6: VM NIC NSG Policy Check ━━━" -ForegroundColor Cyan 
 
 try {
     Write-Host "Checking VM NIC NSG policy..." -ForegroundColor Yellow
@@ -439,7 +439,7 @@ Write-Host "================================================`n" -ForegroundColor
 if ($testsFailed -eq 0) {
     Write-Host "✅ All tests passed!" -ForegroundColor Green
     
-    if ($nsgPolicy.properties.enforcementMode -eq "DoNotEnforce") {
+    if ($vmNicPolicy.properties.enforcementMode -eq "DoNotEnforce") {
         Write-Host "`n💡 Recommendation:" -ForegroundColor Yellow
         Write-Host "   Policies are in audit mode. After 2-4 weeks of monitoring:" -ForegroundColor Yellow
         Write-Host "   1. Review compliance reports in Azure Portal" -ForegroundColor Yellow

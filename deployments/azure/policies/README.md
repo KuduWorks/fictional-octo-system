@@ -59,12 +59,12 @@ policies/
 - **Deployment**: Terraform
 - **Policies**: 26 policies (11 built-in, 15 custom)
   - **Storage Accounts** (4): HTTPS required, TLS 1.2+, no public access, CMK encryption
-  - 4*Application Gateway** (2): HTTPS only, TLS 1.3 minimum
+  - **Application Gateway** (2): HTTPS only, TLS 1.3 minimum
   - **App Services** (3): HTTPS only, TLS 1.2+ minimum
   - **SQL Databases** (1): TDE with customer-managed keys
   - **Key Vault** (2): Soft delete, purge protection
   - **Managed Disks** (1): Customer-managed key encryption required
-  - 5*Data Explorer/Kusto** (2): Disk encryption, CMK required
+  - **Data Explorer/Kusto** (2): Disk encryption, CMK required
   - **Azure Kubernetes Service** (2): Policy add-on, encryption at host
   - **Virtual Machines** (1): EncryptionAtHost OR Azure Disk Encryption
   - **Database Services** (2): MySQL/PostgreSQL SSL enforcement
@@ -111,16 +111,16 @@ terraform plan
 terraform apply
 ```
 
-### Deploy  Azure subscription**
+### Deploy  Azure subscription
 
-## Quick Start
+### Quick Start
 
-##Network security (audit mode recommended initially)
+### Network security (audit mode recommended initially)
 cd ../network-security
 cp terraform.tfvars.example terraform.tfvars
 terraform init && terraform apply -auto-approve
 
-# # Deploy Region Control Policies
+### Deploy Region Control Policies
 
 ```bash
 cd deployments/azure/policies/region-control
@@ -495,7 +495,7 @@ az policy definition list \
 ### Verify Cleanup
 
 ```bash
-# ChNetwork Security
+### Check Network Security
 - **Deployment Guide**: [network-security/README.md](network-security/README.md)
 - **Quick Start**: [network-security/QUICKSTART.md](network-security/QUICKSTART.md)
 - **Policies**: 2 policies (1 custom, 1 built-in)
@@ -503,7 +503,7 @@ az policy definition list \
 - **Features**: Exemption framework, expiration monitoring
 - **Scope**: Subscription-level
 
-### eck no policies remain
+### Check no policies remain
 az policy assignment list \
   --query "[?contains(name, 'iso27001') || contains(name, 'region')].{Name:name, DisplayName:displayName}" \
   -o table
@@ -607,7 +607,7 @@ If you previously deployed the standalone VM encryption policy:
 January 14, 2026  
 **Terraform Version**: >= 1.0  
 **AzureRM Provider**: ~> 3.0  
-**Active Policy Sets**: Region Control, Network SecurityDME files:
+**Active Policy Sets**: Region Control, Network Security README.md files:
    - [region-control/README.md](region-control/README.md)
    - [iso27001-crypto/README.md](iso27001-crypto/README.md)
 3. Review Terraform documentation for azurerm provider
