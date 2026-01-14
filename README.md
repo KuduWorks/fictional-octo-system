@@ -98,7 +98,7 @@ terraform init && terraform apply
 **Security**: [SECURITY.md](SECURITY.md) *(found a bug? Tell us before Twitter does)*  
 **Status**: Work in progress *(a.k.a. it works on my machine)*
 
-*Built with ☕, 😤, and an unhealthy amount of Stack Overflow*r for detailed setup.
+*Built with ☕, 😤, and an unhealthy amount of Stack Overflow and chatting to MCP servers for detailed setup.
 
 ## Contributing
 
