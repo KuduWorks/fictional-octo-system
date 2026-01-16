@@ -660,11 +660,11 @@ output "policy_assignments" {
     storage_tls_12             = azurerm_subscription_policy_assignment.storage_tls_12_assignment.id
     appgw_tls_13_required      = azurerm_subscription_policy_assignment.appgw_tls_13_assignment.id
     appgw_https_required       = azurerm_subscription_policy_assignment.appgw_https_assignment.id
-    disk_cmk_required          = azurerm_policy_definition.disk_cmk_required.id
+    disk_cmk_required          = azurerm_subscription_policy_assignment.disk_cmk_assignment.id
     kusto_disk_encryption      = azurerm_policy_definition.kusto_disk_encryption.id
     kusto_cmk_required         = azurerm_policy_definition.kusto_cmk_required.id
     aks_encryption_at_host     = azurerm_policy_definition.aks_encryption_at_host.id
-    vm_encryption_at_host_required = azurerm_policy_definition.vm_encryption_at_host_required.id
+    vm_encryption_at_host_required = azurerm_subscription_policy_assignment.vm_encryption_at_host_required.id
     mysql_ssl_enforcement      = azurerm_policy_definition.mysql_ssl_enforcement.id
     postgresql_ssl_enforcement = azurerm_policy_definition.postgresql_ssl_enforcement.id
     cosmosdb_cmk_required      = azurerm_policy_definition.cosmosdb_cmk_required.id
