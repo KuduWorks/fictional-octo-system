@@ -207,8 +207,8 @@ try {
     $nic4 = New-AzNetworkInterface -Name $nicName4 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM.Subnets[0].Id
     
     # Create VM credential
-    $plainPassword = [guid]::NewGuid().ToString()
-    $password = ConvertTo-SecureString $plainPassword -AsPlainText -Force
+    $passwordPlain = [guid]::NewGuid().ToString()
+    $password = ConvertTo-SecureString $passwordPlain -AsPlainText -Force
     $cred = New-Object System.Management.Automation.PSCredential ("azureuser", $password)
     
     # Attempt to create VM WITHOUT encryption-at-host (using Standard_D2s_v3)
