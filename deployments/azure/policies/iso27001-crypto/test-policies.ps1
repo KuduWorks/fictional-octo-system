@@ -87,8 +87,27 @@ try {
     exit 1
 }
 
+# Confirm before proceeding
+$currentContext = Get-AzContext
+Write-Host "`n📍 Ready to start testing with:" -ForegroundColor Cyan
+Write-Host "   Account: $($currentContext.Account.Id)" -ForegroundColor White
+Write-Host "   Subscription: $($currentContext.Subscription.Name) ($($currentContext.Subscription.Id))" -ForegroundColor White
+Write-Host "   Location: $Location" -ForegroundColor White
+Write-Host "   Resource Group: $ResourceGroupName" -ForegroundColor White
+
+$confirm = Read-Host "`nProceed with policy testing? (Y/N)"
+if ($confirm -ne 'Y' -and $confirm -ne 'y') {
+    Write-Host "❌ Testing cancelled by user" -ForegroundColor Yellow
+    exit 0
+}
+
+# Wait for policy propagation
+Write-Host "`n⏳ Waiting 30 seconds for policy propagation..." -ForegroundColor Yellow
+Start-Sleep -Seconds 30
+Write-Host "✅ Policy propagation wait complete" -ForegroundColor Green
+
 # Create test resource group
-Write-Host "Creating test resource group..." -ForegroundColor Yellow
+Write-Host "`nCreating test resource group..." -ForegroundColor Yellow
 try {
     $rg = New-AzResourceGroup -Name $ResourceGroupName -Location $Location -Force
     Write-Host "✅ Resource group created: $($rg.ResourceGroupName)" -ForegroundColor Green
@@ -169,6 +188,100 @@ try {
     
 } catch {
     Write-Host "⚠️  Unexpected failure creating compliant storage account: $($_.Exception.Message)" -ForegroundColor Red
+}
+
+# Test 4: VM without Encryption-at-Host (Should FAIL)
+Write-Host "`n❌ Testing VM without Encryption-at-Host (should fail)..." -ForegroundColor Red
+$vmName4 = "test-vm-no-enc-$(Get-Random -Minimum 1000 -Maximum 9999)"
+$nicName4 = "test-nic-4"
+$vnetNameVM = "test-vnet-vm"
+$subnetNameVM = "vm-subnet"
+
+try {
+    # Create VNet for VM
+    Write-Host "Creating VNet for VM test: $vnetNameVM" -ForegroundColor Yellow
+    $subnetVM = New-AzVirtualNetworkSubnetConfig -Name $subnetNameVM -AddressPrefix "10.1.0.0/24"
+    $vnetVM = New-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Location $Location -Name $vnetNameVM -AddressPrefix "10.1.0.0/16" -Subnet $subnetVM
+    
+    # Create NIC
+    $nic4 = New-AzNetworkInterface -Name $nicName4 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM.Subnets[0].Id
+    
+    # Create VM credential
+    $password = ConvertTo-SecureString "P@ssw0rd1234!" -AsPlainText -Force
+    $cred = New-Object System.Management.Automation.PSCredential ("azureuser", $password)
+    
+    # Attempt to create VM WITHOUT encryption-at-host (using Standard_D2s_v3)
+    Write-Host "Attempting to create VM without encryption-at-host: $vmName4" -ForegroundColor Yellow
+    $vmConfig = New-AzVMConfig -VMName $vmName4 -VMSize "Standard_D2s_v3"
+    $vmConfig = Set-AzVMOperatingSystem -VM $vmConfig -Linux -ComputerName $vmName4 -Credential $cred
+    $vmConfig = Set-AzVMSourceImage -VM $vmConfig -PublisherName "Canonical" -Offer "0001-com-ubuntu-server-jammy" -Skus "22_04-lts-gen2" -Version "latest"
+    $vmConfig = Add-AzVMNetworkInterface -VM $vmConfig -Id $nic4.Id
+    $vmConfig = Set-AzVMOSDisk -VM $vmConfig -CreateOption FromImage -StorageAccountType "Premium_LRS"
+    
+    $vm4 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $Location -VM $vmConfig
+    
+    Write-Host "⚠️  Policy failed - VM created without encryption-at-host!" -ForegroundColor Red
+    Remove-AzVM -ResourceGroupName $ResourceGroupName -Name $vmName4 -Force
+    
+} catch {
+    Write-Host "✅ Policy working - VM without encryption-at-host blocked: $($_.Exception.Message)" -ForegroundColor Green
+} finally {
+    # Cleanup
+    if (Get-AzNetworkInterface -Name $nicName4 -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue) {
+        Remove-AzNetworkInterface -Name $nicName4 -ResourceGroupName $ResourceGroupName -Force
+    }
+    if (Get-AzVirtualNetwork -Name $vnetNameVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue) {
+        Remove-AzVirtualNetwork -Name $vnetNameVM -ResourceGroupName $ResourceGroupName -Force
+    }
+}
+
+# Test 5: VM with Encryption-at-Host (Should PASS)
+Write-Host "`n✅ Testing VM with Encryption-at-Host enabled (should pass)..." -ForegroundColor Green
+$vmName5 = "test-vm-enc-$(Get-Random -Minimum 1000 -Maximum 9999)"
+$nicName5 = "test-nic-5"
+
+try {
+    # Reuse VNet from previous test or create new
+    $vnetVM5 = Get-AzVirtualNetwork -Name $vnetNameVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue
+    if (-not $vnetVM5) {
+        $subnetVM5 = New-AzVirtualNetworkSubnetConfig -Name $subnetNameVM -AddressPrefix "10.1.0.0/24"
+        $vnetVM5 = New-AzVirtualNetwork -ResourceGroupName $ResourceGroupName -Location $Location -Name $vnetNameVM -AddressPrefix "10.1.0.0/16" -Subnet $subnetVM5
+    }
+    
+    # Create NIC
+    $nic5 = New-AzNetworkInterface -Name $nicName5 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM5.Subnets[0].Id
+    
+    # Create VM credential
+    $password = ConvertTo-SecureString "P@ssw0rd1234!" -AsPlainText -Force
+    $cred = New-Object System.Management.Automation.PSCredential ("azureuser", $password)
+    
+    # Create VM WITH encryption-at-host (using Standard_D2s_v3)
+    Write-Host "Creating compliant VM with encryption-at-host: $vmName5" -ForegroundColor Yellow
+    $vmConfig = New-AzVMConfig -VMName $vmName5 -VMSize "Standard_D2s_v3" -SecurityType "Standard"
+    
+    # Enable encryption-at-host
+    $vmConfig = Set-AzVMSecurityProfile -VM $vmConfig -EncryptionAtHost $true
+    
+    $vmConfig = Set-AzVMOperatingSystem -VM $vmConfig -Linux -ComputerName $vmName5 -Credential $cred
+    $vmConfig = Set-AzVMSourceImage -VM $vmConfig -PublisherName "Canonical" -Offer "0001-com-ubuntu-server-jammy" -Skus "22_04-lts-gen2" -Version "latest"
+    $vmConfig = Add-AzVMNetworkInterface -VM $vmConfig -Id $nic5.Id
+    $vmConfig = Set-AzVMOSDisk -VM $vmConfig -CreateOption FromImage -StorageAccountType "Premium_LRS"
+    
+    $vm5 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $Location -VM $vmConfig
+    
+    Write-Host "✅ Compliant VM with encryption-at-host created successfully" -ForegroundColor Green
+    Remove-AzVM -ResourceGroupName $ResourceGroupName -Name $vmName5 -Force
+    
+} catch {
+    Write-Host "⚠️  Unexpected failure creating compliant VM: $($_.Exception.Message)" -ForegroundColor Red
+} finally {
+    # Cleanup
+    if (Get-AzNetworkInterface -Name $nicName5 -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue) {
+        Remove-AzNetworkInterface -Name $nicName5 -ResourceGroupName $ResourceGroupName -Force
+    }
+    if (Get-AzVirtualNetwork -Name $vnetNameVM -ResourceGroupName $ResourceGroupName -ErrorAction SilentlyContinue) {
+        Remove-AzVirtualNetwork -Name $vnetNameVM -ResourceGroupName $ResourceGroupName -Force
+    }
 }
 
 # Application Gateway Tests require prerequisite resources
@@ -303,7 +416,7 @@ try {
     Write-Host "❌ Failed to set up Application Gateway prerequisites: $($_.Exception.Message)" -ForegroundColor Red
 }
 
-# Test 6: Check Policy Compliance Status
+# Test 7: Check Policy Compliance Status
 Write-Host "`n📊 Checking overall policy compliance..." -ForegroundColor Blue
 try {
     $policyStates = Get-AzPolicyState | Where-Object { $_.PolicyDefinitionName -like "*iso27001*" }
