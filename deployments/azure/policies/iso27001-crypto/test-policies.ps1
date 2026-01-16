@@ -207,7 +207,7 @@ try {
     $nic4 = New-AzNetworkInterface -Name $nicName4 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM.Subnets[0].Id
     
     # Create VM credential
-    $passwordPlain = [guid]::NewGuid().ToString()
+    $passwordPlain = [System.Web.Security.Membership]::GeneratePassword(16, 3)
     $password = ConvertTo-SecureString $passwordPlain -AsPlainText -Force
     $cred = New-Object System.Management.Automation.PSCredential ("azureuser", $password)
     
