@@ -417,7 +417,7 @@ try {
     Write-Host "❌ Failed to set up Application Gateway prerequisites: $($_.Exception.Message)" -ForegroundColor Red
 }
 
-# Test 7: Check Policy Compliance Status
+# Test 6: Check Policy Compliance Status
 Write-Host "`n📊 Checking overall policy compliance..." -ForegroundColor Blue
 try {
     $policyStates = Get-AzPolicyState | Where-Object { $_.PolicyDefinitionName -like "*iso27001*" }
