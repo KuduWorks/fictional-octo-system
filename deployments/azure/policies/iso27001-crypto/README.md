@@ -247,9 +247,12 @@ pwsh ./test-policies.ps1
 Tests include:
 - Function App HTTPS enforcement
 - Storage TLS 1.2+ requirement
-- **VM encryption-at-host enforcement (deny mode)**
-- Application Gateway HTTPS/TLS requirements
-- Policy compliance checks
+- Compliant storage configuration
+- VM deployment without encryption (expected to be denied)
+- VM deployment with encryption-at-host enabled (expected to succeed)
+- Application Gateway HTTP listener (expected to be non-compliant)
+- Application Gateway HTTPS/TLS listener (expected to be compliant)
+- Overall policy compliance checks
 
 ## 📖 ISO 27001 Mapping
 
