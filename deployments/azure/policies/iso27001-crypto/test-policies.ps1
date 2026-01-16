@@ -254,7 +254,6 @@ try {
     # Create VM credential with a randomly generated password to avoid hardcoding secrets
     $passwordPlain = [System.Web.Security.Membership]::GeneratePassword(16, 3)
     $password = ConvertTo-SecureString $passwordPlain -AsPlainText -Force
-    $password = ConvertTo-SecureString "P@ssw0rd1234!" -AsPlainText -Force
     $cred = New-Object System.Management.Automation.PSCredential ("azureuser", $password)
     
     # Create VM WITH encryption-at-host (using Standard_D2s_v3)
