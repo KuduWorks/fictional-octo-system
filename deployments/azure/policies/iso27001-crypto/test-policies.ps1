@@ -252,7 +252,14 @@ try {
     # Create NIC
     $nic5 = New-AzNetworkInterface -Name $nicName5 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM5.Subnets[0].Id
     # Create VM credential with a randomly generated password to avoid hardcoding secrets
-    $passwordPlain = [System.Web.Security.Membership]::GeneratePassword(16, 3)
+    $charSet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*_-+='
+    $passwordLength = 16
+    $randomBytes = New-Object 'System.Byte[]' $passwordLength
+    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($randomBytes)
+    $passwordChars = for ($i = 0; $i -lt $passwordLength; $i++) {
+        $charSet[ $randomBytes[$i] % $charSet.Length ]
+    }
+    $passwordPlain = -join $passwordChars
     $password = ConvertTo-SecureString $passwordPlain -AsPlainText -Force
     $cred = New-Object System.Management.Automation.PSCredential ("azureuser", $password)
     
