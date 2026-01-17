@@ -363,7 +363,7 @@ try {
     }
 
     # Test: Compliant Application Gateway with HTTPS (Should PASS) — only if PFX provided
-    if ([string]::IsNullOrWhiteSpace($AppGwPfxPath) -or $null -eq $AppGwPfxPassword) {
+    if ([string]::IsNullOrWhiteSpace($AppGwPfxPath) -or ($null -eq $AppGwPfxPassword -or $AppGwPfxPassword.Length -eq 0)) {
         Write-Host "`nℹ️ Skipping HTTPS Application Gateway test (no PFX path/password provided)" -ForegroundColor Yellow
     } else {
         Write-Host "`n✅ Testing compliant Application Gateway with HTTPS (should pass)..." -ForegroundColor Green
