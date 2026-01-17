@@ -42,6 +42,11 @@ $requiredModules = @(
     "Az.PolicyInsights"
 )
 
+# Critical modules without which the script cannot function
+$criticalModules = @("Az.Accounts", "Az.Resources")
+
+$failedModules = @()
+
 foreach ($m in $requiredModules) {
     if (-not (Get-Module -ListAvailable -Name $m)) {
         try {
@@ -49,8 +54,27 @@ foreach ($m in $requiredModules) {
             Write-Host "✅ Installed ${m}" -ForegroundColor Green
         } catch {
             Write-Host "⚠️  Failed to install ${m}: $($_.Exception.Message)" -ForegroundColor Red
+            $failedModules += $m
         }
     }
+}
+
+# Check if any critical modules failed to install
+$failedCritical = $failedModules | Where-Object { $criticalModules -contains $_ }
+if ($failedCritical.Count -gt 0) {
+    Write-Host "❌ Critical module(s) failed to install: $($failedCritical -join ', ')" -ForegroundColor Red
+    Write-Host "Cannot proceed without these modules. Please install them manually:" -ForegroundColor Red
+    foreach ($m in $failedCritical) {
+        Write-Host "   Install-Module -Name $m -Force -AllowClobber -Scope CurrentUser" -ForegroundColor Yellow
+    }
+    exit 1
+}
+
+# Warn about non-critical modules that failed
+$failedNonCritical = $failedModules | Where-Object { $criticalModules -notcontains $_ }
+if ($failedNonCritical.Count -gt 0) {
+    Write-Host "⚠️  Non-critical module(s) failed to install: $($failedNonCritical -join ', ')" -ForegroundColor Yellow
+    Write-Host "Some tests may be skipped due to missing modules." -ForegroundColor Yellow
 }
 
 Write-Host "Loading required Azure modules..." -ForegroundColor Yellow
