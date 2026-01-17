@@ -247,6 +247,7 @@ try {
     $vmConfig = Set-AzVMSourceImage -VM $vmConfig -PublisherName "Canonical" -Offer "0001-com-ubuntu-server-jammy" -Skus "22_04-lts-gen2" -Version "latest"
     $vmConfig = Add-AzVMNetworkInterface -VM $vmConfig -Id $nic4.Id
     $vmConfig = Set-AzVMOSDisk -VM $vmConfig -CreateOption FromImage -StorageAccountType "Premium_LRS"
+    # Boot diagnostics are disabled intentionally for this non-compliant VM; this setting is unrelated to the encryption-at-host policy under test.
     $vmConfig = Set-AzVMBootDiagnostic -VM $vmConfig -Disable
     
     $vm4 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $Location -VM $vmConfig -ErrorAction Stop -WarningAction SilentlyContinue
@@ -368,13 +369,16 @@ try {
             $fipconfig2 = New-AzApplicationGatewayFrontendIPConfig -Name "frontendIP02" -PublicIPAddress $publicIp
             $fpconfig2 = New-AzApplicationGatewayFrontendPort -Name "frontendPort02" -Port 443
 
-            $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $AppGwPfxPassword
             $securePfxPassword = ConvertTo-SecureString $AppGwPfxPassword -AsPlainText -Force
             $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $securePfxPassword
-            $pool2 = New-AzApplicationGatewayBackendAddressPool -Name "pool02"
+            $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $securePfxPassword
+            $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2 -SslCertificate $sslCert
             $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
             $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
-            $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+            $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+            $sku2 = New-AzApplication
+            
+            GatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
 
             Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
             $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location `
@@ -413,8 +417,8 @@ try {
 }
 
 # Clean up test resource group (only if we created it)
-Write-Host "`n🧹 Cleaning up test resources..." -ForegroundColor Yellow
-if ($rgCreated) {
+        $removeRgJob = Remove-AzResourceGroup -Name $ResourceGroupName -Force -AsJob -ErrorAction Stop
+        Write-Host "✅ Resource group deletion started as background job (Job Id: $($removeRgJob.Id)) for: $ResourceGroupName" -ForegroundColor Green
     try {
         Remove-AzResourceGroup -Name $ResourceGroupName -Force -ErrorAction Stop
         Write-Host "✅ Resource group removed: $ResourceGroupName" -ForegroundColor Green
