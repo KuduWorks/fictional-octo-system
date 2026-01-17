@@ -425,7 +425,7 @@ try {
     } catch {
         Write-Host "❌ Failed to clean up resource group: $($_.Exception.Message)" -ForegroundColor Red
     }
-} else {
+  else {
     Write-Host "ℹ️ Skipping RG cleanup; it was not created by this run." -ForegroundColor Yellow
 }
 
