@@ -390,7 +390,7 @@ try {
                 -Sku $sku2 -SslCertificates $sslCert
 
             Write-Host "✅ Compliant Application Gateway created successfully" -ForegroundColor Green
-            Remove-AzApplicationGateway -ResourceGroupName $ResourceGroupName -Name $appGwName2 -Force
+            Remove-AzApplicationGateway -ResourceGroupName $ResourceGroupName -Name $appGwName2 -Force -ErrorAction SilentlyContinue
         } catch {
             Write-Host "⚠️  Unexpected failure creating compliant Application Gateway: $($_.Exception.Message)" -ForegroundColor Red
         }
