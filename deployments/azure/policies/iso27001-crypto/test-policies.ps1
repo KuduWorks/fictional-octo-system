@@ -349,7 +349,11 @@ try {
             -GatewayIpConfigurations $gipconfig -FrontendPorts $fpconfig -HttpListeners $listener -RequestRoutingRules $rule -Sku $sku
 
         Write-Host "⚠️  Policy failed - Application Gateway created with HTTP!" -ForegroundColor Red
-        Remove-AzApplicationGateway -ResourceGroupName $ResourceGroupName -Name $appGwName1 -Force
+        try {
+            Remove-AzApplicationGateway -ResourceGroupName $ResourceGroupName -Name $appGwName1 -Force
+        } catch {
+            Write-Host "⚠️ Failed to remove Application Gateway '$appGwName1': $($_.Exception.Message)" -ForegroundColor Yellow
+        }
     } catch {
         if ($_.Exception.Message -match "RequestDisallowedByPolicy") {
             Write-Host "✅ Policy working - Application Gateway HTTP listener blocked by policy" -ForegroundColor Green
