@@ -10,7 +10,7 @@ param(
     [string]$ResourceGroupName = "policy-test-rg",
     [string]$Location = "swedencentral",
     [string]$AppGwPfxPath = "",
-    [string]$AppGwPfxPassword = ""
+    [SecureString]$AppGwPfxPassword = $null
 )
 
 # Azure PowerShell breaking change warnings are not suppressed globally to avoid hiding important notices.
@@ -403,7 +403,7 @@ try {
     }
 
     # Test: Compliant Application Gateway with HTTPS (Should PASS) — only if PFX provided
-    if ([string]::IsNullOrWhiteSpace($AppGwPfxPath) -or [string]::IsNullOrWhiteSpace($AppGwPfxPassword)) {
+    if ([string]::IsNullOrWhiteSpace($AppGwPfxPath) -or ($null -eq $AppGwPfxPassword -or $AppGwPfxPassword.Length -eq 0)) {
         Write-Host "`nℹ️ Skipping HTTPS Application Gateway test (no PFX path/password provided)" -ForegroundColor Yellow
     } else {
         Write-Host "`n✅ Testing compliant Application Gateway with HTTPS (should pass)..." -ForegroundColor Green
@@ -413,8 +413,7 @@ try {
             $fipconfig2 = New-AzApplicationGatewayFrontendIPConfig -Name "frontendIP02" -PublicIPAddress $publicIp
             $fpconfig2 = New-AzApplicationGatewayFrontendPort -Name "frontendPort02" -Port 443
 
-            $securePfxPassword = ConvertTo-SecureString $AppGwPfxPassword -AsPlainText -Force
-            $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $securePfxPassword
+            $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $AppGwPfxPassword
             $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2 -SslCertificate $sslCert
             
             $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
