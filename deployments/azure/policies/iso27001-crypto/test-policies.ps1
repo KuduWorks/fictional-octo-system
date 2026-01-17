@@ -151,7 +151,23 @@ try {
 # Helper: secure random password
 function New-RandomPassword([int]$length = 16) {
     $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
-    -join ((1..$length) | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] })
+    $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
+    try {
+        $bytes = New-Object 'System.Byte[]' $length
+        $rng.GetBytes($bytes)
+
+        $passwordChars = New-Object 'System.Char[]' $length
+        for ($i = 0; $i -lt $length; $i++) {
+            $index = $bytes[$i] % $chars.Length
+            $passwordChars[$i] = $chars[$index]
+        }
+
+        -join $passwordChars
+    } finally {
+        if ($rng -is [System.IDisposable]) {
+            $rng.Dispose()
+        }
+    }
 }
 
 # Test 1: Azure Function App without HTTPS (Should FAIL)
