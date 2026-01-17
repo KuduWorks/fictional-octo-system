@@ -13,8 +13,7 @@ param(
     [string]$AppGwPfxPassword = ""
 )
 
-# Suppress Azure breaking change warnings
-Set-Item Env:\SuppressAzurePowerShellBreakingChangeWarnings "true"
+# Azure PowerShell breaking change warnings are not suppressed globally to avoid hiding important notices.
 
 Write-Host "🧪 Testing ISO 27001 Cryptography Policies..." -ForegroundColor Green
 
@@ -45,9 +44,9 @@ $requiredModules = @(
 
 foreach ($m in $requiredModules) {
     if (-not (Get-Module -ListAvailable -Name $m)) {
-        Write-Host "Installing $m (CurrentUser scope)..." -ForegroundColor Yellow
         try {
-            Install-Module -Name $m -Scope CurrentUser -Repository PSGallery -Force -AllowClobber -ErrorAction Stop
+            Install-Module -Name $m -Force -AllowClobber -Scope CurrentUser
+            Write-Host "✅ Installed ${m}" -ForegroundColor Green
         } catch {
             Write-Host "⚠️  Failed to install ${m}: $($_.Exception.Message)" -ForegroundColor Red
         }
@@ -57,7 +56,7 @@ foreach ($m in $requiredModules) {
 Write-Host "Loading required Azure modules..." -ForegroundColor Yellow
 foreach ($m in $requiredModules) {
     if (Get-Module -ListAvailable -Name $m) {
-        Import-Module $m -Force -Scope Local -ErrorAction SilentlyContinue
+        Import-Module $m -ErrorAction SilentlyContinue
     } else {
         Write-Host "⚠️  Skipping load for missing module: ${m}" -ForegroundColor Yellow
     }
@@ -151,10 +150,8 @@ try {
 
 # Helper: secure random password
 function New-RandomPassword([int]$length = 16) {
-    $chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*_-+='
-    $bytes = New-Object 'System.Byte[]' $length
-    [System.Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($bytes)
-    -join ($bytes | ForEach-Object { $chars[ $_ % $chars.Length ] })
+    $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
+    -join ((1..$length) | ForEach-Object { $chars[(Get-Random -Maximum $chars.Length)] })
 }
 
 # Test 1: Azure Function App without HTTPS (Should FAIL)
@@ -372,7 +369,8 @@ try {
             $fpconfig2 = New-AzApplicationGatewayFrontendPort -Name "frontendPort02" -Port 443
 
             $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $AppGwPfxPassword
-            $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2 -SslCertificate $sslCert
+            $securePfxPassword = ConvertTo-SecureString $AppGwPfxPassword -AsPlainText -Force
+            $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $securePfxPassword
             $pool2 = New-AzApplicationGatewayBackendAddressPool -Name "pool02"
             $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
             $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
