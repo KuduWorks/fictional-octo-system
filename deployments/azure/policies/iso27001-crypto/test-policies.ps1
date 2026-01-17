@@ -371,14 +371,13 @@ try {
 
             $securePfxPassword = ConvertTo-SecureString $AppGwPfxPassword -AsPlainText -Force
             $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $securePfxPassword
-            $sslCert = New-AzApplicationGatewaySslCertificate -Name "sslCert02" -CertificateFile $AppGwPfxPath -Password $securePfxPassword
             $listener2 = New-AzApplicationGatewayHttpListener -Name "listener02" -Protocol Https -FrontendIPConfiguration $fipconfig2 -FrontendPort $fpconfig2 -SslCertificate $sslCert
-            $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
-            $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
-            $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
-            $sku2 = New-AzApplication
             
-            GatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
+            $poolSetting2 = New-AzApplicationGatewayBackendHttpSettings -Name "poolsetting02" -Port 443 -Protocol Https -CookieBasedAffinity Disabled
+            $pool2 = New-AzApplicationGatewayBackendAddressPool -Name "pool02"
+            $rule2 = New-AzApplicationGatewayRequestRoutingRule -Name "rule02" -RuleType Basic -BackendHttpSettings $poolSetting2 -HttpListener $listener2 -BackendAddressPool $pool2
+
+            $sku2 = New-AzApplicationGatewaySku -Name Standard_v2 -Tier Standard_v2 -Capacity 1
 
             Write-Host "Creating compliant Application Gateway with HTTPS listener: $appGwName2" -ForegroundColor Yellow
             $appGw2 = New-AzApplicationGateway -Name $appGwName2 -ResourceGroupName $ResourceGroupName -Location $Location `
@@ -417,15 +416,15 @@ try {
 }
 
 # Clean up test resource group (only if we created it)
-        $removeRgJob = Remove-AzResourceGroup -Name $ResourceGroupName -Force -AsJob -ErrorAction Stop
-        Write-Host "✅ Resource group deletion started as background job (Job Id: $($removeRgJob.Id)) for: $ResourceGroupName" -ForegroundColor Green
+Write-Host "`n🧹 Cleaning up test resources..." -ForegroundColor Yellow
+if ($rgCreated) {
     try {
         Remove-AzResourceGroup -Name $ResourceGroupName -Force -ErrorAction Stop
         Write-Host "✅ Resource group removed: $ResourceGroupName" -ForegroundColor Green
     } catch {
         Write-Host "❌ Failed to clean up resource group: $($_.Exception.Message)" -ForegroundColor Red
     }
-  else {
+} else {
     Write-Host "ℹ️ Skipping RG cleanup; it was not created by this run." -ForegroundColor Yellow
 }
 
