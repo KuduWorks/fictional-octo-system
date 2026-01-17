@@ -325,21 +325,22 @@ try {
     $passwordPlain = New-RandomPassword 16
     $cred = New-Object System.Management.Automation.PSCredential ("azureuser", (ConvertTo-SecureString $passwordPlain -AsPlainText -Force))
     
-    $supportsEncAtHost = (Get-Command Set-AzVMSecurityProfile).Parameters.ContainsKey('EncryptionAtHost')
+    # Check if New-AzVMConfig supports EncryptionAtHost parameter
+    $supportsEncAtHost = (Get-Command New-AzVMConfig).Parameters.ContainsKey('EncryptionAtHost')
     if (-not $supportsEncAtHost) {
         Write-Host "ℹ️ Module does not support EncryptionAtHost; skipping compliant VM test." -ForegroundColor Yellow
         throw "Skipped test due to missing EncryptionAtHost support"
     }
 
     Write-Host "Creating compliant VM with encryption-at-host: $vmName5" -ForegroundColor Yellow
-    $vmConfig = New-AzVMConfig -VMName $vmName5 -VMSize "Standard_D2s_v3" -SecurityType "Standard"
-    $vmConfig = Set-AzVMSecurityProfile -VM $vmConfig -EncryptionAtHost $true
+    $vmConfig = New-AzVMConfig -VMName $vmName5 -VMSize "Standard_D2s_v3" -EncryptionAtHost
     $vmConfig = Set-AzVMOperatingSystem -VM $vmConfig -Linux -ComputerName $vmName5 -Credential $cred
     $vmConfig = Set-AzVMSourceImage -VM $vmConfig -PublisherName "Canonical" -Offer "0001-com-ubuntu-server-jammy" -Skus "22_04-lts-gen2" -Version "latest"
     $vmConfig = Add-AzVMNetworkInterface -VM $vmConfig -Id $nic5.Id
     $vmConfig = Set-AzVMOSDisk -VM $vmConfig -CreateOption FromImage -StorageAccountType "Premium_LRS"
+    $vmConfig = Set-AzVMBootDiagnostic -VM $vmConfig -Disable
     
-    $vm5 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $Location -VM $vmConfig -ErrorAction Stop
+    $vm5 = New-AzVM -ResourceGroupName $ResourceGroupName -Location $Location -VM $vmConfig -ErrorAction Stop -WarningAction SilentlyContinue
     
     Write-Host "✅ Compliant VM with encryption-at-host created successfully" -ForegroundColor Green
     Remove-AzVM -ResourceGroupName $ResourceGroupName -Name $vmName5 -Force -ErrorAction SilentlyContinue
