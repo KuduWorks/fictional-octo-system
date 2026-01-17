@@ -5,7 +5,7 @@
 # Usage: pwsh ./test-policies.ps1 -TenantId "<tenant-guid>" [-ResourceGroupName "rg"] [-Location "swedencentral"]
 param(
     [Parameter(Mandatory = $false)]
-    [ValidatePattern('^[0-9a-fA-F-]{36}$')]
+    [ValidatePattern('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$')]
     [string]$TenantId,
     [string]$ResourceGroupName = "policy-test-rg",
     [string]$Location = "swedencentral",
