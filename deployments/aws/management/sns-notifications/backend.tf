@@ -4,7 +4,7 @@
 
 terraform {
   backend "s3" {
-    bucket         = "fictional-octo-system-tfstate-494367313227"  # e.g., fictional-octo-system-tfstate-123456789012
+    bucket         = "fictional-octo-system-tfstate-494367313227" # e.g., fictional-octo-system-tfstate-123456789012
     key            = "aws/sns-notifications/terraform.tfstate"
     region         = "eu-north-1"
     dynamodb_table = "terraform-state-locks"

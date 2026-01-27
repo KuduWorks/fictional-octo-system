@@ -13,3 +13,9 @@ enable_scps = false
 
 # Automatic Remediation
 remediation_enabled = false
+
+# Security Alerts (EventBridge → SNS integration)
+# Set this to the ARN of your security alerts SNS topic from deployments/aws/management/sns-notifications/
+# Example: "arn:aws:sns:us-east-1:123456789012:security-compliance-alerts"
+# Leave empty ("") to disable EventBridge alerts
+security_sns_topic_arn = ""
