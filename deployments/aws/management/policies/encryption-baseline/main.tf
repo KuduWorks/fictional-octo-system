@@ -405,21 +405,101 @@ resource "aws_organizations_policy_attachment" "deny_s3_public_access_attachment
 # RDS ENCRYPTION IN TRANSIT (SSL/TLS)
 # ============================================================================
 
-# AWS Config Rule: RDS In-Transit Encryption (SSL/TLS)
-resource "aws_config_config_rule" "rds_ssl_encryption" {
-  name        = "rds-require-ssl-connection"
-  description = "Checks that RDS instances require SSL/TLS for connections (ISO 27001 A.10.1.1)"
+# Note: AWS Config does not have a managed rule for RDS SSL enforcement.
+# To enforce SSL/TLS for RDS connections:
+# 1. Create RDS parameter groups with rds.force_ssl=1 (PostgreSQL/Aurora PostgreSQL)
+# 2. Or require_secure_transport=ON (MySQL/Aurora MySQL)
+# 3. Attach these parameter groups to all RDS instances
+# 4. Use the parameter groups defined below
 
-  # 24-hour grace period: evaluates once per day instead of on every change
-  maximum_execution_frequency = "TwentyFour_Hours"
+# PostgreSQL Parameter Groups (Multiple Versions)
+locals {
+  postgresql_families = ["postgres12", "postgres13", "postgres14", "postgres15", "postgres16"]
+  mysql_families      = ["mysql5.7", "mysql8.0"]
+  aurora_pg_families  = ["aurora-postgresql13", "aurora-postgresql14", "aurora-postgresql15", "aurora-postgresql16"]
+  aurora_my_families  = ["aurora-mysql5.7", "aurora-mysql8.0"]
+}
 
-  source {
-    owner             = "AWS"
-    source_identifier = "RDS_INSTANCES_SHOULD_HAVE_ENCRYPTION_IN_TRANSIT_ENABLED"
+# RDS Parameter Group: PostgreSQL with SSL enforcement (all supported versions)
+resource "aws_db_parameter_group" "postgresql_ssl_required" {
+  for_each = toset(local.postgresql_families)
+
+  name        = "postgresql-${each.value}-ssl-required"
+  family      = each.value
+  description = "PostgreSQL ${each.value} parameter group requiring SSL connections (ISO 27001 A.10.1.1)"
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"
   }
 
-  depends_on = [aws_config_configuration_recorder.main]
+  tags = {
+    Name    = "postgresql-${each.value}-ssl-required"
+    Purpose = "Force-SSL-Connections"
+    Version = each.value
+  }
 }
+
+# RDS Parameter Group: MySQL with SSL enforcement (all supported versions)
+resource "aws_db_parameter_group" "mysql_ssl_required" {
+  for_each = toset(local.mysql_families)
+
+  name        = "mysql-${replace(each.value, ".", "")}-ssl-required"
+  family      = each.value
+  description = "MySQL ${each.value} parameter group requiring SSL connections (ISO 27001 A.10.1.1)"
+
+  parameter {
+    name  = "require_secure_transport"
+    value = "ON"
+  }
+
+  tags = {
+    Name    = "mysql-${each.value}-ssl-required"
+    Purpose = "Force-SSL-Connections"
+    Version = each.value
+  }
+}
+
+# RDS Cluster Parameter Group: Aurora PostgreSQL with SSL enforcement (all supported versions)
+resource "aws_rds_cluster_parameter_group" "aurora_postgresql_ssl_required" {
+  for_each = toset(local.aurora_pg_families)
+
+  name        = "${each.value}-ssl-required"
+  family      = each.value
+  description = "Aurora PostgreSQL ${each.value} parameter group requiring SSL connections (ISO 27001 A.10.1.1)"
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"
+  }
+
+  tags = {
+    Name    = "${each.value}-ssl-required"
+    Purpose = "Force-SSL-Connections"
+    Version = each.value
+  }
+}
+
+# RDS Cluster Parameter Group: Aurora MySQL with SSL enforcement (all supported versions)
+resource "aws_rds_cluster_parameter_group" "aurora_mysql_ssl_required" {
+  for_each = toset(local.aurora_my_families)
+
+  name        = replace("${each.value}-ssl-required", ".", "-")  # Replace dots with hyphens for valid name
+  family      = each.value
+  description = "Aurora MySQL ${each.value} parameter group requiring SSL connections (ISO 27001 A.10.1.1)"
+
+  parameter {
+    name  = "require_secure_transport"
+    value = "ON"
+  }
+
+  tags = {
+    Name    = "${each.value}-ssl-required"
+    Purpose = "Force-SSL-Connections"
+    Version = each.value
+  }
+}
+
 
 # ============================================================================
 # EVENTBRIDGE: CONFIG COMPLIANCE ALERTS
