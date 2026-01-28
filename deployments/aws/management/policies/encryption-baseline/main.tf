@@ -501,6 +501,9 @@ resource "aws_sns_topic_policy" "security_alerts_eventbridge" {
           StringEquals = {
             "aws:SourceAccount" = local.account_id
           }
+          ArnLike = {
+            "aws:SourceArn" = "arn:aws:events:${var.aws_region}:${local.account_id}:rule/*"
+          }
         }
       }
     ]
