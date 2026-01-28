@@ -466,16 +466,16 @@ resource "aws_cloudwatch_event_target" "config_to_sns" {
       account      = "$.detail.awsAccountId"
     }
     input_template = <<EOF
-"🚨 AWS Config Compliance Violation"
-"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-"Rule:          <rule>"
-"Status:        <compliance>"
-"Resource:      <resource>"
-"Type:          <resourceType>"
-"Region:        <region>"
-"Account:       <account>"
-"━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
-"Action Required: Review and remediate the non-compliant resource."
+🚨 AWS Config Compliance Violation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Rule:          <rule>
+Status:        <compliance>
+Resource:      <resource>
+Type:          <resourceType>
+Region:        <region>
+Account:       <account>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Action Required: Review and remediate the non-compliant resource.
 EOF
   }
 }
