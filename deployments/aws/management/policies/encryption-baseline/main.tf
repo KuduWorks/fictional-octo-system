@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     aws = {
       source  = "hashicorp/aws"
@@ -33,7 +33,7 @@ locals {
 
 # AWS Config Rule: S3 Bucket Encryption
 resource "aws_config_config_rule" "s3_bucket_encryption" {
-  name = "s3-bucket-server-side-encryption-enabled"
+  name        = "s3-bucket-server-side-encryption-enabled"
   description = "Checks that S3 buckets have encryption enabled (ISO 27001 A.10.1.1)"
 
   source {
@@ -46,7 +46,7 @@ resource "aws_config_config_rule" "s3_bucket_encryption" {
 
 # AWS Config Rule: S3 HTTPS Only
 resource "aws_config_config_rule" "s3_ssl_requests_only" {
-  name = "s3-bucket-ssl-requests-only"
+  name        = "s3-bucket-ssl-requests-only"
   description = "Checks that S3 buckets require HTTPS (ISO 27001 A.10.1.1)"
 
   source {
@@ -59,7 +59,7 @@ resource "aws_config_config_rule" "s3_ssl_requests_only" {
 
 # AWS Config Rule: EBS Volume Encryption
 resource "aws_config_config_rule" "ebs_encryption" {
-  name = "encrypted-volumes"
+  name        = "encrypted-volumes"
   description = "Checks that EBS volumes are encrypted (ISO 27001 A.10.1.1)"
 
   source {
@@ -72,7 +72,7 @@ resource "aws_config_config_rule" "ebs_encryption" {
 
 # AWS Config Rule: RDS Encryption
 resource "aws_config_config_rule" "rds_encryption" {
-  name = "rds-storage-encrypted"
+  name        = "rds-storage-encrypted"
   description = "Checks that RDS instances use encryption (ISO 27001 A.10.1.1)"
 
   source {
@@ -85,7 +85,7 @@ resource "aws_config_config_rule" "rds_encryption" {
 
 # AWS Config Rule: DynamoDB Encryption
 resource "aws_config_config_rule" "dynamodb_encryption" {
-  name = "dynamodb-table-encrypted-kms"
+  name        = "dynamodb-table-encrypted-kms"
   description = "Checks that DynamoDB tables use KMS encryption (ISO 27001 A.10.1.1)"
 
   source {
@@ -98,7 +98,7 @@ resource "aws_config_config_rule" "dynamodb_encryption" {
 
 # AWS Config Rule: CloudTrail Encryption
 resource "aws_config_config_rule" "cloudtrail_encryption" {
-  name = "cloudtrail-encryption-enabled"
+  name        = "cloudtrail-encryption-enabled"
   description = "Checks that CloudTrail logs are encrypted (ISO 27001 A.12.4.1)"
 
   source {
@@ -165,10 +165,10 @@ resource "aws_s3_bucket_policy" "config_bucket_policy" {
     Version = "2012-10-17"
     Statement = [
       {
-        Sid    = "DenyInsecureTransport"
-        Effect = "Deny"
+        Sid       = "DenyInsecureTransport"
+        Effect    = "Deny"
         Principal = "*"
-        Action   = "s3:*"
+        Action    = "s3:*"
         Resource = [
           aws_s3_bucket.config_bucket.arn,
           "${aws_s3_bucket.config_bucket.arn}/*"
@@ -227,6 +227,7 @@ resource "aws_config_configuration_recorder" "main" {
       "AWS::S3::AccountPublicAccessBlock",
       "AWS::EC2::Volume",
       "AWS::RDS::DBInstance",
+      "AWS::RDS::DBCluster",
       "AWS::DynamoDB::Table",
       "AWS::CloudTrail::Trail"
     ]
@@ -398,4 +399,113 @@ resource "aws_organizations_policy_attachment" "deny_s3_public_access_attachment
 
   policy_id = aws_organizations_policy.deny_s3_public_access[0].id
   target_id = data.aws_organizations_organization.current[0].roots[0].id
+}
+
+# ============================================================================
+# RDS ENCRYPTION IN TRANSIT (SSL/TLS)
+# ============================================================================
+
+# AWS Config Rule: RDS In-Transit Encryption (SSL/TLS)
+resource "aws_config_config_rule" "rds_ssl_encryption" {
+  name        = "rds-require-ssl-connection"
+  description = "Checks that RDS instances require SSL/TLS for connections (ISO 27001 A.10.1.1)"
+
+  # 24-hour grace period: evaluates once per day instead of on every change
+  maximum_execution_frequency = "TwentyFour_Hours"
+
+  source {
+    owner             = "AWS"
+    source_identifier = "RDS_INSTANCES_SHOULD_HAVE_ENCRYPTION_IN_TRANSIT_ENABLED"
+  }
+
+  depends_on = [aws_config_configuration_recorder.main]
+}
+
+# ============================================================================
+# EVENTBRIDGE: CONFIG COMPLIANCE ALERTS
+# ============================================================================
+
+# EventBridge Rule: Capture Config compliance changes
+resource "aws_cloudwatch_event_rule" "config_compliance_change" {
+  count = var.security_sns_topic_arn != "" ? 1 : 0
+
+  name        = "config-compliance-violations"
+  description = "Capture AWS Config compliance changes to NON_COMPLIANT status"
+
+  event_pattern = jsonencode({
+    source      = ["aws.config"]
+    detail-type = ["Config Rules Compliance Change"]
+    detail = {
+      newEvaluationResult = {
+        complianceType = ["NON_COMPLIANT"]
+      }
+    }
+  })
+
+  tags = {
+    Name    = "config-compliance-violations"
+    Purpose = "Security-Alerting"
+  }
+}
+
+# EventBridge Target: Route to SNS
+resource "aws_cloudwatch_event_target" "config_to_sns" {
+  count = var.security_sns_topic_arn != "" ? 1 : 0
+
+  rule      = aws_cloudwatch_event_rule.config_compliance_change[0].name
+  target_id = "SendToSecuritySNS"
+  arn       = var.security_sns_topic_arn
+
+  input_transformer {
+    input_paths = {
+      rule         = "$.detail.configRuleName"
+      resource     = "$.detail.resourceId"
+      resourceType = "$.detail.resourceType"
+      compliance   = "$.detail.newEvaluationResult.complianceType"
+      region       = "$.detail.awsRegion"
+      account      = "$.detail.awsAccountId"
+    }
+    input_template = <<EOF
+🚨 AWS Config Compliance Violation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Rule:          <rule>
+Status:        <compliance>
+Resource:      <resource>
+Type:          <resourceType>
+Region:        <region>
+Account:       <account>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Action Required: Review and remediate the non-compliant resource.
+EOF
+  }
+}
+
+# IAM Policy: Allow EventBridge to publish to SNS
+resource "aws_sns_topic_policy" "security_alerts_eventbridge" {
+  count = var.security_sns_topic_arn != "" ? 1 : 0
+
+  arn = var.security_sns_topic_arn
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid    = "AllowEventBridgePublish"
+        Effect = "Allow"
+        Principal = {
+          Service = "events.amazonaws.com"
+        }
+        Action   = "SNS:Publish"
+        Resource = var.security_sns_topic_arn
+        Condition = {
+          StringEquals = {
+            "aws:SourceAccount" = local.account_id
+          }
+          ArnLike = {
+            "aws:SourceArn" = "arn:aws:events:${var.aws_region}:${local.account_id}:rule/*"
+          }
+        }
+      }
+    ]
+  })
 }

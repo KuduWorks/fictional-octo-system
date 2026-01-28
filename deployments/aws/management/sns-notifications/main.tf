@@ -68,3 +68,23 @@ resource "aws_sns_topic_subscription" "member_budget_email" {
   protocol  = "email"
   endpoint  = var.member_alert_email
 }
+
+# ============================================================================
+# SNS TOPIC: SECURITY COMPLIANCE ALERTS
+# ============================================================================
+
+resource "aws_sns_topic" "security_compliance_alerts" {
+  name         = "security-compliance-alerts"
+  display_name = "Security Compliance Alerts"
+
+  tags = {
+    Name        = "security-compliance-alerts"
+    Description = "AWS Config compliance and security policy violations"
+  }
+}
+
+resource "aws_sns_topic_subscription" "security_email" {
+  topic_arn = aws_sns_topic.security_compliance_alerts.arn
+  protocol  = "email"
+  endpoint  = var.security_alert_email
+}

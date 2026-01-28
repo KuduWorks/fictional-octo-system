@@ -88,6 +88,112 @@ terraform apply   # "YOLO! Creating resources..." 🎲
 
 **For Testing**: Use [cross-account-role](iam/cross-account-role/) to properly test SCPs from a member account.
 
+## Security Compliance Alerting
+
+**📧 EventBridge + SNS Integration for Config Compliance Monitoring**
+
+### What is EventBridge?
+
+Amazon EventBridge is AWS's event routing service - think of it as a central switchboard for events happening across your AWS infrastructure. When AWS services emit events (like "Config detected non-compliant resource"), EventBridge can listen for specific patterns and route them to targets like SNS, Lambda, or SQS.
+
+**The Problem**: AWS Config rules can detect compliance violations (unencrypted RDS, public S3 buckets, etc.), but they don't send notifications natively. You'd have to manually check the Config dashboard to see issues.
+
+**The Solution**: EventBridge bridges this gap by:
+1. Listening for Config compliance state changes
+2. Filtering for `NON_COMPLIANT` events
+3. Routing alerts to SNS → Email notifications
+
+**Event Flow**:
+```
+AWS Config Rule detects violation
+    ↓
+Emits event: "Config Rules Compliance Change"
+    ↓
+EventBridge matches: complianceType = "NON_COMPLIANT"
+    ↓
+Routes to SNS topic → <email address for security alerts>
+    ↓
+Email alert sent automatically
+```
+
+### SNS Email Subscription Confirmation
+
+When you first deploy the security alerts infrastructure, you'll receive a confirmation email:
+
+1. **Check your inbox** at the configured security email address
+2. **Click "Confirm subscription"** in the AWS SNS email
+3. **Alerts will start flowing** once confirmed
+
+**Note**: Until confirmed, EventBridge will attempt delivery but emails won't be sent. The subscription remains in "PendingConfirmation" state.
+
+### RDS SSL/TLS Enforcement
+
+The `rds-require-ssl-connection` Config rule monitors RDS instances to ensure database connections use encryption in transit. This prevents credentials and data from being transmitted in plaintext over the network.
+
+**Compliant Configuration Examples**:
+
+#### MySQL/Aurora MySQL
+```hcl
+# Create parameter group requiring SSL
+resource "aws_db_parameter_group" "mysql_force_ssl" {
+  family      = "mysql8.0"
+  name        = "force-ssl-connections"
+  description = "Require SSL for all connections"
+
+  parameter {
+    name  = "require_secure_transport"
+    value = "1"  # Enforces SSL
+  }
+}
+
+# Apply to RDS instance
+resource "aws_db_instance" "mysql" {
+  engine               = "mysql"
+  instance_class       = "db.t3.micro"
+  parameter_group_name = aws_db_parameter_group.mysql_force_ssl.name
+  # ... other settings
+}
+```
+
+#### PostgreSQL/Aurora PostgreSQL
+```hcl
+# Create parameter group requiring SSL
+resource "aws_db_parameter_group" "postgres_force_ssl" {
+  family      = "postgres15"
+  name        = "force-ssl-connections"
+  description = "Require SSL for all connections"
+
+  parameter {
+    name  = "rds.force_ssl"
+    value = "1"  # Enforces SSL
+  }
+}
+
+# Apply to RDS instance
+resource "aws_db_instance" "postgres" {
+  engine               = "postgres"
+  instance_class       = "db.t3.micro"
+  parameter_group_name = aws_db_parameter_group.postgres_force_ssl.name
+  # ... other settings
+}
+```
+
+**Grace Period**: The RDS SSL rule evaluates every 24 hours (not on every change), providing a 24-hour grace period for remediation before marking resources non-compliant.
+
+**Alert Example**:
+```
+🚨 AWS Config Compliance Violation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Rule:          rds-require-ssl-connection
+Status:        NON_COMPLIANT
+Resource:      my-database-instance
+Type:          AWS::RDS::DBInstance
+Region:        eu-north-1
+Account:       123456789012
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Action Required: Review and remediate the non-compliant resource.
+```
+
 ## Multi-Cloud Strategy
 
 *"Why put all your eggs in one basket when you can distribute them across multiple baskets in different regions with redundant storage and automatic failover?"*

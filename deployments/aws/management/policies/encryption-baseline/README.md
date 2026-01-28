@@ -11,7 +11,8 @@ This module mirrors the Azure ISO 27001 cryptography policies using AWS Config r
 - **s3-bucket-public-write-prohibited** - Detects S3 buckets allowing public write access
 - **s3-account-level-public-access-blocks-periodic** - Verifies account-level public access blocks
 - **encrypted-volumes** - Ensures EBS volumes are encrypted
-- **rds-storage-encrypted** - Ensures RDS instances use encryption
+- **rds-storage-encrypted** - Ensures RDS instances use encryption at rest
+- **rds-require-ssl-connection** - Ensures RDS instances require SSL/TLS for connections (24-hour grace period)
 - **dynamodb-table-encrypted-kms** - Ensures DynamoDB uses KMS encryption
 - **cloudtrail-encryption-enabled** - Ensures CloudTrail logs are encrypted
 
@@ -109,8 +110,42 @@ See `variables.tf` for configuration options:
 - `enable_scps` - Whether to create Service Control Policies (requires Organizations) - **Set to `true` for enforcement**
 - `config_recorder_name` - Name of the AWS Config recorder
 - `remediation_enabled` - Enable automatic remediation for non-compliant resources
+- `security_sns_topic_arn` - SNS topic ARN for security compliance alerts (EventBridge integration)
 - `aws_region` - AWS region (default: `eu-north-1` Stockholm)
 - `environment` - Environment name (default: `prod`)
+
+## EventBridge Integration for Compliance Alerts
+
+This module can send automatic email alerts when Config rules detect non-compliant resources.
+
+### How It Works
+
+1. **AWS Config** evaluates resources against compliance rules
+2. **EventBridge** listens for compliance state changes to `NON_COMPLIANT`
+3. **SNS** sends formatted email alerts to configured recipients
+
+### Setup
+
+1. Deploy SNS topic in `deployments/aws/management/sns-notifications/`
+2. Configure `security_sns_topic_arn` variable with the SNS topic ARN
+3. Confirm email subscription (check inbox for AWS SNS confirmation)
+
+### Alert Format
+
+```
+🚨 AWS Config Compliance Violation
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Rule:          rds-require-ssl-connection
+Status:        NON_COMPLIANT
+Resource:      my-database-instance
+Type:          AWS::RDS::DBInstance
+Region:        eu-north-1
+Account:       123456789012
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Action Required: Review and remediate the non-compliant resource.
+```
+
+See main [AWS README](../../README.md#security-compliance-alerting) for EventBridge explanation and RDS SSL configuration examples.
 
 ## SCP Propagation
 

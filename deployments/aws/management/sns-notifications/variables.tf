@@ -36,3 +36,14 @@ variable "member_alert_email" {
     error_message = "Must be a valid email address"
   }
 }
+
+variable "security_alert_email" {
+  description = "Email address for security compliance alerts (AWS Config non-compliance notifications)"
+  type        = string
+  default     = "security@example.com"
+
+  validation {
+    condition     = can(regex("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$", var.security_alert_email))
+    error_message = "Must be a valid email address"
+  }
+}
