@@ -12,9 +12,34 @@ This module mirrors the Azure ISO 27001 cryptography policies using AWS Config r
 - **s3-account-level-public-access-blocks-periodic** - Verifies account-level public access blocks
 - **encrypted-volumes** - Ensures EBS volumes are encrypted
 - **rds-storage-encrypted** - Ensures RDS instances use encryption at rest
-- **rds-require-ssl-connection** - Ensures RDS instances require SSL/TLS for connections (24-hour grace period)
 - **dynamodb-table-encrypted-kms** - Ensures DynamoDB uses KMS encryption
 - **cloudtrail-encryption-enabled** - Ensures CloudTrail logs are encrypted
+
+### RDS Parameter Groups (SSL/TLS Enforcement)
+Pre-configured parameter groups that enforce SSL/TLS connections for **all supported versions**:
+
+**PostgreSQL (12, 13, 14, 15, 16)**
+- `postgresql-postgres12-ssl-required`
+- `postgresql-postgres13-ssl-required`
+- `postgresql-postgres14-ssl-required`
+- `postgresql-postgres15-ssl-required`
+- `postgresql-postgres16-ssl-required`
+
+**MySQL (5.7, 8.0)**
+- `mysql-mysql57-ssl-required`
+- `mysql-mysql80-ssl-required`
+
+**Aurora PostgreSQL (13, 14, 15, 16)**
+- `aurora-postgresql13-ssl-required`
+- `aurora-postgresql14-ssl-required`
+- `aurora-postgresql15-ssl-required`
+- `aurora-postgresql16-ssl-required`
+
+**Aurora MySQL (5.7, 8.0)**
+- `aurora-mysql5-7-ssl-required`
+- `aurora-mysql8-0-ssl-required`
+
+**Note**: AWS Config does not have a managed rule to check RDS SSL enforcement. Instead, use these parameter groups when creating RDS instances to enforce SSL/TLS connections.
 
 ### Service Control Policies (Prevention Layer)
 When `enable_scps = true`, creates preventive controls:
@@ -64,6 +89,104 @@ This module implements **defense in depth** with multiple layers:
 terraform init
 terraform plan
 terraform apply
+```
+
+## How to Use RDS SSL/TLS Enforcement
+
+After deploying this module, use the created parameter groups when creating RDS instances to enforce SSL/TLS:
+
+### PostgreSQL Instance
+
+```hcl
+resource "aws_db_instance" "postgres" {
+  identifier           = "my-postgres-db"
+  engine              = "postgres"
+  engine_version      = "16.1"
+  instance_class      = "db.t3.micro"
+  
+  # Encryption at rest
+  storage_encrypted   = true
+  kms_key_id         = aws_kms_key.rds.arn
+  
+  # Encryption in transit (SSL/TLS) - Use version-specific parameter group
+  parameter_group_name = "postgresql-postgres16-ssl-required"  # Match your engine version
+  
+  # Other settings...
+}
+```
+
+### MySQL Instance
+
+```hcl
+resource "aws_db_instance" "mysql" {
+  identifier           = "my-mysql-db"
+  engine              = "mysql"
+  engine_version      = "8.0.35"
+  instance_class      = "db.t3.micro"
+  
+  # Encryption at rest
+  storage_encrypted   = true
+  kms_key_id         = aws_kms_key.rds.arn
+  
+  # Encryption in transit (SSL/TLS) - Use version-specific parameter group
+  parameter_group_name = "mysql-mysql80-ssl-required"  # Match your engine version
+  
+  # Other settings...
+}
+```
+
+### Aurora PostgreSQL Cluster
+
+```hcl
+resource "aws_rds_cluster" "aurora_postgres" {
+  cluster_identifier   = "my-aurora-cluster"
+  engine              = "aurora-postgresql"
+  engine_version      = "16.1"
+  
+  # Encryption at rest
+  storage_encrypted   = true
+  kms_key_id         = aws_kms_key.rds.arn
+  
+  # Encryption in transit (SSL/TLS) - Use version-specific parameter group
+  db_cluster_parameter_group_name = "aurora-postgresql16-ssl-required"  # Match your engine version
+  
+  # Other settings...
+}
+```
+
+### Aurora MySQL Cluster
+
+```hcl
+resource "aws_rds_cluster" "aurora_mysql" {
+  cluster_identifier   = "my-aurora-mysql-cluster"
+  engine              = "aurora-mysql"
+  engine_version      = "8.0.mysql_aurora.3.05.2"
+  
+  # Encryption at rest
+  storage_encrypted   = true
+  kms_key_id         = aws_kms_key.rds.arn
+  
+  # Encryption in transit (SSL/TLS) - Use version-specific parameter group
+  db_cluster_parameter_group_name = "aurora-mysql8-0-ssl-required"  # Match your engine version
+  
+  # Other settings...
+}
+```
+
+### Verify SSL Enforcement
+
+After creating your RDS instance:
+
+```bash
+# PostgreSQL
+psql -h your-endpoint.rds.amazonaws.com -U username -d database \
+  -c "SHOW rds.force_ssl;"
+# Expected: rds.force_ssl = on
+
+# MySQL  
+mysql -h your-endpoint.rds.amazonaws.com -u username -p \
+  -e "SHOW VARIABLES LIKE 'require_secure_transport';"
+# Expected: require_secure_transport = ON
 ```
 
 ## Prerequisites
