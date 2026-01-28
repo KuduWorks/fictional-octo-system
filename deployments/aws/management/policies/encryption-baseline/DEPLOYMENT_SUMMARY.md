@@ -12,7 +12,7 @@ Successfully implemented RDS SSL connection enforcement with comprehensive secur
 **Files Modified**:
 - ✅ `main.tf` - Added `security-compliance-alerts` SNS topic and email subscription
 - ✅ `variables.tf` - Added `security_alert_email` variable with email validation
-- ✅ `terraform.tfvars` - Configured security team email as recipient
+- ✅ `terraform.tfvars.example` - Documented security team email variable; configure your local `terraform.tfvars` with the actual recipient address (untracked)
 - ✅ `outputs.tf` - Exported security SNS topic ARN for EventBridge integration
 
 **What It Does**:
