@@ -1,0 +1,24 @@
+# Sensitive Configuration Files
+# These files contain actual values and should never be committed
+
+# Configuration files
+config.sh
+terraform.tfvars
+*.auto.tfvars
+
+# Service account keys
+*.json
+!*.example.json
+
+# Break-glass credentials
+breakglass-key.json
+entra-id-metadata.xml
+
+# Local state files
+.terraform/
+*.tfstate
+*.tfstate.backup
+
+# Environment files
+.env
+.env.local

@@ -1,23 +1,20 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     google = {
       source  = "hashicorp/google"
       version = "~> 5.0"
     }
   }
-  
-  # GCS backend configuration - update PROJECT-ID with your actual project
-  backend "gcs" {
-    bucket = "fictional-octo-system-tfstate-PROJECT-ID"
-    prefix = "gcp/secrets/secret-manager/terraform.tfstate"
-  }
 }
 
 provider "google" {
-  region = var.gcp_region
-  
+  project               = var.project_id
+  region                = var.gcp_region
+  user_project_override = true
+  billing_project       = var.project_id
+
   default_labels = {
     environment = var.environment
     managed_by  = "terraform"
@@ -26,18 +23,11 @@ provider "google" {
   }
 }
 
-# Get current project information
-data "google_project" "current" {}
-
-locals {
-  project_id = data.google_project.current.project_id
-}
-
 # Enable Secret Manager API
 resource "google_project_service" "secretmanager" {
-  project = local.project_id
+  project = var.project_id
   service = "secretmanager.googleapis.com"
-  
+
   disable_on_destroy = false
 }
 

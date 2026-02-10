@@ -1,0 +1,186 @@
+name: GCP Security Audit - Service Account Keys
+
+on:
+  # Run quarterly on the 1st of January, April, July, October at 09:00 UTC
+  schedule:
+    - cron: '0 9 1 1,4,7,10 *'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      verbose:
+        description: 'Enable verbose output'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  id-token: write      # Required for Workload Identity Federation
+  contents: read       # Required to checkout repository
+  issues: write        # Required to create GitHub Issues
+
+jobs:
+  audit-service-account-keys:
+    name: Audit Dormant Service Account Keys
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Run Service Account Key Audit
+        id: audit
+        run: |
+          cd deployments/gcp/organization/scripts
+          
+          # Make script executable
+          chmod +x service-account-key-audit.sh
+          
+          # Run audit with verbose flag if requested
+          if [[ "${{ inputs.verbose }}" == "true" ]]; then
+            ./service-account-key-audit.sh --verbose
+          else
+            ./service-account-key-audit.sh
+          fi
+          
+          # Capture exit code (should always be 0)
+          echo "exit_code=$?" >> $GITHUB_OUTPUT
+          
+          # Check if JSON output exists
+          if [[ -f dormant-keys-report.json ]]; then
+            echo "json_exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "json_exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Parse JSON Report
+        id: parse
+        if: steps.audit.outputs.json_exists == 'true'
+        run: |
+          cd deployments/gcp/organization/scripts
+          
+          # Extract key metrics from JSON
+          TOTAL_KEYS=$(jq '.summary.total_keys_found' dormant-keys-report.json)
+          DORMANT_90=$(jq '.summary.dormant_90_days' dormant-keys-report.json)
+          DORMANT_180=$(jq '.summary.dormant_180_days' dormant-keys-report.json)
+          
+          echo "total_keys=${TOTAL_KEYS}" >> $GITHUB_OUTPUT
+          echo "dormant_90=${DORMANT_90}" >> $GITHUB_OUTPUT
+          echo "dormant_180=${DORMANT_180}" >> $GITHUB_OUTPUT
+          
+          # Extract top 5 dormant keys for issue summary
+          TOP_KEYS=$(jq -r '.dormant_keys[:5] | map("- **\(.service_account)** (Project: \(.project_id)) - Last used: \(.last_used_days) days ago") | join("\n")' dormant-keys-report.json)
+          
+          # Save to temp file for multi-line output
+          echo "${TOP_KEYS}" > /tmp/top_keys.txt
+          echo "top_keys_file=/tmp/top_keys.txt" >> $GITHUB_OUTPUT
+
+      - name: Upload JSON Report to Secret Manager
+        if: steps.audit.outputs.json_exists == 'true'
+        run: |
+          cd deployments/gcp/organization/scripts
+          
+          # Generate secret name with timestamp
+          TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+          SECRET_NAME="service-account-key-audit-${TIMESTAMP}"
+          
+          # Check file size (Secret Manager limit: 64KB)
+          FILE_SIZE=$(stat -f%z dormant-keys-report.json 2>/dev/null || stat -c%s dormant-keys-report.json)
+          
+          if [[ ${FILE_SIZE} -gt 65536 ]]; then
+            echo "⚠️ JSON report exceeds 64KB - truncating to summary only"
+            jq '{scan_timestamp, summary, recommendations}' dormant-keys-report.json > dormant-keys-report-summary.json
+            UPLOAD_FILE="dormant-keys-report-summary.json"
+          else
+            UPLOAD_FILE="dormant-keys-report.json"
+          fi
+          
+          # Create secret and add first version
+          gcloud secrets create "${SECRET_NAME}" \
+            --project="${{ secrets.GCP_PROJECT_ID }}" \
+            --replication-policy="automatic" \
+            --ttl="365d" \
+            --data-file="${UPLOAD_FILE}"
+          
+          echo "✓ Uploaded audit report to Secret Manager: ${SECRET_NAME}"
+          echo "secret_name=${SECRET_NAME}" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Issue
+        if: steps.parse.outputs.dormant_90 != '0' || steps.parse.outputs.dormant_180 != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const totalKeys = '${{ steps.parse.outputs.total_keys }}';
+            const dormant90 = '${{ steps.parse.outputs.dormant_90 }}';
+            const dormant180 = '${{ steps.parse.outputs.dormant_180 }}';
+            const topKeysFile = '${{ steps.parse.outputs.top_keys_file }}';
+            const topKeys = fs.existsSync(topKeysFile) ? fs.readFileSync(topKeysFile, 'utf8') : 'No dormant keys found';
+            
+            const severity = dormant180 > 0 ? '🔴 Critical' : '🟡 Warning';
+            const timestamp = new Date().toISOString().split('T')[0];
+            
+            const issueBody = `## GCP Service Account Key Security Audit
+            
+            **Scan Date:** ${timestamp}
+            **Severity:** ${severity}
+            
+            ### Summary
+            - **Total Keys Found:** ${totalKeys}
+            - **Dormant 90+ Days:** ${dormant90}
+            - **Dormant 180+ Days:** ${dormant180}
+            
+            ### Top Dormant Keys
+            ${topKeys}
+            
+            ### Recommendations
+            1. **Review dormant keys** - Investigate why these keys haven't been used
+            2. **Rotate or delete** - Remove keys that are no longer needed
+            3. **Migrate to Workload Identity** - Replace long-lived keys with short-lived tokens
+            4. **Enable Organization Policies** - Set \`dry_run = false\` in \`deployments/gcp/organization/policies/terraform.tfvars\`
+            
+            ### Full Report
+            - JSON report uploaded to Secret Manager: \`${{ steps.upload.outputs.secret_name }}\`
+            - Download via: \`gcloud secrets versions access latest --secret="${{ steps.upload.outputs.secret_name }}"\`
+            
+            ### Next Steps
+            - [ ] Review full JSON report from Secret Manager
+            - [ ] Identify owners of dormant keys
+            - [ ] Create rotation plan for active keys
+            - [ ] Delete unnecessary keys
+            - [ ] Enforce organization policies
+            
+            ---
+            *This issue was automatically created by the [GCP Security Audit workflow](https://github.com/${{ github.repository }}/actions/workflows/gcp-security-audit.yml).*
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🔐 GCP Security Audit: ${dormant90} Dormant Service Account Keys Found`,
+              body: issueBody,
+              labels: ['security', 'gcp', 'audit', 'service-accounts']
+            });
+
+      - name: Audit Summary
+        if: always()
+        run: |
+          echo "════════════════════════════════════════════════════════════════"
+          echo "GCP Service Account Key Audit - Workflow Complete"
+          echo "════════════════════════════════════════════════════════════════"
+          echo "Audit Exit Code: ${{ steps.audit.outputs.exit_code }}"
+          echo "JSON Report Generated: ${{ steps.audit.outputs.json_exists }}"
+          echo "Total Keys: ${{ steps.parse.outputs.total_keys }}"
+          echo "Dormant 90+ Days: ${{ steps.parse.outputs.dormant_90 }}"
+          echo "Dormant 180+ Days: ${{ steps.parse.outputs.dormant_180 }}"
+          echo "════════════════════════════════════════════════════════════════"

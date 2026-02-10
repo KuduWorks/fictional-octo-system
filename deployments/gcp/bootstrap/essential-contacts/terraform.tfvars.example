@@ -1,0 +1,61 @@
+# GCP Essential Contacts Configuration
+# Copy this file to terraform.tfvars and update with your actual values
+# DO NOT commit terraform.tfvars to version control
+
+# =============================================================================
+# ORGANIZATION DETAILS
+# =============================================================================
+
+# GCP Organization ID (numeric)
+# Find via: gcloud organizations list
+# Example: 123456789012
+organization_id = "<your-org-id>"
+
+# =============================================================================
+# PROJECT CONFIGURATION
+# =============================================================================
+
+# Project where Essential Contacts API will be enabled
+# Usually your bootstrap or dev project
+# Example: my-bootstrap-project-123
+project_id = "<your-project-id>"
+
+# =============================================================================
+# CONTACT EMAILS
+# =============================================================================
+
+# Security Contact - Receives SECURITY and TECHNICAL notifications
+# Examples: security incidents, vulnerability alerts, critical updates
+# Recommended: security team distribution list or SOC email
+security_contact_email = "security@your-domain.com"
+
+# Billing Contact - Receives BILLING notifications
+# Examples: billing anomalies, budget alerts, payment issues
+# Recommended: finance team or billing administrator email
+billing_contact_email = "billing@your-domain.com"
+
+# Monitoring Contact - Receives TECHNICAL and SUSPENSION notifications
+# Examples: service suspensions, technical issues, operational alerts
+# Recommended: operations team or on-call engineer email
+monitoring_contact_email = "ops@your-domain.com"
+
+# =============================================================================
+# OPTIONAL CONFIGURATION
+# =============================================================================
+
+# GCP Region (default: europe-north1 - Finland)
+# gcp_region = "europe-north1"
+
+# Environment label (default: bootstrap)
+# environment = "bootstrap"
+
+# Language code for notifications (default: en)
+# Supported: en, fi, sv, de, fr, etc.
+# language_code = "en"
+
+# =============================================================================
+# SECURITY REMINDER
+# =============================================================================
+# This is a PUBLIC repository. Never commit actual values.
+# Use generic placeholders in documentation and examples.
+# =============================================================================
