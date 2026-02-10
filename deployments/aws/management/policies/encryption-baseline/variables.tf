@@ -26,3 +26,9 @@ variable "remediation_enabled" {
   type        = bool
   default     = false
 }
+
+variable "security_sns_topic_arn" {
+  description = "ARN of the SNS topic for security compliance alerts (Config non-compliance notifications)"
+  type        = string
+  default     = ""
+}

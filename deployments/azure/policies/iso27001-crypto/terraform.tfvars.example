@@ -1,0 +1,15 @@
+# ISO 27001 Cryptography Policies - Example Configuration
+# Copy this file to terraform.tfvars and customize values
+# WARNING: terraform.tfvars is in .gitignore to protect subscription IDs
+
+# Azure subscription ID where policies will be deployed
+subscription_id = "00000000-0000-0000-0000-000000000000"
+
+# Policy enforcement mode
+# - "Default" = Policies actively block non-compliant resources
+# - "DoNotEnforce" = Policies only audit/report (recommended for testing)
+enforcement_mode = "DoNotEnforce"
+
+# Azure region for policy assignments requiring system-assigned identity
+# Must match the region where you plan to deploy resources
+location = "swedencentral"

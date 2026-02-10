@@ -37,15 +37,15 @@ variable "subscription_id" {
 locals {
   subscription_id_raw = var.subscription_id != null ? var.subscription_id : data.azurerm_client_config.current.subscription_id
   subscription_id     = "/subscriptions/${local.subscription_id_raw}"
-  
+
   # Built-in policy IDs
-  storage_https_policy_id            = "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9"
-  storage_cmk_policy_id              = "/providers/Microsoft.Authorization/policyDefinitions/6fac406b-40ca-413b-bf8e-0bf964659c25"
-  storage_public_access_policy_id    = "/providers/Microsoft.Authorization/policyDefinitions/4fa4b6c0-31ca-4c0d-b10d-24b96f62a751"
-  sql_tde_cmk_policy_id              = "/providers/Microsoft.Authorization/policyDefinitions/0a370ff3-6cab-4e85-8995-295fd854c5b8"
-  keyvault_soft_delete_policy_id     = "/providers/Microsoft.Authorization/policyDefinitions/1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d"
+  storage_https_policy_id             = "/providers/Microsoft.Authorization/policyDefinitions/404c3081-a854-4457-ae30-26a93ef643f9"
+  storage_cmk_policy_id               = "/providers/Microsoft.Authorization/policyDefinitions/6fac406b-40ca-413b-bf8e-0bf964659c25"
+  storage_public_access_policy_id     = "/providers/Microsoft.Authorization/policyDefinitions/4fa4b6c0-31ca-4c0d-b10d-24b96f62a751"
+  sql_tde_cmk_policy_id               = "/providers/Microsoft.Authorization/policyDefinitions/0a370ff3-6cab-4e85-8995-295fd854c5b8"
+  keyvault_soft_delete_policy_id      = "/providers/Microsoft.Authorization/policyDefinitions/1e66c121-a66a-4b1f-9b83-0fd99bf0fc2d"
   keyvault_purge_protection_policy_id = "/providers/Microsoft.Authorization/policyDefinitions/0b60c0b2-2dc2-4e1c-b5c9-abbed971de53"
-  aks_azure_policy_addon_policy_id   = "/providers/Microsoft.Authorization/policyDefinitions/a8eff44f-8c92-45c3-a3fb-9880802d67a7"
+  aks_azure_policy_addon_policy_id    = "/providers/Microsoft.Authorization/policyDefinitions/a8eff44f-8c92-45c3-a3fb-9880802d67a7"
 }
 
 #
@@ -104,7 +104,7 @@ resource "azurerm_policy_definition" "storage_tls_12_required" {
         {
           anyOf = [
             {
-              field  = "Microsoft.Storage/storageAccounts/minimumTlsVersion"
+              field = "Microsoft.Storage/storageAccounts/minimumTlsVersion"
               notIn = ["TLS1_2", "TLS1_3"]
             },
             {
@@ -230,7 +230,7 @@ resource "azurerm_policy_definition" "appgw_tls_13_required" {
         {
           anyOf = [
             {
-              field  = "Microsoft.Network/applicationGateways/sslPolicy.minProtocolVersion"
+              field     = "Microsoft.Network/applicationGateways/sslPolicy.minProtocolVersion"
               notEquals = "TLSv1_3"
             },
             {
@@ -287,7 +287,7 @@ resource "azurerm_policy_definition" "appgw_https_required" {
           count = {
             field = "Microsoft.Network/applicationGateways/httpListeners[*]"
             where = {
-              field = "Microsoft.Network/applicationGateways/httpListeners[*].protocol"
+              field  = "Microsoft.Network/applicationGateways/httpListeners[*].protocol"
               equals = "Http"
             }
           }
@@ -327,7 +327,7 @@ resource "azurerm_policy_definition" "disk_cmk_required" {
   policy_type  = "Custom"
   mode         = "Indexed"
   display_name = "ISO 27001 - Managed Disks should use customer-managed keys"
-  description  = "Audits managed disks that don't use disk encryption sets with customer-managed keys"
+  description  = "Audits managed disks that don't use disk encryption sets with customer-managed keys. Note: Encryption-at-host provides encryption without requiring CMK disk encryption sets."
 
   metadata = jsonencode({
     category = "ISO 27001 - Cryptography"
@@ -356,7 +356,7 @@ resource "azurerm_policy_definition" "disk_cmk_required" {
       ]
     }
     then = {
-      effect = "deny"
+      effect = "audit"
     }
   })
 }
@@ -510,7 +510,7 @@ resource "azurerm_subscription_policy_assignment" "aks_azure_policy_addon" {
   identity {
     type = "SystemAssigned"
   }
-  
+
   metadata = jsonencode({
     assignedBy = "Terraform"
     category   = "ISO 27001 - Cryptography"
@@ -584,19 +584,19 @@ resource "azurerm_subscription_policy_assignment" "aks_encryption_at_host_assign
 # ==================== VIRTUAL MACHINE ENCRYPTION ====================
 #
 
-# Custom Policy: Audit VMs without EncryptionAtHost or Azure Disk Encryption
-resource "azurerm_policy_definition" "vm_encryption_audit" {
-  name         = "custom-vm-encryption-audit"
+# Custom Policy: Deny VMs without Encryption-at-Host
+resource "azurerm_policy_definition" "vm_encryption_at_host_required" {
+  name         = "iso27001-vm-encryption-at-host-required"
   policy_type  = "Custom"
   mode         = "Indexed"
-  display_name = "Audit VMs without EncryptionAtHost or Azure Disk Encryption"
-  description  = "Audits VMs that don't have EncryptionAtHost enabled or Azure Disk Encryption applied. This allows either encryption method."
+  display_name = "ISO 27001 - VMs must have Encryption-at-Host enabled"
+  description  = "Denies VM deployment if Encryption-at-Host is not enabled. Accepts both PMK and CMK for encryption. Azure Disk Encryption (ADE) is deprecated and not supported."
 
   metadata = jsonencode({
     category = "ISO 27001 - Cryptography"
     control  = "A.10.1.1"
     source   = "Terraform"
-    version  = "1.0.0"
+    version  = "2.0.0"
   })
 
   policy_rule = jsonencode({
@@ -607,8 +607,6 @@ resource "azurerm_policy_definition" "vm_encryption_audit" {
           equals = "Microsoft.Compute/virtualMachines"
         },
         {
-          # Only audit if EncryptionAtHost is NOT enabled
-          # (If it IS enabled, VM is compliant)
           anyOf = [
             {
               field  = "Microsoft.Compute/virtualMachines/securityProfile.encryptionAtHost"
@@ -623,42 +621,18 @@ resource "azurerm_policy_definition" "vm_encryption_audit" {
       ]
     }
     then = {
-      effect = "auditIfNotExists"
-      details = {
-        type = "Microsoft.Compute/virtualMachines/extensions"
-        existenceCondition = {
-          allOf = [
-            {
-              field  = "Microsoft.Compute/virtualMachines/extensions/publisher"
-              equals = "Microsoft.Azure.Security"
-            },
-            {
-              field = "Microsoft.Compute/virtualMachines/extensions/type"
-              in    = ["AzureDiskEncryption", "AzureDiskEncryptionForLinux"]
-            },
-            {
-              field  = "Microsoft.Compute/virtualMachines/extensions/provisioningState"
-              equals = "Succeeded"
-            }
-          ]
-        }
-      }
+      effect = "deny"
     }
   })
 }
 
-# Policy Assignment: VM Encryption Audit
-resource "azurerm_subscription_policy_assignment" "vm_encryption_audit" {
-  name                 = "vm-encryption-audit"
-  policy_definition_id = azurerm_policy_definition.vm_encryption_audit.id
+# Policy Assignment: VM Encryption-at-Host Required
+resource "azurerm_subscription_policy_assignment" "vm_encryption_at_host_required" {
+  name                 = "iso27001-vm-encryption-required"
+  policy_definition_id = azurerm_policy_definition.vm_encryption_at_host_required.id
   subscription_id      = local.subscription_id
-  display_name         = "Audit VMs - Require EncryptionAtHost OR Azure Disk Encryption"
-  description          = "Audits VMs to ensure they have either EncryptionAtHost or Azure Disk Encryption. Does not block deployment. Applies to both Windows and Linux VMs."
-  location             = "swedencentral"
-
-  identity {
-    type = "SystemAssigned"
-  }
+  display_name         = "ISO 27001 - VMs must use Encryption-at-Host"
+  description          = "Enforces Encryption-at-Host on all VMs. Accepts both PMK and CMK. Applies to both Windows and Linux VMs."
 
   metadata = jsonencode({
     category   = "ISO 27001 - Cryptography"
@@ -666,7 +640,7 @@ resource "azurerm_subscription_policy_assignment" "vm_encryption_audit" {
     assignedBy = "Terraform"
   })
 
-  depends_on = [azurerm_policy_definition.vm_encryption_audit]
+  depends_on = [azurerm_policy_definition.vm_encryption_at_host_required]
 }
 
 #
@@ -682,22 +656,22 @@ output "subscription_id" {
 output "policy_assignments" {
   description = "List of all policy assignments created"
   value = {
-    storage_https                = azurerm_subscription_policy_assignment.storage_https_required.id
-    storage_tls_12               = azurerm_subscription_policy_assignment.storage_tls_12_assignment.id
-    appgw_tls_13_required        = azurerm_subscription_policy_assignment.appgw_tls_13_assignment.id
-    appgw_https_required         = azurerm_subscription_policy_assignment.appgw_https_assignment.id
-    disk_cmk_required        = azurerm_policy_definition.disk_cmk_required.id
-    kusto_disk_encryption    = azurerm_policy_definition.kusto_disk_encryption.id
-    kusto_cmk_required       = azurerm_policy_definition.kusto_cmk_required.id
-    aks_encryption_at_host   = azurerm_policy_definition.aks_encryption_at_host.id
-    vm_encryption_audit      = azurerm_policy_definition.vm_encryption_audit.id
-    mysql_ssl_enforcement    = azurerm_policy_definition.mysql_ssl_enforcement.id
+    storage_https              = azurerm_subscription_policy_assignment.storage_https_required.id
+    storage_tls_12             = azurerm_subscription_policy_assignment.storage_tls_12_assignment.id
+    appgw_tls_13_required      = azurerm_subscription_policy_assignment.appgw_tls_13_assignment.id
+    appgw_https_required       = azurerm_subscription_policy_assignment.appgw_https_assignment.id
+    disk_cmk_required          = azurerm_subscription_policy_assignment.disk_cmk_assignment.id
+    kusto_disk_encryption      = azurerm_policy_definition.kusto_disk_encryption.id
+    kusto_cmk_required         = azurerm_policy_definition.kusto_cmk_required.id
+    aks_encryption_at_host     = azurerm_policy_definition.aks_encryption_at_host.id
+    vm_encryption_at_host_required = azurerm_subscription_policy_assignment.vm_encryption_at_host_required.id
+    mysql_ssl_enforcement      = azurerm_policy_definition.mysql_ssl_enforcement.id
     postgresql_ssl_enforcement = azurerm_policy_definition.postgresql_ssl_enforcement.id
-    cosmosdb_cmk_required    = azurerm_policy_definition.cosmosdb_cmk_required.id
-    servicebus_cmk_required  = azurerm_policy_definition.servicebus_cmk_required.id
-    eventhub_cmk_required    = azurerm_policy_definition.eventhub_cmk_required.id
-    acr_cmk_required         = azurerm_policy_definition.acr_cmk_required.id
-    ml_workspace_cmk         = azurerm_policy_definition.ml_workspace_cmk.id
+    cosmosdb_cmk_required      = azurerm_policy_definition.cosmosdb_cmk_required.id
+    servicebus_cmk_required    = azurerm_policy_definition.servicebus_cmk_required.id
+    eventhub_cmk_required      = azurerm_policy_definition.eventhub_cmk_required.id
+    acr_cmk_required           = azurerm_policy_definition.acr_cmk_required.id
+    ml_workspace_cmk           = azurerm_policy_definition.ml_workspace_cmk.id
   }
 }
 
@@ -836,7 +810,7 @@ resource "azurerm_subscription_policy_assignment" "app_service_tls_12" {
     type = "SystemAssigned"
   }
 
-  location = "swedencentral"  # Required when identity is specified
+  location = var.location # Required when identity is specified
 }
 
 # Function App TLS Policy
@@ -857,7 +831,7 @@ resource "azurerm_subscription_policy_assignment" "function_app_tls_12" {
     type = "SystemAssigned"
   }
 
-  location = "swedencentral"  # Required when identity is specified
+  location = var.location # Required when identity is specified
 }
 
 # ==================== APP SERVICE HTTPS ENFORCEMENT ====================
@@ -876,7 +850,7 @@ resource "azurerm_subscription_policy_assignment" "app_service_https_only" {
   identity {
     type = "SystemAssigned"
   }
-  location = "swedencentral"
+  location = var.location
 }
 
 # Service Bus CMK Policy
@@ -902,7 +876,7 @@ resource "azurerm_policy_definition" "servicebus_cmk_required" {
         {
           anyOf = [
             {
-              field  = "Microsoft.ServiceBus/namespaces/encryption.keySource"
+              field     = "Microsoft.ServiceBus/namespaces/encryption.keySource"
               notEquals = "Microsoft.KeyVault"
             },
             {
@@ -956,7 +930,7 @@ resource "azurerm_policy_definition" "eventhub_cmk_required" {
         {
           anyOf = [
             {
-              field  = "Microsoft.EventHub/namespaces/encryption.keySource"
+              field     = "Microsoft.EventHub/namespaces/encryption.keySource"
               notEquals = "Microsoft.KeyVault"
             },
             {
@@ -1010,7 +984,7 @@ resource "azurerm_policy_definition" "acr_cmk_required" {
         {
           anyOf = [
             {
-              field  = "Microsoft.ContainerRegistry/registries/encryption.status"
+              field     = "Microsoft.ContainerRegistry/registries/encryption.status"
               notEquals = "enabled"
             },
             {
@@ -1064,7 +1038,7 @@ resource "azurerm_policy_definition" "ml_workspace_cmk" {
         {
           anyOf = [
             {
-              field  = "Microsoft.MachineLearningServices/workspaces/encryption.status"
+              field     = "Microsoft.MachineLearningServices/workspaces/encryption.status"
               notEquals = "Enabled"
             },
             {
