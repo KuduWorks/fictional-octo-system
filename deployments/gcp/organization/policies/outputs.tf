@@ -11,9 +11,9 @@ output "dry_run_mode" {
 output "policies_deployed" {
   description = "List of deployed organization policies"
   value = {
-    key_expiry_policy       = var.enable_key_expiry_policy
-    key_creation_policy     = var.enable_key_creation_policy
-    key_upload_policy       = var.enable_key_upload_policy
+    key_expiry_policy         = var.enable_key_expiry_policy
+    key_creation_policy       = var.enable_key_creation_policy
+    key_upload_policy         = var.enable_key_upload_policy
     domain_restriction_policy = var.enable_domain_restriction_policy && length(var.allowed_policy_member_domains) > 0
   }
 }
@@ -39,52 +39,17 @@ output "exempted_resources" {
 
 output "dry_run_warning" {
   description = "Warning message if policies are in dry-run mode"
-  value = var.dry_run ? <<-EOT
-  
-  ╔═══════════════════════════════════════════════════════════════════╗
-  ║                     ⚠️  DRY-RUN MODE ACTIVE ⚠️                     ║
-  ╠═══════════════════════════════════════════════════════════════════╣
-  ║                                                                   ║
-  ║  Organization policies are deployed in DRY-RUN mode.              ║
-  ║  Policy violations are LOGGED but NOT ENFORCED.                   ║
-  ║                                                                   ║
-  ║  Next Steps:                                                      ║
-  ║    1. Monitor Cloud Logging for policy violations                 ║
-  ║    2. Review violations and adjust exemptions if needed           ║
-  ║    3. Set dry_run = false in terraform.tfvars                     ║
-  ║    4. Run terraform apply to enforce policies                     ║
-  ║                                                                   ║
-  ║  View violations:                                                 ║
-  ║    gcloud logging read \                                          ║
-  ║      "protoPayload.methodName=\"SetOrgPolicy\" AND \               ║
-  ║       protoPayload.request.policy.dryRun=true" \                  ║
-  ║      --limit=50 --format=json                                     ║
-  ║                                                                   ║
-  ╚═══════════════════════════════════════════════════════════════════╝
-  
-  EOT : "Policies are ENFORCED. Violations will be blocked."
+  value       = var.dry_run ? "⚠️  DRY-RUN MODE: Policies are NOT created. Set dry_run=false in terraform.tfvars to enforce." : "✓ ENFORCED MODE: Policy violations will be blocked."
 }
 
 output "exemption_review_reminder" {
   description = "Reminder to review exemptions periodically"
-  value = length(var.exclude_folders) > 0 || length(var.exclude_projects) > 0 ? <<-EOT
-  
-  📋 EXEMPTION REVIEW REMINDER
-  ════════════════════════════════════════════════════════════════
-  
-  ${length(var.exclude_folders)} folder(s) and ${length(var.exclude_projects)} project(s) are exempt from policies.
-  
-  Review exemptions quarterly to ensure they are still necessary.
-  Check inline comments in terraform.tfvars for expiration dates.
-  
-  Future refinement: Automated exemption expiry tracking planned.
-  
-  EOT : "No exemptions configured."
+  value       = length(var.exclude_folders) > 0 || length(var.exclude_projects) > 0 ? "📋 ${length(var.exclude_folders)} folder(s) and ${length(var.exclude_projects)} project(s) exempt. Review exemptions quarterly." : "No exemptions configured."
 }
 
 output "policies_summary" {
   description = "Human-readable summary of deployed policies"
-  value = <<-EOT
+  value       = <<-EOT
   
   ════════════════════════════════════════════════════════════════
   GCP ORGANIZATION POLICIES DEPLOYED
@@ -106,7 +71,7 @@ output "policies_summary" {
   ════════════════════════════════════════════════════════════════
   NEXT STEPS
   ════════════════════════════════════════════════════════════════
-  ${var.dry_run ? "1. Monitor Cloud Logging for violations\n  2. Review and adjust exemptions\n  3. Set dry_run = false to enforce policies" : "1. Monitor compliance via Cloud Logging\n  2. Review exemptions quarterly\n  3. Deploy service account key audit automation"}
+  ${var.dry_run ? "Dry-run mode: Policies are NOT enforced.\n  1. Review policy configuration above\n  2. Set dry_run = false in terraform.tfvars\n  3. Run terraform apply to enforce policies" : "1. Monitor compliance via Cloud Logging\n  2. Review exemptions quarterly\n  3. Deploy service account key audit automation"}
   
   ════════════════════════════════════════════════════════════════
   EOT
