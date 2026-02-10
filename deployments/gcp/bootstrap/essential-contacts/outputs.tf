@@ -37,7 +37,7 @@ output "essential_contacts_api_enabled" {
 
 output "contacts_summary" {
   description = "Summary of all configured essential contacts"
-  value = <<-EOT
+  value       = <<-EOT
   
   ====================================================================
   GCP ESSENTIAL CONTACTS CONFIGURED

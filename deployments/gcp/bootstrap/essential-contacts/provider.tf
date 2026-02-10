@@ -10,8 +10,10 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
-  region  = var.gcp_region
+  project               = var.project_id
+  region                = var.gcp_region
+  user_project_override = true
+  billing_project       = var.project_id
 
   default_labels = {
     environment = var.environment
