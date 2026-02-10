@@ -1,0 +1,15 @@
+# Audit Reports - NEVER COMMIT
+# Contains sensitive information:
+# - Service account email addresses
+# - Project IDs
+# - Key creation dates and usage patterns
+# - Internal infrastructure inventory
+
+audit-reports/
+*.json
+*.csv
+dormant-keys-report.*
+
+# Temporary files
+*.tmp
+*.log

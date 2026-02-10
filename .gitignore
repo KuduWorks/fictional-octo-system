@@ -41,5 +41,9 @@ deployments/azure/policies/vm-encryption/terraform.tfstate
 deployments/azure/policies/vm-encryption/terraform.tfstate.backup
 terraform/.terraform/terraform.tfstate
 
+# GCP audit reports (contain sensitive service account inventory)
+audit-reports/
+**/audit-reports/
+
 # Never ignore the .gitignore file itself
 !.gitignore
