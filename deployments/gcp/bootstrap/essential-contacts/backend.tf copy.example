@@ -1,0 +1,15 @@
+# Terraform Backend Configuration
+# Copy this file to backend.tf and update <YOUR-PROJECT-ID> with your actual GCP project ID
+# backend.tf is gitignored - safe to store project-specific values
+
+terraform {
+  backend "gcs" {
+    bucket = "fictional-octo-system-tfstate-<YOUR-PROJECT-ID>"
+    prefix = "gcp/bootstrap/essential-contacts/terraform.tfstate"
+  }
+}
+
+# After copying to backend.tf:
+# 1. Replace <YOUR-PROJECT-ID> with your actual project ID
+# 2. Run: terraform init -migrate-state
+# 3. Confirm state migration when prompted
