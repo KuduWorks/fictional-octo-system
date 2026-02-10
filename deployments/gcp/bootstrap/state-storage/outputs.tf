@@ -35,7 +35,7 @@ output "workload_identity_pool" {
 
 output "backend_config" {
   description = "Backend configuration to use in other modules"
-  value = <<-EOT
+  value       = <<-EOT
     
     Add this to your Terraform modules:
     
@@ -56,7 +56,7 @@ output "backend_config" {
 
 output "github_secrets_config" {
   description = "GitHub repository secrets configuration"
-  value = <<-EOT
+  value       = <<-EOT
     
     Add these secrets to your GitHub repository:
     
@@ -77,7 +77,7 @@ output "github_secrets_config" {
 
 output "github_actions_workflow_example" {
   description = "Example GitHub Actions workflow configuration"
-  value = <<-EOT
+  value       = <<-EOT
     
     # Example .github/workflows/deploy-gcp.yml
     name: Deploy to GCP
@@ -124,7 +124,7 @@ output "github_actions_workflow_example" {
 
 output "local_development_setup" {
   description = "Commands for local development setup"
-  value = <<-EOT
+  value       = <<-EOT
     
     Set up local development with Application Default Credentials:
     
@@ -151,7 +151,7 @@ output "local_development_setup" {
 
 output "migration_instructions" {
   description = "Instructions for migrating bootstrap state to GCS"
-  value = <<-EOT
+  value       = <<-EOT
     
     Migrate bootstrap state to remote GCS storage:
     
@@ -177,7 +177,7 @@ output "migration_instructions" {
 
 output "cost_estimate" {
   description = "Monthly cost estimate for GCP resources"
-  value = <<-EOT
+  value       = <<-EOT
     
     Estimated monthly costs:
     
@@ -195,7 +195,7 @@ output "cost_estimate" {
 
 output "cleanup_instructions" {
   description = "Instructions for cleaning up resources (development only)"
-  value = <<-EOT
+  value       = <<-EOT
     
     ⚠️  WARNING: This will destroy all infrastructure!
     

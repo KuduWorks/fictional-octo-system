@@ -1,6 +1,6 @@
 terraform {
   required_version = ">= 1.0"
-  
+
   required_providers {
     google = {
       source  = "hashicorp/google"
@@ -11,7 +11,7 @@ terraform {
       version = "~> 5.0"
     }
   }
-  
+
   # Store this module's state locally initially, then migrate to GCS
   # ⚠️ IMPORTANT: Backend configuration does not support variables.
   # You MUST manually update the bucket name below with your GCP project ID
@@ -54,10 +54,10 @@ resource "google_project_service" "required_apis" {
     "iamcredentials.googleapis.com",
     "sts.googleapis.com"
   ])
-  
+
   project = local.project_id
   service = each.value
-  
+
   disable_on_destroy = false
 }
 
@@ -65,17 +65,17 @@ resource "google_project_service" "required_apis" {
 resource "google_storage_bucket" "terraform_state" {
   name     = local.bucket_name
   location = var.gcs_location
-  
+
   # Prevent accidental deletion
   lifecycle {
     prevent_destroy = true
   }
-  
+
   # Enable versioning for state recovery
   versioning {
     enabled = true
   }
-  
+
   # Enable encryption (only if KMS key is specified)
   dynamic "encryption" {
     for_each = var.kms_key_name != "" ? [var.kms_key_name] : []
@@ -83,13 +83,13 @@ resource "google_storage_bucket" "terraform_state" {
       default_kms_key_name = var.kms_key_name
     }
   }
-  
+
   # Block public access
   public_access_prevention = "enforced"
-  
+
   # Uniform bucket-level access
   uniform_bucket_level_access = true
-  
+
   # Lifecycle management for old versions
   lifecycle_rule {
     condition {
@@ -99,7 +99,7 @@ resource "google_storage_bucket" "terraform_state" {
       type = "Delete"
     }
   }
-  
+
   # Delete old versions after retention period
   lifecycle_rule {
     condition {
@@ -109,14 +109,14 @@ resource "google_storage_bucket" "terraform_state" {
       type = "Delete"
     }
   }
-  
+
   labels = {
     name        = "terraform-state-storage"
     purpose     = "terraform-state"
     managed_by  = "terraform"
     environment = var.environment
   }
-  
+
   depends_on = [google_project_service.required_apis]
 }
 
@@ -126,7 +126,7 @@ resource "google_service_account" "github_actions" {
   display_name = "GitHub Actions Service Account"
   description  = "Service account for GitHub Actions CI/CD workflows"
   project      = local.project_id
-  
+
   depends_on = [google_project_service.required_apis]
 }
 
@@ -152,7 +152,7 @@ resource "google_iam_workload_identity_pool" "github_actions" {
   display_name              = "GitHub Actions Pool"
   description               = "Workload Identity Federation pool for GitHub Actions across organization"
   disabled                  = false
-  
+
   depends_on = [google_project_service.required_apis]
 }
 
@@ -164,33 +164,33 @@ resource "google_iam_workload_identity_pool_provider" "github" {
   workload_identity_pool_provider_id = "github"
   display_name                       = "GitHub OIDC Provider"
   description                        = "GitHub Actions OIDC provider for repository access"
-  disabled                          = false
-  
+  disabled                           = false
+
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
     "attribute.actor"      = "assertion.actor"
     "attribute.repository" = "assertion.repository"
     "attribute.ref"        = "assertion.ref"
   }
-  
+
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
-  
+
   attribute_condition = "assertion.repository=='${var.github_org}/${var.github_repo}'"
 }
 
 # Allow GitHub Actions to impersonate the service account
 resource "google_service_account_iam_member" "github_actions_workload_identity" {
   service_account_id = google_service_account.github_actions.name
-  role              = "roles/iam.workloadIdentityUser"
-  member            = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_actions.name}/attribute.repository/${var.github_org}/${var.github_repo}"
+  role               = "roles/iam.workloadIdentityUser"
+  member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_actions.name}/attribute.repository/${var.github_org}/${var.github_repo}"
 }
 
 # Optional: Grant additional IAM roles for deployment (if enabled)
 resource "google_project_iam_member" "github_actions_additional_roles" {
   for_each = var.enable_deployment_roles ? toset(var.deployment_roles) : toset([])
-  
+
   project = local.project_id
   role    = each.value
   member  = "serviceAccount:${google_service_account.github_actions.email}"
@@ -200,17 +200,17 @@ resource "google_project_iam_member" "github_actions_additional_roles" {
 # resource "google_storage_bucket_iam_audit_config" "terraform_state_audit" {
 #   count  = var.enable_audit_logging ? 1 : 0
 #   bucket = google_storage_bucket.terraform_state.name
-  
+
 #   audit_log_config {
 #     log_type         = "ADMIN_READ"
 #     exempted_members = []
 #   }
-  
+
 #   audit_log_config {
 #     log_type         = "DATA_READ"
 #     exempted_members = []
 #   }
-  
+
 #   audit_log_config {
 #     log_type         = "DATA_WRITE"
 #     exempted_members = []
@@ -221,15 +221,15 @@ resource "google_project_iam_audit_config" "storage_audit" {
   count   = var.enable_audit_logging ? 1 : 0
   project = local.project_id
   service = "storage.googleapis.com"
-  
+
   audit_log_config {
     log_type = "ADMIN_READ"
   }
-  
+
   audit_log_config {
     log_type = "DATA_READ"
   }
-  
+
   audit_log_config {
     log_type = "DATA_WRITE"
   }
