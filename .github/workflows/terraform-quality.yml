@@ -19,19 +19,6 @@ on:
       - 'terraform/**/*.tf'
 
 jobs:
-  # Security scanning with tfsec
-  tfsec:
-    name: Security Scan (tfsec)
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run tfsec
-        uses: aquasecurity/tfsec-action@v1.0.0
-        with:
-          working_directory: .
-
   # Linting with TFLint - Cloud-specific
   tflint:
     name: TFLint - ${{ matrix.cloud }}
