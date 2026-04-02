@@ -36,11 +36,13 @@ def detect_anomaly(cost_data):
     if len(costs) < 2:
         return False, 0
     # Use mean of previous days for anomaly detection
+    mean_prev = sum(costs[:-1]) / (len(costs) - 1)
     if mean_prev > 0 and costs[-1] > mean_prev * THRESHOLD:
         return True, costs[-1]
     return False, costs[-1]
 
-
+# Function to send an email alert
+def send_email_alert(cost):
     subject = 'AWS Cost Anomaly Detected'
     body = f"Alert: Cost anomaly detected. Latest daily cost: ${cost:.2f}"
     ses_client.send_email(
