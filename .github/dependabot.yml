@@ -1,11 +1,133 @@
-# To get started with Dependabot version updates, you'll need to specify which
-# package ecosystems to update and where the package manifests are located.
-# Please see the documentation for all configuration options:
 # https://docs.github.com/code-security/dependabot/dependabot-version-updates/configuration-options-for-the-dependabot.yml-file
 
 version: 2
 updates:
-  - package-ecosystem: "npm" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  # Keep GitHub Actions pinned to latest secure versions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  # Terraform providers — root
+  - package-ecosystem: "terraform"
+    directory: "/terraform"
+    schedule:
+      interval: "weekly"
+
+  # Terraform providers — Azure deployments
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/app-registration"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/key-vault"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/vm-automation"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/policies/vm-encryption"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/policies/network-security"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/policies/iso27001-crypto"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/azure/policies/region-control"
+    schedule:
+      interval: "weekly"
+
+  # Terraform providers — AWS deployments
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/terraform-state-bootstrap"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/networking"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/iam/cross-account-role"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/iam/github-oidc-management"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/iam/github-oidc-member"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/management/sns-notifications"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/management/cloudtrail-organization"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/management/budget-monitoring"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/management/policies/region-control"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/aws/management/policies/organization-protection"
+    schedule:
+      interval: "weekly"
+
+  # Terraform providers — GCP deployments
+  - package-ecosystem: "terraform"
+    directory: "/deployments/gcp/bootstrap/state-storage"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/gcp/compute/gce-baseline"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/gcp/cost-management/budgets"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/gcp/networking/vpc-baseline"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/gcp/secrets/secret-manager"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "terraform"
+    directory: "/deployments/gcp/iam/workload-identity"
     schedule:
       interval: "weekly"
