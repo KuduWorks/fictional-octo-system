@@ -1,0 +1,116 @@
+name: 🔐 GCP Security Audit Report
+description: Manually report findings from GCP service account key security audits
+title: "[GCP Security Audit] "
+labels: ["security", "gcp", "audit", "service-accounts"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## GCP Service Account Key Security Audit
+        Use this template to manually report findings from running the service account key audit script.
+        
+        **Script Location:** `deployments/gcp/organization/scripts/service-account-key-audit.sh`
+        **Documentation:** `deployments/gcp/organization/scripts/README.md`
+
+  - type: input
+    id: scan-date
+    attributes:
+      label: Scan Date
+      description: When was this audit performed?
+      placeholder: "2026-02-10"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: Overall severity based on dormant key count and age
+      options:
+        - 🟢 Low (0-5 dormant keys, all < 180 days)
+        - 🟡 Medium (6-20 dormant keys or some > 180 days)
+        - 🟠 High (21-50 dormant keys or many > 180 days)
+        - 🔴 Critical (>50 dormant keys or very old keys)
+    validations:
+      required: true
+
+  - type: input
+    id: total-keys
+    attributes:
+      label: Total Keys Found
+      description: Total number of service account keys scanned
+      placeholder: "42"
+    validations:
+      required: true
+
+  - type: input
+    id: dormant-90
+    attributes:
+      label: Dormant Keys (90+ Days)
+      description: Number of keys not used in the last 90 days
+      placeholder: "15"
+    validations:
+      required: true
+
+  - type: input
+    id: dormant-180
+    attributes:
+      label: Dormant Keys (180+ Days)
+      description: Number of keys not used in the last 180 days
+      placeholder: "8"
+    validations:
+      required: true
+
+  - type: textarea
+    id: top-dormant-keys
+    attributes:
+      label: Top Dormant Keys
+      description: List the top 5-10 dormant service account keys (service account, project, last used)
+      placeholder: |
+        - github-actions-terraform@kudu-star-dev-01 (Project: kudu-star-dev-01) - Last used: 245 days ago
+        - legacy-app-sa@kudu-star-dev-01 (Project: kudu-star-dev-01) - Last used: 180 days ago
+    validations:
+      required: true
+
+  - type: textarea
+    id: findings
+    attributes:
+      label: Key Findings
+      description: Summarize the main security concerns or patterns discovered
+      placeholder: |
+        - 8 service accounts have keys dormant for over 6 months
+        - Legacy application service accounts are the primary offenders
+        - No keys found in the production project (good!)
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: recommendations
+    attributes:
+      label: Recommended Actions
+      description: Select the actions you plan to take based on this audit
+      options:
+        - label: Review and contact owners of dormant keys
+        - label: Delete keys that are no longer needed
+        - label: Rotate keys that are still in use but very old
+        - label: Migrate to Workload Identity Federation for CI/CD
+        - label: Enable Organization Policies (set dry_run = false)
+        - label: Schedule follow-up audit in 30 days
+
+  - type: textarea
+    id: secret-manager-path
+    attributes:
+      label: Secret Manager Path
+      description: Path to the full JSON report in Secret Manager (if uploaded)
+      placeholder: "service-account-key-audit-20260210-143022"
+    validations:
+      required: false
+
+  - type: textarea
+    id: additional-notes
+    attributes:
+      label: Additional Notes
+      description: Any other observations or context about this audit
+      placeholder: "First audit after enabling monitoring. Many legacy keys found that need cleanup."
+    validations:
+      required: false

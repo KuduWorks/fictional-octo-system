@@ -2,6 +2,15 @@
 # Copy this file to terraform.tfvars and customize for your environment
 
 # =============================================================================
+# REQUIRED CONFIGURATION
+# =============================================================================
+
+# GCP Project ID (REQUIRED - replace with your actual project ID)
+# Find via: gcloud projects list
+# Example: "my-gcp-project-123456" or "kudu-star-dev-01"
+project_id = "<YOUR-PROJECT-ID>"
+
+# =============================================================================
 # BASIC CONFIGURATION
 # =============================================================================
 

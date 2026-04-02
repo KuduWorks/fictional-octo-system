@@ -1,0 +1,123 @@
+# GCP Organization Policies Configuration
+# Copy this file to terraform.tfvars and update with your actual values
+# DO NOT commit terraform.tfvars to version control
+
+# =============================================================================
+# ORGANIZATION DETAILS
+# =============================================================================
+
+# GCP Organization ID (numeric)
+# Find via: gcloud organizations list
+# Example: 123456789012
+organization_id = "<your-org-id>"
+
+# Project for Terraform state backend
+# Usually your bootstrap or dev project
+# Example: my-bootstrap-project-123
+project_id = "<your-project-id>"
+
+# =============================================================================
+# POLICY CONTROL
+# =============================================================================
+
+# Dry-run mode: Test policies before enforcement
+# true  = Violations logged but NOT blocked (safe testing)
+# false = Violations blocked (production enforcement)
+# 
+# Workflow:
+#   1. Deploy with dry_run = true
+#   2. Monitor Cloud Logging for violations (see README)
+#   3. Adjust exemptions if needed
+#   4. Set dry_run = false to enforce
+dry_run = true
+
+# Enable/disable individual policies
+enable_key_expiry_policy          = true  # 90-day service account key rotation
+enable_key_creation_policy        = true  # Disable user-managed key creation
+enable_key_upload_policy          = true  # Disable external key uploads
+enable_domain_restriction_policy  = true  # Restrict IAM to specific domains
+
+# =============================================================================
+# POLICY CONFIGURATION
+# =============================================================================
+
+# Service account key expiry (hours)
+# Default: 2160 hours = 90 days
+# Minimum: 1 hour, Maximum: 8760 hours (1 year)
+key_expiry_hours = 2160
+
+# Allowed domains for IAM policy members
+# Include your Cloud Identity customer ID and organization domain
+# Find Customer ID: gcloud organizations describe <ORG-ID> --format="value(owner.directoryCustomerId)"
+# Example: ["C0abc123def", "yourdomain.com"]
+allowed_policy_member_domains = [
+  "<your-customer-id>",     # Cloud Identity customer ID (starts with C0)
+  "<your-domain.com>",      # Your organization domain
+]
+
+# =============================================================================
+# EXEMPTIONS - Use inline comments to track expiration
+# =============================================================================
+
+# Folders exempted from organization policies
+# Format: ["<folder-id>"]
+# Find Folder ID: gcloud resource-manager folders list --organization=<ORG-ID>
+#
+# Exemption Tracking Pattern:
+#   - Permanent exemptions: # PERMANENT: Reason - Approved YYYY-MM-DD
+#   - Expiring exemptions:  # EXPIRES: YYYY-MM-DD - Reason - Review frequency
+#
+# Examples:
+exclude_folders = [
+  # "123456789012",  # PERMANENT: Legacy systems folder - Requires user-managed keys - Approved 2026-02-10
+  # "987654321098",  # EXPIRES: 2026-08-01 - Migration project folder - Review quarterly
+]
+
+# Projects exempted from organization policies
+# Format: ["project-id"]
+# Find Project ID: gcloud projects list --format="value(projectId)"
+#
+# Examples:
+exclude_projects = [
+  # "legacy-app-project",        # PERMANENT: Legacy application - Cannot use Workload Identity - Approved 2026-02-10
+  # "migration-project-2026",    # EXPIRES: 2026-12-31 - Temporary exemption during AWS migration - Review monthly
+  # "third-party-integration",   # EXPIRES: 2027-03-01 - Vendor requires service account keys - Review before renewal
+]
+
+# =============================================================================
+# OPTIONAL CONFIGURATION
+# =============================================================================
+
+# GCP Region (default: europe-north1 - Finland)
+# gcp_region = "europe-north1"
+
+# Environment label (default: production for org policies)
+# environment = "production"
+
+# =============================================================================
+# EXEMPTION BEST PRACTICES
+# =============================================================================
+#
+# PERMANENT EXEMPTIONS:
+#   - Use for legacy systems that cannot be migrated
+#   - Require executive/security team approval
+#   - Document compensating controls
+#   - Review annually
+#   - Example: Legacy mainframe integration requiring service account keys
+#
+# EXPIRING EXEMPTIONS:
+#   - Use for temporary scenarios (migrations, vendor requirements)
+#   - Set specific expiration date
+#   - Define review frequency (monthly/quarterly)
+#   - Automate expiration reminders (future refinement)
+#   - Example: 6-month migration project needs manual key management
+#
+# TRACKING FORMAT:
+#   "resource-id",  # TYPE: Date - Reason - Review schedule - Approver
+#
+# =============================================================================
+# SECURITY REMINDER
+# =============================================================================
+# This is a PUBLIC repository. Never commit actual values.
+# Use generic placeholders in documentation and examples.
+# =============================================================================
