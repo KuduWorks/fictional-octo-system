@@ -8,7 +8,13 @@ set -e
 # Configuration
 SUBSCRIPTION_ID=""
 LOCATION="swedencentral"
+# Regions used for testing the region control policy.
+# TEST_DISALLOWED_REGION should be a region blocked by policy; TEST_ALLOWED_REGION should be a permitted region.
+TEST_DISALLOWED_REGION="eastus"
+TEST_ALLOWED_REGION="$LOCATION"
 DEPLOY_TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+TEST_REGION_POLICY_RG="test-region-policy-${DEPLOY_TIMESTAMP}"
+TEST_ALLOWED_REGION_RG="test-allowed-region-${DEPLOY_TIMESTAMP}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -17,7 +23,20 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
+# Validate and determine subscription ID
+if [ -z "$SUBSCRIPTION_ID" ]; then
+    # Attempt to use the currently selected Azure subscription
+    SUBSCRIPTION_ID=$(az account show --query id -o tsv 2>/dev/null || true)
+fi
+
+if [ -z "$SUBSCRIPTION_ID" ]; then
+    echo -e "${RED}Error: SUBSCRIPTION_ID is not set and no active Azure subscription could be detected.${NC}"
+    echo -e "${YELLOW}Please set the SUBSCRIPTION_ID variable or login and select a subscription with 'az account set'.${NC}"
+    exit 1
+fi
+
 echo -e "${BLUE}=== Deploy All Azure Policies ===${NC}"
+echo -e "${BLUE}Using subscription:${NC} $SUBSCRIPTION_ID"
 
 # Policy categories in deployment order
 POLICY_CATEGORIES=(
@@ -170,7 +189,7 @@ validate_deployment() {
     # List all policy assignments
     echo -e "${BLUE}Policy assignments created:${NC}"
     az policy assignment list \
-        --query "[?contains(name, 'region') || contains(name, 'security') || contains(name, 'cost') || contains(name, 'nsg-required') || contains(name, 'deny-vm-public-ip')].{Name:name, DisplayName:displayName, Scope:scope, EnforcementMode:enforcementMode}" \
+        --query "[].{Name:name, DisplayName:displayName, Scope:scope, EnforcementMode:enforcementMode}" \
         --output table
     
     # List policy definitions
@@ -190,22 +209,22 @@ validate_deployment() {
 test_policies() {
     echo -e "${BLUE}=== Testing Policy Enforcement ===${NC}"
     
-    # Test region control
-    echo -e "${YELLOW}Testing region control policy...${NC}"
-    if az group create --name "test-region-policy" --location "eastus" 2>/dev/null; then
-        echo -e "${RED}⚠️  Region policy test failed - resource group created in non-allowed region${NC}"
-        az group delete --name "test-region-policy" --yes --no-wait 2>/dev/null
+    # Test region control (region expected to be disallowed by policy)
+    echo -e "${YELLOW}Testing region control policy with disallowed region '${TEST_DISALLOWED_REGION}'...${NC}"
+    if az group create --name "${TEST_REGION_POLICY_RG}" --location "$TEST_DISALLOWED_REGION" 2>/dev/null; then
+        echo -e "${RED}⚠️  Region policy test failed - resource group created in non-allowed region (${TEST_DISALLOWED_REGION})${NC}"
+        az group delete --name "${TEST_REGION_POLICY_RG}" --yes --no-wait 2>/dev/null
     else
-        echo -e "${GREEN}✅ Region policy working - blocked deployment to non-allowed region${NC}"
+        echo -e "${GREEN}✅ Region policy working - blocked deployment to non-allowed region (${TEST_DISALLOWED_REGION})${NC}"
     fi
     
-    # Test allowed region
-    echo -e "${YELLOW}Testing allowed region...${NC}"
-    if az group create --name "test-allowed-region" --location "swedencentral" 2>/dev/null; then
-        echo -e "${GREEN}✅ Allowed region working - resource group created successfully${NC}"
-        az group delete --name "test-allowed-region" --yes --no-wait 2>/dev/null
+    # Test allowed region (region expected to be allowed by policy)
+    echo -e "${YELLOW}Testing allowed region '${TEST_ALLOWED_REGION}'...${NC}"
+    if az group create --name "${TEST_ALLOWED_REGION_RG}" --location "$TEST_ALLOWED_REGION" 2>/dev/null; then
+        echo -e "${GREEN}✅ Allowed region working - resource group created successfully (${TEST_ALLOWED_REGION})${NC}"
+        az group delete --name "${TEST_ALLOWED_REGION_RG}" --yes --no-wait 2>/dev/null
     else
-        echo -e "${RED}⚠️  Issue with allowed region - could not create resource group${NC}"
+        echo -e "${RED}⚠️  Issue with allowed region - could not create resource group (${TEST_ALLOWED_REGION})${NC}"
     fi
 }
 
