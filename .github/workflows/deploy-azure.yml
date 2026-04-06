@@ -38,7 +38,7 @@ jobs:
       terraform_dir: ${{ steps.determine-dir.outputs.terraform_dir }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4
 
       - name: Azure Login via OIDC
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
@@ -52,7 +52,7 @@ jobs:
           echo "✅ Successfully authenticated with Azure using OIDC!"
           az account show
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.0
 
@@ -120,7 +120,7 @@ jobs:
       name: azure-prod
     steps:
       - name: Checkout code
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        uses: actions/checkout@v4
 
       - name: Azure Login via OIDC
         uses: azure/login@a457da9ea143d694b1b9c7c869ebb04ebe844ef5 # v2
@@ -135,12 +135,12 @@ jobs:
           az account show
 
       - name: Setup Terraform
-        uses: hashicorp/setup-terraform@b9cd54a3c349d3f38e8881555d616ced269862dd # v3
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.0
 
       - name: Download Terraform Plan
-        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        uses: actions/download-artifact@v4
         with:
           name: terraform-plan-${{ github.run_id }}
           path: ${{ needs.plan.outputs.terraform_dir }}
