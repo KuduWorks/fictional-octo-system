@@ -97,15 +97,18 @@ resource "aws_organizations_policy" "region_restriction" {
         }
       },
       {
-        Sid    = "DenyS3BucketActionsInUsEast1"
+        Sid    = "DenyS3BucketCreationInDefaultRegion"
         Effect = "Deny"
         Action = [
           "s3:CreateBucket"
         ]
         Resource = "*"
         Condition = {
-          StringEqualsIfExists = {
+          StringEquals = {
             "s3:LocationConstraint" = ""
+          }
+          Null = {
+            "s3:LocationConstraint" = true
           }
         }
       }
