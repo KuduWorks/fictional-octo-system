@@ -26,17 +26,17 @@ jobs:
     
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
       - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@c200f3691d83b41bf9bbd8638997a462592937ed # v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
           service_account: ${{ secrets.GCP_WIF_SERVICE_ACCOUNT }}
           project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f # v2
 
       - name: Run Service Account Key Audit
         id: audit
@@ -86,6 +86,7 @@ jobs:
           echo "top_keys_file=/tmp/top_keys.txt" >> $GITHUB_OUTPUT
 
       - name: Upload JSON Report to Secret Manager
+        id: upload
         if: steps.audit.outputs.json_exists == 'true'
         run: |
           cd deployments/gcp/organization/scripts
@@ -117,7 +118,7 @@ jobs:
 
       - name: Create GitHub Issue
         if: steps.parse.outputs.dormant_90 != '0' || steps.parse.outputs.dormant_180 != '0'
-        uses: actions/github-script@v7
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
