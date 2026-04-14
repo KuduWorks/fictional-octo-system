@@ -86,6 +86,7 @@ jobs:
           echo "top_keys_file=/tmp/top_keys.txt" >> $GITHUB_OUTPUT
 
       - name: Upload JSON Report to Secret Manager
+        id: upload
         if: steps.audit.outputs.json_exists == 'true'
         run: |
           cd deployments/gcp/organization/scripts
