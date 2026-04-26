@@ -110,6 +110,7 @@ resource "azurerm_subscription_policy_assignment" "vm_encryption_audit" {
   display_name         = "Audit VMs - Require EncryptionAtHost OR Azure Disk Encryption"
   description          = "Audits VMs to ensure they have either EncryptionAtHost or Azure Disk Encryption. Does not block deployment. Applies to both Windows and Linux VMs."
   location             = "swedencentral"
+  enforcement_mode     = var.enforcement_mode
 
   identity {
     type = "SystemAssigned"
