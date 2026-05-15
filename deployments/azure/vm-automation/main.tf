@@ -30,8 +30,8 @@ locals {
       Environment  = var.environment
       ManagedBy    = "Terraform"
       AutoShutdown = "Enabled"
-      ShutdownTime = "19:00 Finnish Time"
-      StartupTime  = "07:00 Finnish Time"
+      ShutdownTime = var.shutdown_time
+      StartupTime  = var.startup_time
     }
   )
 }
