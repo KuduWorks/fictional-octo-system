@@ -13,7 +13,7 @@ Multi-cloud Terraform infrastructure that actually works (most of the time). Cho
 
 ## 🚀 Quick Links (a.k.a. Pick Your Cloud Adventure)
 
-- **Azure** 🔵: [deployments/azure/](deployments/azure/) — app registration, Key Vault, policies, communication services, reporting *(because Microsoft loves acronyms)*
+- **Azure** 🔵: [deployments/azure/](deployments/azure/) — agent identity & blueprints, app registration, Key Vault, policies, communication services, reporting *(because Microsoft loves acronyms)*
 - **AWS** 🟠: [deployments/aws/](deployments/aws/) — state bootstrap, budgets, SCPs, FinOps Lambda, CloudTrail, GitHub OIDC *(Jeff Bezos's side project)*
 - **GCP** 🔴: [deployments/gcp/](deployments/gcp/) — bootstrap, workload identity, security, cost management *(Google's "we can cloud too" offering)*
 - **Terraform root**: [terraform/](terraform/) — shared state backend and VNet examples *(the fun one with all the jokes)*
