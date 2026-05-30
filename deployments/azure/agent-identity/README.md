@@ -211,8 +211,9 @@ Update-MgApplication -ApplicationId "<object-id>" -SignInAudience "AzureADMultip
 $app = Get-MgApplication -ApplicationId "<object-id>"
 Write-Host "Sign-in audience: $($app.SignInAudience)"
 
-# To inspect Service Principals that have been created in your home tenant
-# (each representing consent in a customer tenant, if multi-tenant app is homed here)
+# To inspect the Service Principal created after consent, connect to the tenant
+# where consent was granted first; customer tenant instances are not listed
+# as separate Service Principals in your app's home tenant.
 Get-MgServicePrincipal -Filter "appId eq '<your-app-client-id>'" |
     Select-Object DisplayName, Id, AppId
 ```
