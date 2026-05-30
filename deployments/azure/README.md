@@ -3,6 +3,7 @@
 Short, practical Azure IaC for app registration, Key Vault, VM automation, policies, reporting, and reusable modules — concise, slightly witty, and actually useful.
 
 Quick links
+- [agent-identity/](agent-identity/) — Entra Agent ID: App Regs, Blueprints, and why you don't hand blank logbooks to AI agents
 - [app-registration/](app-registration/) — Azure AD app registration automation (secrets rotate themselves, mostly)
 - [key-vault/](key-vault/) — Key Vault with RBAC (your secrets' safe room)
 - [vm-automation/](vm-automation/) — VM deployment with Bastion and automation (no public SSH circus)
