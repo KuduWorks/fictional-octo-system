@@ -35,8 +35,8 @@ Create a safe, auditable Azure Resource Janitor showcase. The Janitor inventorie
 
 1. A scheduled Automation job authenticates with its managed identity.
 2. The discovery runbook inventories resources and evaluates tags, configuration, and available activity evidence.
-3. The job emits a JSON candidate report to its job output for operator review.
-4. A GitHub workflow publishes the report and requires the `azure-janitor-cleanup` protected environment before any cleanup dispatch.
+3. The job emits a JSON candidate report plus a durable job/manifest identifier.
+4. A GitHub workflow uses its explicitly scoped OIDC identity to retrieve and verify that report (or read it from a durable artifact), publishes it, and only then requests the `azure-janitor-cleanup` protected-environment approval before any cleanup dispatch.
 5. A future cleanup runbook consumes the approved manifest and revalidates every candidate before taking action.
 
 ## Implementation Tasks
