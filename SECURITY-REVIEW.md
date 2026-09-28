@@ -15,6 +15,7 @@ this repository is public.
 | 2 | High | Azure CI/CD | A manual workflow input is interpolated into a privileged shell command, allowing command injection. |
 | 3 | High | GCP CI/CD | Workload Identity does not enforce the configured allowed branch restrictions. |
 | 4 | Medium | AWS CI/CD | The OIDC read role can be assumed from every repository branch and tag. |
+| 5 | Medium | GCP IAM | Service-account keys and their Secret Manager copies are created despite default opt-out settings. |
 
 ### 1. Azure pull-request identity has subscription Contributor access
 
@@ -63,10 +64,20 @@ by service read APIs.
 environments and replace broad managed read access with the minimum required
 inline permissions.
 
+### 5. GCP service-account keys ignore opt-out settings
+
+The Workload Identity module creates a service-account key for every configured
+repository and stores its private key in Secret Manager. This happens even when
+both `create_service_account_keys` and `store_keys_in_secret_manager` retain
+their default `false` values, creating unnecessary long-lived credentials.
+
+**Remediation:** Gate key creation on `create_service_account_keys` and gate
+Secret Manager storage on both key creation and
+`store_keys_in_secret_manager`. Prefer Workload Identity Federation instead of
+long-lived service-account keys.
+
 ## Hardening Recommendations
 
-- Prevent creation of GCP service-account keys unless explicitly requested; use
-  Workload Identity instead.
 - Enable GCP organization-policy protections by default after a controlled
   rollout.
 - Require explicit opt-in for Azure Key Vault administrative and deployment

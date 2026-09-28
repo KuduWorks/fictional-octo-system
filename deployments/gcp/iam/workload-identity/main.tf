@@ -137,14 +137,14 @@ resource "google_project_iam_member" "custom_role_assignments" {
 
 # Create service account keys for GitHub Actions
 resource "google_service_account_key" "github_keys" {
-  for_each           = var.github_repositories
+  for_each           = var.create_service_account_keys ? var.github_repositories : {}
   service_account_id = google_service_account.github_repos[each.key].name
   key_algorithm      = "KEY_ALG_RSA_2048"
 }
 
 # Store service account keys in Secret Manager
 resource "google_secret_manager_secret" "github_sa_keys" {
-  for_each  = var.github_repositories
+  for_each  = var.create_service_account_keys && var.store_keys_in_secret_manager ? var.github_repositories : {}
   secret_id = "github-sa-key-${each.key}"
   
   replication {
@@ -153,7 +153,7 @@ resource "google_secret_manager_secret" "github_sa_keys" {
 }
 
 resource "google_secret_manager_secret_version" "github_sa_key_versions" {
-  for_each    = var.github_repositories
+  for_each    = var.create_service_account_keys && var.store_keys_in_secret_manager ? var.github_repositories : {}
   secret      = google_secret_manager_secret.github_sa_keys[each.key].id
   secret_data = base64decode(google_service_account_key.github_keys[each.key].private_key)
 }
