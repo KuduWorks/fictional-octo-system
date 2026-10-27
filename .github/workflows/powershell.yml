@@ -33,6 +33,7 @@ jobs:
       - name: Install PSScriptAnalyzer
         shell: pwsh
         run: |
+          #Requires -Version 7.0
           Set-StrictMode -Version Latest
           $ErrorActionPreference = 'Stop'
           Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
@@ -41,6 +42,7 @@ jobs:
       - name: Run PSScriptAnalyzer and export findings
         shell: pwsh
         run: |
+          #Requires -Version 7.0
           Set-StrictMode -Version Latest
           $ErrorActionPreference = 'Stop'
           $findings = @(Invoke-ScriptAnalyzer -Path . -Recurse -IncludeRule 'PSAvoidGlobalAliases','PSAvoidUsingConvertToSecureStringWithPlainText')
