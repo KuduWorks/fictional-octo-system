@@ -9,6 +9,7 @@ Multi-cloud Terraform infrastructure that actually works (most of the time). Cho
 - [Quick Links](#quick-links)
 - [Features](#features)
 - [Getting Started](#getting-started)
+- [PowerShell checks](#powershell-checks)
 - [Contributing](#contributing)
 
 ## 🚀 Quick Links (a.k.a. Pick Your Cloud Adventure)
@@ -99,6 +100,21 @@ terraform init && terraform apply
 **Status**: Work in progress *(a.k.a. it works on my machine)*
 
 *Built with ☕, 😤, an unhealthy amount of Stack Overflow, and way too much chatting with MCP servers for detailed setup.*
+
+## PowerShell checks
+
+The **PSScriptAnalyzer** workflow runs on pushes and pull requests targeting
+`main`, weekly, and manually through **Actions → PSScriptAnalyzer → Run workflow**.
+
+It uses inline checkout and GitHub API upload steps to comply with organization
+policies that restrict external actions. It checks `PSAvoidGlobalAliases` and
+`PSAvoidUsingConvertToSecureStringWithPlainText`, fails when findings exist, and
+exports those findings to SARIF for code scanning. Reports are uploaded even
+when findings fail the analyzer step. Fork pull requests run analysis but skip
+upload because their token cannot write security events.
+
+No deployment credentials are needed. The workflow uses the job's GitHub token
+with `contents: read` and `security-events: write` permissions.
 
 ## Contributing
 
