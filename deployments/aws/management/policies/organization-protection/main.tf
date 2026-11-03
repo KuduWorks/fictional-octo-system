@@ -28,10 +28,6 @@ data "aws_caller_identity" "current" {}
 # Data source to get organization information
 data "aws_organizations_organization" "current" {}
 
-locals {
-  account_id = data.aws_caller_identity.current.account_id
-}
-
 # ============================================================================
 # SERVICE CONTROL POLICY: ORGANIZATION PROTECTION
 # ============================================================================
