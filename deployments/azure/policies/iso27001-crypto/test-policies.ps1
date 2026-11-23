@@ -173,21 +173,25 @@ try {
 }
 
 # Helper: secure random password
-function New-RandomPassword([int]$length = 16) {
+function New-RandomSecurePassword([int]$length = 16) {
     $chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()"
     $rng = [System.Security.Cryptography.RandomNumberGenerator]::Create()
     try {
         $bytes = New-Object 'System.Byte[]' $length
         $rng.GetBytes($bytes)
 
-        $passwordChars = New-Object 'System.Char[]' $length
+        $password = [System.Security.SecureString]::new()
         for ($i = 0; $i -lt $length; $i++) {
             $index = $bytes[$i] % $chars.Length
-            $passwordChars[$i] = $chars[$index]
+            $password.AppendChar($chars[$index])
         }
 
-        -join $passwordChars
+        $password.MakeReadOnly()
+        $password
     } finally {
+        if ($null -ne $bytes) {
+            [Array]::Clear($bytes, 0, $bytes.Length)
+        }
         if ($rng -is [System.IDisposable]) {
             $rng.Dispose()
         }
@@ -278,8 +282,7 @@ try {
     
     $nic4 = New-AzNetworkInterface -Name $nicName4 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM.Subnets[0].Id
     
-    $passwordPlain = New-RandomPassword 16
-    $cred = New-Object System.Management.Automation.PSCredential ("azureuser", (ConvertTo-SecureString $passwordPlain -AsPlainText -Force))
+    $cred = [System.Management.Automation.PSCredential]::new("azureuser", (New-RandomSecurePassword 16))
     
     Write-Host "Attempting to create VM without encryption-at-host: $vmName4" -ForegroundColor Yellow
     $vmConfig = New-AzVMConfig -VMName $vmName4 -VMSize "Standard_D2s_v3"
@@ -322,8 +325,7 @@ try {
     }
     
     $nic5 = New-AzNetworkInterface -Name $nicName5 -ResourceGroupName $ResourceGroupName -Location $Location -SubnetId $vnetVM5.Subnets[0].Id
-    $passwordPlain = New-RandomPassword 16
-    $cred = New-Object System.Management.Automation.PSCredential ("azureuser", (ConvertTo-SecureString $passwordPlain -AsPlainText -Force))
+    $cred = [System.Management.Automation.PSCredential]::new("azureuser", (New-RandomSecurePassword 16))
     
     # Check if New-AzVMConfig supports EncryptionAtHost parameter
     $supportsEncAtHost = (Get-Command New-AzVMConfig).Parameters.ContainsKey('EncryptionAtHost')

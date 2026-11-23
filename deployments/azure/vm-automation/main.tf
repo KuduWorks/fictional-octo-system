@@ -3,7 +3,7 @@ terraform {
   required_providers {
     azurerm = {
       source  = "hashicorp/azurerm"
-      version = "~> 4.67"
+      version = "~> 5.10"
     }
   }
   required_version = ">= 1.0"
@@ -30,8 +30,8 @@ locals {
       Environment  = var.environment
       ManagedBy    = "Terraform"
       AutoShutdown = "Enabled"
-      ShutdownTime = "19:00 Finnish Time"
-      StartupTime  = "07:00 Finnish Time"
+      ShutdownTime = var.shutdown_time
+      StartupTime  = var.startup_time
     }
   )
 }
